@@ -1,0 +1,27 @@
+[project]
+name = "astro-imaging-planner"
+version = "0.1.0"
+description = "Astrophotography planner: nightly target ranking, optimal sub-exposure (Glover model), FITS/XISF SNR analysis, session logging."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "astropy>=6.0",
+    "astroplan>=0.9",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.scripts]
+astroplanner = "astroplanner.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["astroplanner"]
+
+[tool.setuptools.package-data]
+astroplanner = ["data/*.csv"]
