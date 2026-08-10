@@ -13,9 +13,13 @@ A command-line astrophotography assistant:
   SQM / sky rate), the sensor's read noise and QE, your optics, and the
   filter bandwidth determine the sub length where read noise stops
   mattering.
+- **Physical moonlight model** — Krisciunas & Schaefer (1991) scattering, so
+  the moon's cost depends on its phase, its altitude, the target's altitude,
+  and their angular separation. Feeds both the ranking and the sub length:
+  under a bright moon the sky is brighter, so optimal subs get *shorter*.
 - **Filter advisor** — knows which targets are line emitters (Ha/OIII) and
-  recommends a duo-band/narrowband filter when the moon is up or the sky is
-  bright.
+  picks the filter that maximizes SNR under tonight's actual sky, rather
+  than following a hand-written rule.
 - **FITS/XISF analyzer** — measures background, noise, SNR, and the *actual*
   sky electron rate of your light frames, which you can feed back into the
   exposure calculator to replace the Bortle estimate with reality.
@@ -61,6 +65,13 @@ astroplanner log add --date 2026-08-02 --target NGC7000 --filter duoband \
 astroplanner log list
 ```
 
+Restrict to the filters you actually own, or to a kind of target:
+
+```bash
+astroplanner plan ... --filters none,cls      # no narrowband in the drawer
+astroplanner plan ... --type galaxy,cluster   # galaxy night
+```
+
 Reference lists: `astroplanner cameras`, `astroplanner filters`,
 `astroplanner targets`. Unknown camera? Override with
 `--read-noise` / `--qe` on any command.
@@ -82,12 +93,30 @@ scale, QE and the filter's bandwidth — or measured directly from your frames
 with `analyze`. Narrowband filters cut P by 40×+, which is why 300–600 s
 narrowband subs coexist with 30 s broadband subs in the same sky.
 
+Moonlight adds to P through the Krisciunas & Schaefer model, so a full moon
+shortens the recommended sub as well as costing SNR. Two consequences are
+worth knowing, because both are easy to guess wrong:
+
+- **The darkest sky is ~90° from the moon, not opposite it.** Rayleigh
+  scattering carries a `cos²ρ` term, so backscatter brightens the anti-moon
+  point again.
+- **A filter does not reduce the moon's *fractional* cost.** Moonlight and
+  light-pollution skyglow are both continuum, so any filter attenuates both
+  equally and the ratio cancels. What narrowband buys is *absolute* SNR: it
+  passes the line flux while cutting continuum sky, so an Hα sub under a full
+  moon can beat an unfiltered sub under a dark sky. The `SkyQual` column
+  reports that (1.00 = unfiltered under your moonless sky).
+
+Filter choice maximizes SNR only — it does not know that a broadband filter
+also captures colour in one shot, or that narrowband needs far more total
+integration time. Use `--filters` to constrain it to what you'll really use.
+
 ## Roadmap
 
 - Hα survey sampling (hips2fits / Finkbeiner map) so filter advice uses the
   actual emission strength at the target's coordinates
-- Physical moonlight-scattering model (Krisciunas & Schaefer) instead of the
-  heuristic penalty
+- Spectral sky model (airglow lines vs. continuum), which would let filter
+  choice change the moon's relative cost as it does in reality
 - Compressed-XISF support, OSC Bayer-aware statistics
 - Multi-night project planning and a small web UI
 

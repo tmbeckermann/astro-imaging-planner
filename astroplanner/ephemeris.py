@@ -31,6 +31,7 @@ class NightPlanContext:
     moon_alt_deg: np.ndarray
     moon_coord: SkyCoord             # moon position at each sample
     moon_illumination: float         # 0..1 at the middle of the night
+    moon_phase_angle_deg: float      # 0 = full, 180 = new
     step_hours: float = field(default=GRID_STEP_MIN / 60.0)
 
     @property
@@ -48,14 +49,21 @@ class NightPlanContext:
         return self.times[idx[-1]] if idx.size else None
 
 
-def moon_illumination_fraction(t: Time) -> float:
-    """Illuminated fraction of the moon's disk (0=new, 1=full)."""
+def moon_phase_angle(t: Time) -> float:
+    """Sun-moon-Earth phase angle in degrees (0 = full, 180 = new)."""
     sun = get_sun(t)
     moon = get_body("moon", t)
     elongation = sun.separation(moon)
-    # Standard phase-angle formula; sun-moon distance ratio approximated.
-    i = np.arctan2(sun.distance * np.sin(elongation), moon.distance - sun.distance * np.cos(elongation))
-    return float((1 + np.cos(i)) / 2)
+    i = np.arctan2(
+        sun.distance * np.sin(elongation),
+        moon.distance - sun.distance * np.cos(elongation),
+    )
+    return float(i.to(u.deg).value)
+
+
+def moon_illumination_fraction(t: Time) -> float:
+    """Illuminated fraction of the moon's disk (0=new, 1=full)."""
+    return float((1 + np.cos(np.radians(moon_phase_angle(t)))) / 2)
 
 
 def build_night(date_iso: str, lat_deg: float, lon_deg: float, elevation_m: float = 0.0) -> NightPlanContext:
@@ -89,7 +97,8 @@ def build_night(date_iso: str, lat_deg: float, lon_deg: float, elevation_m: floa
     mid = times[len(times) // 2]
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        illum = moon_illumination_fraction(mid)
+        phase = moon_phase_angle(mid)
+    illum = float((1 + np.cos(np.radians(phase))) / 2)
 
     return NightPlanContext(
         location=location,
@@ -99,6 +108,7 @@ def build_night(date_iso: str, lat_deg: float, lon_deg: float, elevation_m: floa
         moon_alt_deg=moon_alt,
         moon_coord=moon_altaz,
         moon_illumination=illum,
+        moon_phase_angle_deg=phase,
     )
 
 

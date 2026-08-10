@@ -51,16 +51,27 @@ def cmd_plan(args) -> int:
         print("The sun never gets below -6 deg on this date at this site; no usable darkness.")
         return 1
 
+    subset = None
+    if args.type:
+        wanted = {s.strip().lower() for s in args.type.split(",")}
+        subset = [t for t in load_targets() if t.type in wanted]
+        if not subset:
+            print(f"No catalog targets of type(s) {args.type}. See 'astroplanner targets'.")
+            return 1
+
     ranked = rank_targets(
         ctx, cam, args.fl, args.aperture, args.bortle,
         available_filters=args.filters.split(",") if args.filters else None,
         min_alt_deg=args.min_alt,
+        targets=subset,
     )
     fov_w, fov_h = cam.fov_arcmin(args.fl)
     print(f"Night of {args.date}  |  lat {args.lat:+.2f} lon {args.lon:+.2f}  |  Bortle {args.bortle}")
+    moon_hours = float((ctx.dark & (ctx.moon_alt_deg > 0)).sum()) * ctx.step_hours
     print(f"Darkness ({ctx.darkness_kind}): {ctx.dark_start.strftime('%H:%M')}"
           f"-{ctx.dark_end.strftime('%H:%M')} UTC  ({ctx.dark_hours:.1f} h)"
-          f"  |  Moon {ctx.moon_illumination*100:.0f}% illuminated")
+          f"  |  Moon {ctx.moon_illumination*100:.0f}% illuminated,"
+          f" up {moon_hours:.1f} h of darkness")
     print(f"Rig: {cam.name}, {args.fl:.0f} mm f/{args.fl/args.aperture:.1f}"
           f"  |  FoV {fov_w:.0f}' x {fov_h:.0f}'  |  {cam.pixel_scale(args.fl):.2f}\"/px")
     print()
@@ -68,13 +79,16 @@ def cmd_plan(args) -> int:
         print(f"No catalog targets rise above {args.min_alt:.0f} deg during darkness tonight.")
         return 0
 
-    hdr = f"{'#':>2} {'ID':<8} {'Name':<26} {'Score':>5} {'Hrs':>4} {'MaxAlt':>6} {'MoonSep':>7} {'Window (UTC)':<13} {'Filter':<8} {'Sub':>5}"
+    hdr = (f"{'#':>2} {'ID':<8} {'Name':<26} {'Score':>5} {'Hrs':>4} {'MaxAlt':>6} "
+           f"{'MoonSep':>7} {'MoonCost':>8} {'SkyQual':>7} {'Window (UTC)':<13} {'Filter':<8} {'Sub':>5}")
     print(hdr)
     print("-" * len(hdr))
     for i, r in enumerate(ranked[: args.top], 1):
+        cost = f"-{r.moon_brightening_mag:.2f}m" if r.moon_brightening_mag >= 0.005 else "     -"
         print(
             f"{i:>2} {r.target.id:<8} {r.target.name:<26} {r.score:>5.2f} "
-            f"{r.usable_hours:>4.1f} {r.max_alt_deg:>5.0f}° {r.mean_moon_sep_deg:>6.0f}° "
+            f"{r.usable_hours:>4.1f} {r.max_alt_deg:>5.0f}° {r.mean_moon_sep_deg:>6.0f}° {cost:>8} "
+            f"{r.sky_quality:>7.2f} "
             f"{r.best_window[0]}-{r.best_window[1]:<7} {r.suggested_filter.key:<8} {r.exposure.recommended_s:>4}s"
         )
     print()
@@ -82,8 +96,14 @@ def cmd_plan(args) -> int:
     print(f"Best pick: {top.target.name} ({top.target.id}) — {top.suggested_filter.name}, "
           f"{top.exposure.recommended_s}s subs "
           f"(sky {top.exposure.sky_e_per_s:.2f} e-/px/s, exact optimum {top.exposure.optimal_s:.0f}s).")
+    if top.moon_brightening_mag >= 0.05:
+        print(f"Moonlight brightens its sky by {top.moon_brightening_mag:.2f} mag/arcsec² "
+              f"({top.moon_penalty*100:.0f}% SNR cost vs. a moonless night; "
+              f"dark-sky rate would be {top.dark_sky_rate:.2f} e-/px/s).")
     if top.suggested_filter.line_filter:
-        print("Duoband/narrowband suggested: line-emission target under moonlight/light pollution.")
+        print(f"Line filter suggested: it delivers {top.sky_quality:.1f}x the SNR of an "
+              f"unfiltered frame under this site's moonless sky.")
+    print("SkyQual: achievable SNR, 1.00 = unfiltered under a moonless sky at this site.")
     return 0
 
 
@@ -189,6 +209,7 @@ def main(argv: list[str] | None = None) -> int:
     sp.add_argument("--bortle", type=int, required=True, choices=range(1, 10))
     _rig_args(sp)
     sp.add_argument("--filters", help="comma list of filters you own (default: all)")
+    sp.add_argument("--type", help="only these target types, e.g. galaxy,cluster")
     sp.add_argument("--min-alt", type=float, default=30.0)
     sp.add_argument("--top", type=int, default=5)
     sp.set_defaults(func=cmd_plan)
