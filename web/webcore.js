@@ -442,6 +442,9 @@ export function rankTargets(night, opts) {
       skyQuality,
       fovFit,
       window: [hhmmUTC(night.times[usableIdx[0]]), hhmmUTC(night.times[usableIdx[usableIdx.length - 1]])],
+      // Raw instants too, so the page can render them in the viewer's zone
+      // while the UTC strings stay comparable against the Python engine.
+      windowMs: [night.times[usableIdx[0]], night.times[usableIdx[usableIdx.length - 1]]],
       suggestedFilter: moonlitBest.f,
       exposure: optimalSub(camera.read_noise_e, moonlitRate(moonlitBest.f)),
       darkSkyRate: darkRate(moonlitBest.f),

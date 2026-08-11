@@ -589,6 +589,21 @@
     </div>
 
     <div class="field">
+      <label for="tzInput">Times shown in</label>
+      <select id="tzInput"></select>
+      <span class="hint" id="tzHint"></span>
+    </div>
+
+    <div class="field">
+      <label for="unitsInput">Units</label>
+      <select id="unitsInput">
+        <option value="imperial" selected>Imperial (ft, inches)</option>
+        <option value="metric">Metric (m, mm)</option>
+      </select>
+      <span class="hint">Focal length and pixel scale stay in mm and arcsec</span>
+    </div>
+
+    <div class="field">
       <label for="bortleInput">Sky class</label>
       <select id="bortleInput"></select>
       <span class="hint" id="bortleHint"></span>
@@ -655,7 +670,7 @@
         <thead>
           <tr>
             <th>Target</th><th>Type</th><th>Score</th><th>Hours</th><th>Max alt</th>
-            <th>Moon sep</th><th>Moon cost</th><th>Mode</th><th>SkyQual</th><th>Sub</th>
+            <th>Moon sep</th><th>Moon cost</th><th>Window</th><th>Mode</th><th>SkyQual</th><th>Sub</th>
             <th>Sky e&minus;/px/s</th>
           </tr>
         </thead>
@@ -731,6 +746,23 @@ const BORTLE_TEXT = {
   7: "7 — suburban/urban", 8: "8 — city", 9: "9 — inner city",
 };
 
+// Zones an observer here plausibly plans in. The browser owns the tzdata, so
+// DST and abbreviations (CDT vs CST) come out right without shipping a table.
+const ZONES = [
+  ["America/Chicago", "Central"],
+  ["America/New_York", "Eastern"],
+  ["America/Denver", "Mountain"],
+  ["America/Phoenix", "Arizona (no DST)"],
+  ["America/Los_Angeles", "Pacific"],
+  ["America/Anchorage", "Alaska"],
+  ["Pacific/Honolulu", "Hawaii"],
+  ["UTC", "UTC"],
+  ["Europe/London", "London"],
+  ["Europe/Berlin", "Central Europe"],
+  ["Australia/Sydney", "Sydney"],
+  ["Pacific/Auckland", "Auckland"],
+];
+
 const state = {
   place: DATA.places.find((p) => p.name === DEFAULTS.place) ?? DATA.places[0],
   date: DEFAULTS.date,
@@ -739,7 +771,31 @@ const state = {
   scope: DEFAULTS.scope,
   corrector: DEFAULTS.corrector,
   camera: DEFAULTS.camera,
+  tz: DEFAULTS.tz,
+  units: DEFAULTS.units,
 };
+
+/* ---------- presentation ---------- */
+const MM_PER_INCH = 25.4, FEET_PER_METRE = 3.280839895;
+
+const clockFmt = (tz) => new Intl.DateTimeFormat("en-GB",
+  { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: tz });
+
+function zoneAbbrev(ms, tz) {
+  const parts = new Intl.DateTimeFormat("en-US",
+    { timeZone: tz, timeZoneName: "short" }).formatToParts(new Date(ms));
+  return parts.find((p) => p.type === "timeZoneName")?.value ?? tz;
+}
+
+const fmtElevation = (m) => state.units === "imperial"
+  ? `${Math.round(m * FEET_PER_METRE).toLocaleString()} ft`
+  : `${Math.round(m).toLocaleString()} m`;
+
+// Telescopes are sold as 8-inch and as 80 mm in the same shop, so imperial
+// shows both rather than pretending one of them is unfamiliar.
+const fmtAperture = (mm) => state.units === "imperial"
+  ? `${(mm / MM_PER_INCH).toFixed(1)}&Prime; (${Math.round(mm)} mm)`
+  : `${Math.round(mm)} mm`;
 
 /* ---------- controls ---------- */
 const $ = (id) => document.getElementById(id);
@@ -752,6 +808,9 @@ function fillSelect(el, items, selected) {
 
 function buildControls() {
   $("dateInput").value = state.date;
+
+  fillSelect($("tzInput"), ZONES.map(([value, label]) => ({ value, label })), state.tz);
+  $("unitsInput").value = state.units;
 
   fillSelect($("bortleInput"),
     Object.keys(BORTLE_TEXT).map((b) => ({ value: b, label: BORTLE_TEXT[b] })), String(state.bortle));
@@ -790,7 +849,7 @@ function syncPlaceInput() {
   $("placeInput").value = state.place.label;
   $("placeHint").innerHTML =
     `<b>${state.place.lat.toFixed(2)}°</b>, <b>${state.place.lon.toFixed(2)}°</b>` +
-    (state.place.elevation_m ? ` · ${Math.round(state.place.elevation_m)} m` : "");
+    (state.place.elevation_m ? ` · ${fmtElevation(state.place.elevation_m)}` : "");
 }
 
 /* ---------- place search ---------- */
@@ -935,23 +994,33 @@ function render() {
   $("rig").innerHTML =
     `<b>${camera.name}</b><br>${rig.scope.name}` +
     `${rig.correctorLabel === "native" ? "" : " + " + rig.correctorLabel}<br>` +
-    `${Math.round(rig.focalLengthMm)}&thinsp;mm f/${(rig.focalLengthMm / rig.apertureMm).toFixed(1)} &middot; ` +
+    `${fmtAperture(rig.apertureMm)} at ${Math.round(rig.focalLengthMm)}&thinsp;mm ` +
+    `f/${(rig.focalLengthMm / rig.apertureMm).toFixed(1)}<br>` +
     `${scale.toFixed(2)}&Prime;/px &middot; ${fov.map((v) => Math.round(v)).join("&prime;&times;")}&prime; FoV<br>` +
     `Bortle ${state.bortle} &middot; ${state.place.label}`;
 
-  $("scopeHint").innerHTML = `${rig.scope.aperture_mm} mm aperture &middot; ${scale.toFixed(2)}&Prime;/px`;
+  $("scopeHint").innerHTML = `${fmtAperture(rig.scope.aperture_mm)} aperture &middot; ${scale.toFixed(2)}&Prime;/px`;
   $("correctorHint").textContent = `${Math.round(rig.focalLengthMm)} mm effective`;
   $("cameraHint").innerHTML =
     `${camera.read_noise_e.toFixed(1)} e&minus; read noise &middot; ` +
     (camera.builtin_ir_cut ? `H&alpha; ${Math.round(camera.ha_transmission * 100)}%` : "no built-in IR cut");
+  const basis = { measured: "measured at this site",
+                  typical: "typical for a city this size — check it",
+                  estimated: "estimated from town size — check it" };
   $("bortleHint").textContent = state.bortleTouched
     ? `SQM ${BORTLE_SQM[state.bortle].toFixed(1)} mag/arcsec²`
-    : (state.place.bortle_measured ? "measured at this site" : "estimated from town size — check it");
+    : basis[state.place.bortle_basis];
 
-  const kindLabel = { astronomical: "Astronomical dark (UTC)", nautical: "Nautical dark (UTC)",
-                      civil: "Civil twilight (UTC)", none: "No usable darkness" };
+  const clock = clockFmt(state.tz);
+  const tzName = zoneAbbrev(night.darkStart ?? night.times[0], state.tz);
+  const at = (ms) => clock.format(new Date(ms));
+  const kindLabel = { astronomical: `Astronomical dark (${tzName})`,
+                      nautical: `Nautical dark (${tzName})`,
+                      civil: `Civil twilight (${tzName})`, none: "No usable darkness" };
   $("darkKind").textContent = kindLabel[night.darknessKind];
-  $("darkWindow").textContent = night.darkStart ? `${hhmmUTC(night.darkStart)} – ${hhmmUTC(night.darkEnd)}` : "—";
+  $("darkWindow").textContent = night.darkStart ? `${at(night.darkStart)} – ${at(night.darkEnd)}` : "—";
+  $("tzHint").textContent = `${tzName} · ${state.tz}`;
+  $("dateHint").textContent = `The evening this night begins, local to the site`;
   $("darkHours").textContent = `${night.darkHours.toFixed(1)} h`;
   $("moonIllum").textContent = `${Math.round(night.illumination * 100)}% lit`;
   $("moonUp").textContent = night.moonUpHours > 0
@@ -964,7 +1033,7 @@ function render() {
   const lo = darkIdx.length ? darkIdx[0] : 0;
   const hi = darkIdx.length ? darkIdx[darkIdx.length - 1] : night.times.length - 1;
   const crop = (arr) => arr.slice(lo, hi + 1);
-  const labels = crop(night.times.map(hhmmUTC));
+  const labels = crop(night.times).map(at);
 
   $("axStart").textContent = labels[0];
   $("axEnd").textContent = labels[labels.length - 1];
@@ -980,7 +1049,8 @@ function render() {
   const cli =
     `astroplanner plan --date ${state.date} --place "${state.place.name}" --bortle ${state.bortle} ` +
     `--camera ${camera.key} --scope ${rig.scope.key}` +
-    (rig.correctorLabel === "native" ? "" : ` --corrector "${rig.correctorLabel}"`);
+    (rig.correctorLabel === "native" ? "" : ` --corrector "${rig.correctorLabel}"`) +
+    ` --tz ${state.tz} --units ${state.units}`;
   $("prov").textContent = cli;
   $("provenance").textContent =
     "Same model as the command line: ephemeris, Krisciunas & Schaefer moonlight, Glover sub-exposure. " +
@@ -1058,6 +1128,7 @@ function render() {
            <span>peak <b>${Math.round(r.maxAltDeg)}°</b></span>
            <span>moon <b>${Math.round(r.meanMoonSepDeg)}°</b></span>
            <span>cost <b>${r.moonBrighteningMag >= 0.005 ? "−" + r.moonBrighteningMag.toFixed(2) + " mag" : "none"}</b></span>
+           <span><b>${at(r.windowMs[0])}–${at(r.windowMs[1])}</b></span>
          </div>
        </div>
        <div class="col-chart">
@@ -1087,6 +1158,7 @@ function render() {
       <td>${r.usableHours.toFixed(1)}</td><td>${Math.round(r.maxAltDeg)}°</td>
       <td>${Math.round(r.meanMoonSepDeg)}°</td>
       <td>${r.moonBrighteningMag >= 0.005 ? "−" + r.moonBrighteningMag.toFixed(2) : "—"}</td>
+      <td>${at(r.windowMs[0])}–${at(r.windowMs[1])}</td>
       <td>${m.label}</td><td>${m.skyQuality.toFixed(2)}</td><td>${m.recommendedSubS}s</td>
       <td>${m.skyEPerS.toFixed(2)}</td></tr>`;
   }).join("");
@@ -1153,6 +1225,10 @@ $("bortleInput").addEventListener("change", (e) => {
 $("scopeInput").addEventListener("change", (e) => { state.scope = e.target.value; syncCorrectors(); render(); });
 $("correctorInput").addEventListener("change", (e) => { state.corrector = e.target.value; render(); });
 $("cameraInput").addEventListener("change", (e) => { state.camera = e.target.value; render(); });
+$("tzInput").addEventListener("change", (e) => { state.tz = e.target.value; render(); });
+$("unitsInput").addEventListener("change", (e) => {
+  state.units = e.target.value; syncPlaceInput(); render();
+});
 
 document.querySelectorAll(".switch button").forEach((b) =>
   b.addEventListener("click", () => {

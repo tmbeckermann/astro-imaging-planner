@@ -56,8 +56,22 @@ class Place:
         return self.bortle if self.bortle is not None else estimate_bortle(self.population)
 
     @property
+    def bortle_basis(self) -> str:
+        """How much to trust this place's sky class.
+
+        `measured` is reserved for the observing sites, which have been
+        characterised with a meter. A town carrying a stated value gets
+        `typical` — a published figure for a place that size and that lit, not
+        a reading at your parking spot. Everything else is `estimated` from
+        population, which is a rule of thumb wearing a number.
+        """
+        if self.bortle is None:
+            return "estimated"
+        return "measured" if self.kind == "site" else "typical"
+
+    @property
     def bortle_is_measured(self) -> bool:
-        return self.bortle is not None
+        return self.bortle_basis == "measured"
 
 
 def estimate_bortle(population: int) -> int:

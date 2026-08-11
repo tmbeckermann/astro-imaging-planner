@@ -29,7 +29,7 @@ def build() -> dict:
         "targets": [{**asdict(t), "line_emitter": t.line_emitter} for t in load_targets()],
         "places": [
             {**asdict(p), "label": p.label, "bortle_estimate": p.bortle_estimate,
-             "bortle_measured": p.bortle_is_measured}
+             "bortle_basis": p.bortle_basis, "bortle_measured": p.bortle_is_measured}
             for p in load_places()
         ],
     }

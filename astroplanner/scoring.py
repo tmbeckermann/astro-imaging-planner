@@ -188,6 +188,7 @@ class RankedTarget:
     sky_quality: float           # achieved SNR vs unfiltered-at-dark-sky = 1.0
     fov_fit: float
     best_window: tuple[str, str] | None   # UTC hh:mm strings
+    window_idx: tuple[int, int] | None    # grid indices, so callers can localise
     suggested_filter: Filter
     exposure: ExposureResult
     dark_sky_rate: float         # e-/px/s with no moon, for comparison
@@ -329,6 +330,7 @@ def rank_targets(
             ctx.times[idx[0]].strftime("%H:%M"),
             ctx.times[idx[-1]].strftime("%H:%M"),
         )
+        window_idx = (int(idx[0]), int(idx[-1]))
         exp = optimal_sub_exposure(camera.read_noise_e, mean_rate)
 
         ranked.append(
@@ -343,6 +345,7 @@ def rank_targets(
                 sky_quality=sky_quality,
                 fov_fit=fov_fit,
                 best_window=window,
+                window_idx=window_idx,
                 suggested_filter=filt,
                 exposure=exp,
                 dark_sky_rate=dark_rate,

@@ -31,6 +31,15 @@ def shots(outdir: pathlib.Path):
     def act_search(pg):
         pg.fill("#placeInput", "cherry")
 
+    def act_utc_metric(pg):
+        pg.select_option("#tzInput", "UTC")
+        pg.select_option("#unitsInput", "metric")
+
+    def act_pacific(pg):
+        pg.fill("#placeInput", "los angeles")
+        pg.keyboard.press("Enter")
+        pg.select_option("#tzInput", "America/Los_Angeles")
+
     def act_darksite(pg):
         pg.fill("#placeInput", "big bend")
         pg.keyboard.press("Enter")
@@ -42,6 +51,8 @@ def shots(outdir: pathlib.Path):
         ("dark", 1280, 1500, "page-stock-dslr", act_stock),
         ("dark", 1280, 900, "page-search", act_search),
         ("dark", 1280, 1500, "page-dark-site", act_darksite),
+        ("dark", 1280, 900, "page-utc-metric", act_utc_metric),
+        ("dark", 1280, 900, "page-pacific", act_pacific),
         ("dark", 420, 2000, "page-mobile", None),
     ]
 

@@ -26,6 +26,10 @@ A command-line astrophotography assistant:
 - **Site and rig databases** — search observing sites and towns by name
   (`--place "cherry springs"`), and pick a telescope by key (`--scope gt71
   --corrector "0.8x reducer"`) instead of typing focal lengths.
+- **Times you'd actually set an alarm for** — everything is computed in UTC and
+  displayed in your zone (`--tz`, default `America/Chicago`), with the
+  abbreviation the date is actually in, CDT or CST. Elevations and apertures
+  follow `--units` (default `imperial`).
 - **FITS/XISF analyzer** — measures background, noise, SNR, and the *actual*
   sky electron rate of your light frames, which you can feed back into the
   exposure calculator to replace the Bortle estimate with reality.
@@ -49,12 +53,16 @@ astroplanner plan --date 2026-08-02 --place "st louis" \
 ```
 
 `--place` searches the bundled gazetteer first (towns plus dark-sky observing
-sites, the latter carrying a measured Bortle class) and falls back to the
-Open-Meteo geocoder for anywhere else; `--offline` skips the network entirely.
-When the site is a known one its sky class is filled in for you — for a town it
-is estimated from population and labelled as an estimate, so check it on
+sites) and falls back to the Open-Meteo geocoder for anywhere else; `--offline`
+skips the network entirely. The site's sky class is filled in for you, labelled
+with how much to trust it: **measured** at a characterised observing site,
+**typical** for a city that size, or **estimated** from population. Check it on
 lightpollutionmap.info and override with `--bortle`. Coordinates still work:
 `--lat 38.6 --lon -90.2 --bortle 7 --fl 500 --aperture 80`.
+
+Times print in `--tz` (default Central), so a plan reads `21:23-04:23 CDT`
+rather than `02:42-09:30 UTC` — the same instants, in the zone you are standing
+in. `--tz UTC` if you would rather keep the log in UTC.
 
 Every plan reports all three modes per target, so the recommendation shows its
 working:
@@ -153,8 +161,9 @@ integration time. Use `--filters` to constrain it to what you'll really use.
 ## Web page
 
 `web/` builds a single self-contained HTML file with the same model ported to
-JavaScript, so site, date, sky class, telescope, corrector and camera are all
-live controls:
+JavaScript, so site, date, sky class, telescope, corrector, camera, timezone
+and unit system are all live controls (the browser owns the tz database, so DST
+and zone abbreviations come out right without shipping a table):
 
 ```bash
 python web/build.py            # -> web/dist/tonight.html

@@ -18,12 +18,14 @@ from export_data import build as build_data
 HERE = pathlib.Path(__file__).parent
 
 DEFAULTS = {
-    "place": "Saint Louis",
+    "place": "Nashville",
     "date": "2026-08-11",
-    "bortle": 6,
+    "bortle": 8,
     "scope": "gt71",
     "corrector": "0.8x reducer",
     "camera": "asi533mc",
+    "tz": "America/Chicago",
+    "units": "imperial",
 }
 
 
