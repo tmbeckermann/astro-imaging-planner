@@ -17,9 +17,15 @@ A command-line astrophotography assistant:
   the moon's cost depends on its phase, its altitude, the target's altitude,
   and their angular separation. Feeds both the ranking and the sub length:
   under a bright moon the sky is brighter, so optimal subs get *shorter*.
-- **Filter advisor** — knows which targets are line emitters (Ha/OIII) and
-  picks the filter that maximizes SNR under tonight's actual sky, rather
-  than following a hand-written rule.
+- **Imaging-mode advisor** — for every target, scores the three things you can
+  actually put in front of the sensor: **full spectrum** (no UV/IR cut),
+  **visible** (UV/IR cut), and **duo-band** (Ha+OIII; a narrowband on mono).
+  It knows which targets are line emitters, and it knows your camera — an
+  unmodified DSLR passes ~20% of Ha, so a duo-band on one is mostly an OIII
+  filter, and full spectrum is not a mode it can shoot at all.
+- **Site and rig databases** — search observing sites and towns by name
+  (`--place "cherry springs"`), and pick a telescope by key (`--scope gt71
+  --corrector "0.8x reducer"`) instead of typing focal lengths.
 - **FITS/XISF analyzer** — measures background, noise, SNR, and the *actual*
   sky electron rate of your light frames, which you can feed back into the
   exposure calculator to replace the Bortle estimate with reality.
@@ -35,18 +41,35 @@ pytest            # optional: run the test suite
 
 ## Usage
 
-Plan tonight (St. Louis, Bortle 7, ASI533MC on an 80 mm f/6.25 refractor):
+Plan tonight, naming the site and the scope:
 
 ```bash
-astroplanner plan --date 2026-08-02 --lat 38.6 --lon -90.2 --bortle 7 \
-    --camera asi533mc --fl 500 --aperture 80 --top 5
+astroplanner plan --date 2026-08-02 --place "st louis" \
+    --camera asi533mc --scope gt71 --corrector "0.8x reducer" --top 5
+```
+
+`--place` searches the bundled gazetteer first (towns plus dark-sky observing
+sites, the latter carrying a measured Bortle class) and falls back to the
+Open-Meteo geocoder for anywhere else; `--offline` skips the network entirely.
+When the site is a known one its sky class is filled in for you — for a town it
+is estimated from population and labelled as an estimate, so check it on
+lightpollutionmap.info and override with `--bortle`. Coordinates still work:
+`--lat 38.6 --lon -90.2 --bortle 7 --fl 500 --aperture 80`.
+
+Every plan reports all three modes per target, so the recommendation shows its
+working:
+
+```
+  Mode comparison (SkyQual, 1.00 = visible train under a moonless sky here):
+      Full spectrum          1.02     5s subs
+      Visible (UV/IR cut)    1.00    10s subs
+   -> Duo-band               4.15   180s subs
 ```
 
 Optimal sub length for a duo-band filter under that sky:
 
 ```bash
-astroplanner exposure --bortle 7 --camera asi533mc --fl 500 --aperture 80 \
-    --filter duoband
+astroplanner exposure --bortle 7 --camera asi533mc --scope gt71 --filter duoband
 ```
 
 Measure a real sub and close the loop:
@@ -72,9 +95,10 @@ astroplanner plan ... --filters none,cls      # no narrowband in the drawer
 astroplanner plan ... --type galaxy,cluster   # galaxy night
 ```
 
-Reference lists: `astroplanner cameras`, `astroplanner filters`,
-`astroplanner targets`. Unknown camera? Override with
-`--read-noise` / `--qe` on any command.
+Reference lists: `astroplanner cameras`, `astroplanner scopes`,
+`astroplanner filters`, `astroplanner targets`, `astroplanner places <query>`.
+Unknown camera or scope? Override with `--read-noise` / `--qe` /
+`--fl` / `--aperture` on any command.
 
 ## The physics, briefly
 
@@ -107,9 +131,41 @@ worth knowing, because both are easy to guess wrong:
   moon can beat an unfiltered sub under a dark sky. The `SkyQual` column
   reports that (1.00 = unfiltered under your moonless sky).
 
-Filter choice maximizes SNR only — it does not know that a broadband filter
-also captures colour in one shot, or that narrowband needs far more total
+### Why full spectrum is a wash
+
+Removing the UV/IR cut opens the sensor's full 350-1000 nm response. That is
+about 1.6x more sky but only about 1.3x more target, because the near-IR is
+where the OH airglow bands live and most deep-sky continuum is not especially
+NIR-bright. Net, roughly +2% SNR — real, but not worth losing true star colour
+and tight stars, so the advisor requires full spectrum to beat visible by 15%
+before recommending it. That reproduces the standard advice (always put a UV/IR
+cut on a modified camera) from the photon budget rather than from folklore.
+
+On an emission target the same arithmetic runs the other way and is not close:
+a duo-band passes the nebula's line flux while cutting continuum sky ~20x, and
+because both broadband modes and the sky scale together, that margin is the
+same at Bortle 8 as at Bortle 3.
+
+Mode choice maximizes SNR only — it does not know that a broadband filter also
+captures colour in one shot, or that narrowband needs far more total
 integration time. Use `--filters` to constrain it to what you'll really use.
+
+## Web page
+
+`web/` builds a single self-contained HTML file with the same model ported to
+JavaScript, so site, date, sky class, telescope, corrector and camera are all
+live controls:
+
+```bash
+python web/build.py            # -> web/dist/tonight.html
+python web/shoot.py            # render it in Chromium, fail on any error
+```
+
+The port is not trusted on faith. `web/dump_reference.py` computes plans with
+the Python engine across eight sites, dates and rigs, and `node web/validate.mjs`
+checks the JavaScript against them target by target — ranking order, mode,
+sub length and SkyQual must match, and the ephemeris agreement is reported as
+measured maxima (currently 0.15 deg on the moon, 0.008 deg on targets).
 
 ## Roadmap
 
@@ -118,7 +174,9 @@ integration time. Use `--filters` to constrain it to what you'll really use.
 - Spectral sky model (airglow lines vs. continuum), which would let filter
   choice change the moon's relative cost as it does in reality
 - Compressed-XISF support, OSC Bayer-aware statistics
-- Multi-night project planning and a small web UI
+- Multi-night project planning
+- Serve the web page from the Python core instead of a static build, so the
+  catalog and the site search are live rather than bundled
 
 ## Disclaimers
 

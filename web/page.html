@@ -1,0 +1,1169 @@
+<title>Tonight's Imaging Plan</title>
+<style>
+  :root {
+    --ground: #EEF1F6;
+    --surface: #FFFFFF;
+    --raised: #F7F9FC;
+    --ink: #171B26;
+    --ink-2: #3D4658;
+    --muted: #5A6480;
+    --rule: #D3DAE6;
+    --rule-soft: #E6EBF2;
+    --accent: #9A6F1E;
+    --accent-bg: #F6EBD4;
+    --emitter: #C13B31;
+    --emitter-bg: #FAE6E3;
+    --broad: #2E6FB8;
+    --broad-bg: #E2ECF8;
+    --moon: #5C6E96;
+    --moon-fill: rgba(92, 110, 150, .16);
+    --qual: #1F7A68;
+    --qual-track: #DDE4EC;
+    --sky-fill: rgba(46, 111, 184, .10);
+    --field: #FFFFFF;
+    --shadow: 0 1px 2px rgba(20, 26, 40, .05), 0 10px 26px -14px rgba(20, 26, 40, .22);
+    --serif: Georgia, "Iowan Old Style", "Palatino Linotype", Palatino, "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", "Cascadia Code", Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0B1020;
+      --surface: #151B2E;
+      --raised: #1D2540;
+      --ink: #E6E9F5;
+      --ink-2: #C2C9DE;
+      --muted: #8E9AB8;
+      --rule: #2A3350;
+      --rule-soft: #1E2640;
+      --accent: #E8B04B;
+      --accent-bg: #33280F;
+      --emitter: #E0574C;
+      --emitter-bg: #381916;
+      --broad: #5A9EE4;
+      --broad-bg: #14273D;
+      --moon: #9FB3D9;
+      --moon-fill: rgba(159, 179, 217, .16);
+      --qual: #3FBBA0;
+      --qual-track: #232C46;
+      --sky-fill: rgba(90, 158, 228, .12);
+      --field: #0F1526;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 12px 32px -16px rgba(0, 0, 0, .7);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #0B1020;
+    --surface: #151B2E;
+    --raised: #1D2540;
+    --ink: #E6E9F5;
+    --ink-2: #C2C9DE;
+    --muted: #8E9AB8;
+    --rule: #2A3350;
+    --rule-soft: #1E2640;
+    --accent: #E8B04B;
+    --accent-bg: #33280F;
+    --emitter: #E0574C;
+    --emitter-bg: #381916;
+    --broad: #5A9EE4;
+    --broad-bg: #14273D;
+    --moon: #9FB3D9;
+    --moon-fill: rgba(159, 179, 217, .16);
+    --qual: #3FBBA0;
+    --qual-track: #232C46;
+    --sky-fill: rgba(90, 158, 228, .12);
+    --field: #0F1526;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 12px 32px -16px rgba(0, 0, 0, .7);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 68rem;
+    margin: 0 auto;
+    padding: clamp(1.5rem, 4vw, 3.5rem) clamp(1rem, 3vw, 2rem) 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: .7rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  /* ---- masthead ---- */
+  .masthead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 2px solid var(--rule);
+  }
+
+  .masthead h1 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(1.9rem, 4.5vw, 2.9rem);
+    line-height: 1.1;
+    margin: .3rem 0 0;
+    text-wrap: balance;
+  }
+
+  .masthead h1 em { font-style: italic; color: var(--accent); }
+
+  .rig {
+    font-family: var(--mono);
+    font-size: .76rem;
+    color: var(--muted);
+    text-align: right;
+    line-height: 1.7;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .rig b { color: var(--ink-2); font-weight: 600; }
+
+  /* ---- controls ---- */
+  .controls {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: 1.1rem clamp(1rem, 2.5vw, 1.5rem);
+    display: grid;
+    gap: .9rem 1.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    align-items: start;
+  }
+
+  .field { display: flex; flex-direction: column; gap: .3rem; position: relative; min-width: 0; }
+
+  .field > label {
+    font-family: var(--mono);
+    font-size: .64rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .field input,
+  .field select {
+    appearance: none;
+    width: 100%;
+    font-family: var(--sans);
+    font-size: .86rem;
+    color: var(--ink);
+    background: var(--field);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: .45rem .6rem;
+    line-height: 1.35;
+  }
+
+  .field select {
+    background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+                      linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+    background-position: right 1.05rem center, right .8rem center;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    padding-right: 1.9rem;
+  }
+
+  .field input:focus-visible,
+  .field select:focus-visible,
+  .switch button:focus-visible,
+  summary:focus-visible,
+  .result:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  .hint {
+    font-family: var(--mono);
+    font-size: .64rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .hint b { color: var(--ink-2); font-weight: 600; }
+
+  /* ---- place search results ---- */
+  .results {
+    position: absolute;
+    top: calc(100% + .25rem);
+    left: 0;
+    right: 0;
+    z-index: 20;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    padding: .25rem;
+    margin: 0;
+    list-style: none;
+    max-height: 17rem;
+    overflow-y: auto;
+    display: none;
+  }
+
+  .results.on { display: block; }
+
+  .result {
+    display: flex;
+    justify-content: space-between;
+    gap: .6rem;
+    align-items: baseline;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: 0;
+    border-radius: 5px;
+    padding: .35rem .5rem;
+    cursor: pointer;
+    font-family: var(--sans);
+    font-size: .82rem;
+    color: var(--ink);
+  }
+
+  .result:hover, .result[aria-selected="true"] { background: var(--raised); }
+
+  .result .rb {
+    font-family: var(--mono);
+    font-size: .68rem;
+    color: var(--muted);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .result .site { color: var(--accent); }
+
+  /* ---- night panel ---- */
+  .night {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: 1.25rem clamp(1rem, 2.5vw, 1.5rem) 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .9rem;
+  }
+
+  .night-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .facts { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; }
+  .fact { display: flex; flex-direction: column; gap: .1rem; }
+
+  .fact .v {
+    font-family: var(--mono);
+    font-size: 1.05rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+
+  .fact .k {
+    font-family: var(--mono);
+    font-size: .66rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .moonbadge { display: flex; align-items: center; gap: .6rem; }
+
+  .switch {
+    display: flex;
+    gap: .35rem;
+    background: var(--raised);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    padding: .25rem;
+  }
+
+  .switch button {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: .82rem;
+    font-weight: 600;
+    padding: .4rem .85rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background .18s ease, color .18s ease;
+  }
+
+  .switch button:hover { color: var(--ink); }
+
+  .switch button[aria-pressed="true"] {
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .12);
+  }
+
+  /* ---- charts ---- */
+  .chart { position: relative; width: 100%; }
+  .chart svg { display: block; width: 100%; }
+
+  .tip {
+    position: absolute;
+    pointer-events: none;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    box-shadow: var(--shadow);
+    padding: .3rem .5rem;
+    font-family: var(--mono);
+    font-size: .7rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity .12s ease;
+    z-index: 5;
+  }
+
+  .tip.on { opacity: 1; }
+
+  .axis {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: .66rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---- target list ---- */
+  .targets { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .7rem; }
+
+  .target {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--edge, var(--rule));
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    padding: 1rem clamp(.9rem, 2vw, 1.25rem);
+    display: grid;
+    gap: .5rem 1.25rem;
+    grid-template-columns: 2rem minmax(10rem, 1fr) minmax(11rem, 1.2fr) minmax(15rem, 1.3fr);
+    align-items: center;
+  }
+
+  @media (max-width: 66rem) {
+    .target { grid-template-columns: 2rem 1fr; }
+    .target .col-chart, .target .col-modes { grid-column: 1 / -1; }
+  }
+
+  .rank {
+    font-family: var(--serif);
+    font-size: 1.5rem;
+    color: var(--accent);
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    align-self: start;
+  }
+
+  .tname { font-family: var(--serif); font-size: 1.16rem; margin: 0; line-height: 1.25; }
+
+  .tid { font-family: var(--mono); font-size: .72rem; color: var(--muted); letter-spacing: .04em; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .35rem; }
+
+  .chip {
+    font-family: var(--mono);
+    font-size: .66rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: .16rem .45rem;
+    border-radius: 4px;
+    border: 1px solid transparent;
+  }
+
+  .chip-emit { background: var(--emitter-bg); color: var(--emitter); border-color: var(--emitter); }
+  .chip-broad { background: var(--broad-bg); color: var(--broad); border-color: var(--broad); }
+  .chip-pick { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .1rem 1rem;
+    font-family: var(--mono);
+    font-size: .7rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    margin-top: .4rem;
+  }
+
+  .stats b { color: var(--ink-2); font-weight: 600; }
+
+  /* ---- the three imaging modes ---- */
+  .col-modes { display: flex; flex-direction: column; gap: .3rem; }
+
+  .modehead {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: .62rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .mode {
+    display: grid;
+    grid-template-columns: 9.6rem 1fr 2.6rem 2.8rem;
+    align-items: center;
+    gap: .5rem;
+    padding: .18rem .4rem;
+    border-radius: 5px;
+    border-left: 2px solid transparent;
+    font-family: var(--mono);
+    font-size: .7rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+  }
+
+  .mode.pick {
+    background: var(--accent-bg);
+    border-left-color: var(--accent);
+    color: var(--ink);
+  }
+
+  .mode.off { opacity: .55; }
+
+  .mode .mname { letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mode.pick .mname { font-weight: 700; color: var(--accent); }
+  .mode .mq { text-align: right; }
+  .mode .msub { text-align: right; color: var(--ink-2); }
+  .mode.pick .mq, .mode.pick .msub { color: var(--ink); font-weight: 700; }
+
+  .bar { position: relative; height: 5px; background: var(--qual-track); border-radius: 3px; }
+  .bar i { position: absolute; inset: 0 auto 0 0; background: var(--qual); border-radius: 3px; }
+  .mode.pick .bar i { background: var(--accent); }
+  .bar u { position: absolute; top: -2px; bottom: -2px; width: 1px; background: var(--muted); opacity: .8; }
+
+  /* An unavailable mode explains itself on one line across the number columns,
+     so a long reason cannot stretch the row it sits in. */
+  .mode .na {
+    grid-column: 2 / -1;
+    font-size: .66rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .why {
+    font-family: var(--sans);
+    font-size: .74rem;
+    color: var(--muted);
+    line-height: 1.45;
+    margin: .15rem 0 0;
+  }
+
+  .why b { color: var(--ink-2); font-weight: 600; }
+
+  /* ---- messages ---- */
+  .empty {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+    color: var(--ink-2);
+    font-size: .92rem;
+  }
+
+  .empty h2 { font-family: var(--serif); font-weight: 400; font-size: 1.2rem; margin: 0 0 .4rem; }
+
+  /* ---- notes ---- */
+  .notes {
+    border-top: 2px solid var(--rule);
+    padding-top: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .notes h2 { font-family: var(--serif); font-weight: 400; font-size: 1.25rem; margin: 0; }
+  .notes p { margin: 0; max-width: 62ch; color: var(--ink-2); font-size: .9rem; }
+
+  .findings { display: grid; gap: .9rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+
+  .finding {
+    background: var(--raised);
+    border: 1px solid var(--rule-soft);
+    border-radius: 8px;
+    padding: .85rem 1rem;
+  }
+
+  .finding h3 { font-family: var(--sans); font-size: .84rem; margin: 0 0 .3rem; color: var(--ink); }
+  .finding p { font-size: .82rem; color: var(--muted); }
+
+  details {
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    background: var(--surface);
+    padding: .6rem .9rem;
+  }
+
+  summary {
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: .74rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .tablewrap { overflow-x: auto; margin-top: .75rem; }
+
+  table { border-collapse: collapse; width: 100%; font-family: var(--mono); font-size: .74rem; font-variant-numeric: tabular-nums; }
+  th, td { text-align: right; padding: .35rem .55rem; border-bottom: 1px solid var(--rule-soft); white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--muted); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; font-size: .64rem; }
+
+  code {
+    font-family: var(--mono);
+    font-size: .84em;
+    background: var(--raised);
+    border: 1px solid var(--rule-soft);
+    border-radius: 4px;
+    padding: .08em .35em;
+  }
+
+  .foot { font-family: var(--mono); font-size: .7rem; color: var(--muted); overflow-wrap: anywhere; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <div>
+      <p class="eyebrow">Observing plan &middot; astro-imaging-planner</p>
+      <h1>What to image, <em id="nightWord">and how to filter it</em></h1>
+    </div>
+    <div class="rig" id="rig"></div>
+  </header>
+
+  <section class="controls" aria-label="Site, night and rig">
+    <div class="field">
+      <label for="placeInput">Observing site</label>
+      <input id="placeInput" type="text" autocomplete="off" role="combobox"
+             aria-expanded="false" aria-controls="placeResults" aria-autocomplete="list"
+             placeholder="Search a town or dark-sky site">
+      <ul class="results" id="placeResults" role="listbox" aria-label="Matching places"></ul>
+      <span class="hint" id="placeHint"></span>
+    </div>
+
+    <div class="field">
+      <label for="dateInput">Night of (evening)</label>
+      <input id="dateInput" type="date">
+      <span class="hint" id="dateHint">Darkness window is shown in UTC</span>
+    </div>
+
+    <div class="field">
+      <label for="bortleInput">Sky class</label>
+      <select id="bortleInput"></select>
+      <span class="hint" id="bortleHint"></span>
+    </div>
+
+    <div class="field">
+      <label for="scopeInput">Telescope</label>
+      <select id="scopeInput"></select>
+      <span class="hint" id="scopeHint"></span>
+    </div>
+
+    <div class="field" id="correctorField">
+      <label for="correctorInput">Reducer / corrector</label>
+      <select id="correctorInput"></select>
+      <span class="hint" id="correctorHint"></span>
+    </div>
+
+    <div class="field">
+      <label for="cameraInput">Camera</label>
+      <select id="cameraInput"></select>
+      <span class="hint" id="cameraHint"></span>
+    </div>
+  </section>
+
+  <section class="night" aria-labelledby="nightHead">
+    <div class="night-head">
+      <div class="facts">
+        <div class="fact">
+          <span class="v" id="darkWindow"></span>
+          <span class="k" id="darkKind">Astronomical dark (UTC)</span>
+        </div>
+        <div class="fact">
+          <span class="v" id="darkHours"></span>
+          <span class="k">Usable hours</span>
+        </div>
+        <div class="moonbadge">
+          <svg id="moonDisc" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"></svg>
+          <div class="fact">
+            <span class="v" id="moonIllum"></span>
+            <span class="k" id="moonUp"></span>
+          </div>
+        </div>
+      </div>
+      <div class="switch" role="group" aria-label="Jump to a moon phase">
+        <button type="button" data-jump="new" aria-pressed="false">Next new moon</button>
+        <button type="button" data-jump="full" aria-pressed="false">Next full moon</button>
+      </div>
+    </div>
+
+    <div>
+      <h2 id="nightHead" class="eyebrow">Moon altitude across the dark window</h2>
+      <div class="chart" id="moonChart"><div class="tip"></div></div>
+      <div class="axis"><span id="axStart"></span><span id="axEnd"></span></div>
+    </div>
+  </section>
+
+  <ol class="targets" id="targets"></ol>
+  <div class="empty" id="empty" hidden></div>
+
+  <details>
+    <summary>Table view &mdash; all ranked targets</summary>
+    <div class="tablewrap">
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th>Target</th><th>Type</th><th>Score</th><th>Hours</th><th>Max alt</th>
+            <th>Moon sep</th><th>Moon cost</th><th>Mode</th><th>SkyQual</th><th>Sub</th>
+            <th>Sky e&minus;/px/s</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </details>
+
+  <section class="notes">
+    <h2>Reading the numbers</h2>
+    <p>
+      Each target is scored in all three modes you can put in front of the sensor.
+      <b>Full spectrum</b> is the camera with no UV/IR cut at all; <b>visible</b> is a UV/IR-cut
+      filter, the colour-correct baseline; <b>duo-band</b> passes only H&alpha; and O&thinsp;III
+      (a 7&thinsp;nm narrowband on a mono camera, where shooting one line at a time costs nothing).
+      <b>SkyQual</b> is the signal-to-noise each mode achieves, where <code>1.00</code> is a visible
+      frame under this site&rsquo;s moonless sky &mdash; so the tick on every bar is the same
+      reference. <b>Sub</b> is the exposure at which sky shot noise swamps read noise, Robin
+      Glover&rsquo;s criterion at a 5% stack-noise penalty.
+    </p>
+    <div class="findings">
+      <div class="finding">
+        <h3>Full spectrum is a wash, not a shortcut</h3>
+        <p>
+          Dropping the UV/IR cut opens ~1.6&times; more sky but only ~1.3&times; more target: the
+          near-IR is where the OH airglow bands live. The +2% SNR does not pay for the colour cast
+          and the bloated stars, which is why the standard advice holds.
+        </p>
+      </div>
+      <div class="finding">
+        <h3>On emission targets the filter beats the drive</h3>
+        <p>
+          A duo-band passes the nebula&rsquo;s line flux while cutting continuum sky ~20&times;. That
+          margin is the same at Bortle 8 as at Bortle 3 &mdash; owning the filter can be worth more
+          than the drive to a dark site.
+        </p>
+      </div>
+      <div class="finding">
+        <h3>An unmodified camera is the real bottleneck</h3>
+        <p>
+          A stock DSLR&rsquo;s built-in IR cut passes only about 20% of H&alpha;, so a duo-band
+          bolted to one is mostly an O&thinsp;III filter. Pick the stock DSLR above and watch every
+          emission nebula&rsquo;s numbers collapse.
+        </p>
+      </div>
+    </div>
+    <p class="foot" id="prov"></p>
+    <p class="foot" id="provenance"></p>
+  </section>
+</div>
+
+<script type="module">
+__CORE_JS__
+
+const DATA = __DATA_JSON__;
+const DEFAULTS = __DEFAULTS__;
+
+const cameras = Object.fromEntries(DATA.cameras.map((c) => [c.key, c]));
+const scopes = Object.fromEntries(DATA.telescopes.map((t) => [t.key, t]));
+const TOP_N = 6;
+
+// The catalog's type codes, spelled the way an observer would say them —
+// "snr" on a card next to a signal-to-noise number reads as the wrong thing.
+const TYPE_NAMES = {
+  emission: "emission nebula", reflection: "reflection nebula",
+  planetary: "planetary nebula", snr: "supernova remnant",
+  galaxy: "galaxy", cluster: "globular cluster",
+};
+
+const BORTLE_TEXT = {
+  1: "1 — pristine dark site", 2: "2 — typical dark site", 3: "3 — rural",
+  4: "4 — rural/suburban edge", 5: "5 — suburban", 6: "6 — bright suburban",
+  7: "7 — suburban/urban", 8: "8 — city", 9: "9 — inner city",
+};
+
+const state = {
+  place: DATA.places.find((p) => p.name === DEFAULTS.place) ?? DATA.places[0],
+  date: DEFAULTS.date,
+  bortle: DEFAULTS.bortle,
+  bortleTouched: false,
+  scope: DEFAULTS.scope,
+  corrector: DEFAULTS.corrector,
+  camera: DEFAULTS.camera,
+};
+
+/* ---------- controls ---------- */
+const $ = (id) => document.getElementById(id);
+
+function fillSelect(el, items, selected) {
+  el.innerHTML = items
+    .map((it) => `<option value="${it.value}"${it.value === selected ? " selected" : ""}>${it.label}</option>`)
+    .join("");
+}
+
+function buildControls() {
+  $("dateInput").value = state.date;
+
+  fillSelect($("bortleInput"),
+    Object.keys(BORTLE_TEXT).map((b) => ({ value: b, label: BORTLE_TEXT[b] })), String(state.bortle));
+
+  const byKind = {};
+  for (const t of DATA.telescopes) (byKind[t.kind] ??= []).push(t);
+  const kindNames = { refractor: "Refractors", newtonian: "Newtonians", sct: "Schmidt-Cassegrains",
+                      rc: "Ritchey-Chretiens", rasa: "Astrographs", lens: "Camera lenses" };
+  $("scopeInput").innerHTML = Object.entries(byKind).map(([kind, list]) =>
+    `<optgroup label="${kindNames[kind] ?? kind}">` +
+    list.sort((a, b) => a.focal_length_mm - b.focal_length_mm).map((t) =>
+      `<option value="${t.key}"${t.key === state.scope ? " selected" : ""}>` +
+      `${t.name} — ${t.focal_length_mm} mm f/${t.f_ratio.toFixed(1)}</option>`).join("") +
+    `</optgroup>`).join("");
+
+  $("cameraInput").innerHTML = DATA.cameras.map((c) =>
+    `<option value="${c.key}"${c.key === state.camera ? " selected" : ""}>` +
+    `${c.name}${c.color ? "" : " · mono"}</option>`).join("");
+
+  syncCorrectors();
+  syncPlaceInput();
+}
+
+function syncCorrectors() {
+  const scope = scopes[state.scope];
+  const opts = scope.correctors;
+  $("correctorField").hidden = opts.length < 2;
+  fillSelect($("correctorInput"), opts.map(([label]) => ({ value: label, label })), state.corrector);
+  if (!opts.some(([label]) => label === state.corrector)) {
+    state.corrector = opts[0][0];
+    $("correctorInput").value = state.corrector;
+  }
+}
+
+function syncPlaceInput() {
+  $("placeInput").value = state.place.label;
+  $("placeHint").innerHTML =
+    `<b>${state.place.lat.toFixed(2)}°</b>, <b>${state.place.lon.toFixed(2)}°</b>` +
+    (state.place.elevation_m ? ` · ${Math.round(state.place.elevation_m)} m` : "");
+}
+
+/* ---------- place search ---------- */
+const ABBREV = { st: "saint", ste: "sainte", mt: "mount", ft: "fort", pt: "point" };
+const normalize = (s) =>
+  s.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(Boolean)
+   .map((w) => ABBREV[w] ?? w).join(" ");
+
+function searchPlaces(query) {
+  const q = normalize(query);
+  if (!q) return [];
+  const scored = [];
+  for (const p of DATA.places) {
+    const name = normalize(p.name), label = normalize(p.label);
+    let base = 0;
+    if (name === q) base = 100;
+    else if (name.startsWith(q)) base = 80;
+    else if (name.includes(q)) base = 60;
+    else if (label.includes(q)) base = 40;
+    else if (q.split(" ").every((tok) => label.includes(tok))) base = 20;
+    else continue;
+    scored.push([base + (p.kind === "site" ? 8 : 0) + Math.log10(Math.max(p.population, 1)), p]);
+  }
+  scored.sort((a, b) => b[0] - a[0]);
+  return scored.slice(0, 8).map(([, p]) => p);
+}
+
+function showResults(list) {
+  const box = $("placeResults");
+  if (!list.length) { box.classList.remove("on"); $("placeInput").setAttribute("aria-expanded", "false"); return; }
+  box.innerHTML = list.map((p, i) =>
+    `<li role="option" aria-selected="false"><button type="button" class="result" data-i="${i}">
+       <span class="${p.kind === "site" ? "site" : ""}">${p.label}</span>
+       <span class="rb">B${p.bortle_estimate}${p.bortle_measured ? "" : "?"} · ${p.lat.toFixed(1)}, ${p.lon.toFixed(1)}</span>
+     </button></li>`).join("");
+  box.classList.add("on");
+  $("placeInput").setAttribute("aria-expanded", "true");
+  box.querySelectorAll(".result").forEach((btn) =>
+    btn.addEventListener("click", () => pickPlace(list[Number(btn.dataset.i)])));
+}
+
+function pickPlace(p) {
+  state.place = p;
+  if (!state.bortleTouched) {
+    state.bortle = p.bortle_estimate;
+    $("bortleInput").value = String(state.bortle);
+  }
+  $("placeResults").classList.remove("on");
+  $("placeInput").setAttribute("aria-expanded", "false");
+  syncPlaceInput();
+  render();
+}
+
+/* ---------- moon phase disc ---------- */
+function drawMoon(illum) {
+  const svg = $("moonDisc"), r = 11, c = 13;
+  // Terminator is an ellipse of half-width |1-2k|r. For a gibbous moon it
+  // bulges past centre to the far side, so the return arc sweeps the other
+  // way — matching sweeps would retrace one semicircle and cancel the fill.
+  const k = illum, rx = Math.abs(1 - 2 * k) * r, sweep = k > .5 ? 1 : 0;
+  svg.innerHTML =
+    `<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="var(--moon)" stroke-width="1.2" opacity=".6"/>` +
+    (k <= .002 ? "" :
+      `<path d="M ${c} ${c - r} A ${r} ${r} 0 0 1 ${c} ${c + r} A ${rx} ${r} 0 0 ${sweep} ${c} ${c - r} Z"
+             fill="var(--moon)"/>`);
+}
+
+/* ---------- generic line/area chart ---------- */
+function drawChart(host, opts) {
+  const w = Math.max(host.clientWidth, 200), h = opts.height;
+  const { values, labels, yMin, yMax, color, fill, refLine, refLabel, unit } = opts;
+  const padL = 5, padR = 5, padT = 6, padB = 6;
+  const iw = w - padL - padR, ih = h - padT - padB;
+  const x = (i) => padL + (values.length === 1 ? iw / 2 : (iw * i) / (values.length - 1));
+  const y = (v) => padT + ih * (1 - (v - yMin) / (yMax - yMin));
+
+  const pts = values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`);
+  const line = "M" + pts.join(" L");
+  const base = y(Math.max(yMin, Math.min(0, yMax)));
+  const area = `${line} L${x(values.length - 1).toFixed(1)},${base.toFixed(1)} L${x(0).toFixed(1)},${base.toFixed(1)} Z`;
+
+  let refs = "";
+  if (refLine !== undefined && refLine > yMin && refLine < yMax) {
+    refs += `<line x1="${padL}" x2="${w - padR}" y1="${y(refLine).toFixed(1)}" y2="${y(refLine).toFixed(1)}"
+                   stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3" opacity=".55"/>`;
+    if (refLabel) {
+      refs += `<text x="${padL + 2}" y="${(y(refLine) + 11).toFixed(1)}" text-anchor="start"
+                     font-family="var(--mono)" font-size="9" fill="var(--muted)">${refLabel}</text>`;
+    }
+  }
+
+  const tip = host.querySelector(".tip");
+  host.innerHTML =
+    `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="${opts.aria}">
+       <path d="${area}" fill="${fill}"/>
+       ${refs}
+       <path d="${line}" fill="none" stroke="${color}" stroke-width="2"
+             stroke-linejoin="round" stroke-linecap="round"/>
+       <circle cx="${x(values.length - 1).toFixed(1)}" cy="${y(values[values.length - 1]).toFixed(1)}"
+               r="3.5" fill="${color}" stroke="var(--surface)" stroke-width="2"/>
+       <line class="cross" x1="0" x2="0" y1="${padT}" y2="${h - padB}"
+             stroke="${color}" stroke-width="1" opacity="0"/>
+     </svg>`;
+  host.appendChild(tip);
+
+  const svg = host.querySelector("svg"), cross = host.querySelector(".cross");
+  const move = (ev) => {
+    const rect = svg.getBoundingClientRect();
+    const px = (ev.clientX - rect.left) * (w / rect.width);
+    const i = Math.max(0, Math.min(values.length - 1, Math.round((px - padL) / (iw / (values.length - 1)))));
+    cross.setAttribute("x1", x(i)); cross.setAttribute("x2", x(i)); cross.setAttribute("opacity", ".5");
+    tip.textContent = `${labels[i]}  ${values[i].toFixed(1)}${unit}`;
+    tip.classList.add("on");
+    const tw = tip.offsetWidth, left = (x(i) / w) * rect.width;
+    tip.style.left = Math.max(0, Math.min(rect.width - tw, left - tw / 2)) + "px";
+    tip.style.top = "-2px";
+  };
+  svg.addEventListener("mousemove", move);
+  svg.addEventListener("mouseleave", () => { cross.setAttribute("opacity", "0"); tip.classList.remove("on"); });
+}
+
+/* ---------- render ---------- */
+function currentRig() {
+  const scope = scopes[state.scope];
+  const entry = scope.correctors.find(([label]) => label === state.corrector) ?? scope.correctors[0];
+  return {
+    scope,
+    camera: cameras[state.camera],
+    focalLengthMm: scope.focal_length_mm * entry[1],
+    apertureMm: scope.aperture_mm,
+    correctorLabel: entry[0],
+  };
+}
+
+function render() {
+  const rig = currentRig();
+  const { camera } = rig;
+  const night = buildNight(state.date, state.place.lat, state.place.lon);
+  const scale = pixelScale(camera.pixel_um, rig.focalLengthMm);
+  const fov = fovArcmin(camera, rig.focalLengthMm);
+
+  $("rig").innerHTML =
+    `<b>${camera.name}</b><br>${rig.scope.name}` +
+    `${rig.correctorLabel === "native" ? "" : " + " + rig.correctorLabel}<br>` +
+    `${Math.round(rig.focalLengthMm)}&thinsp;mm f/${(rig.focalLengthMm / rig.apertureMm).toFixed(1)} &middot; ` +
+    `${scale.toFixed(2)}&Prime;/px &middot; ${fov.map((v) => Math.round(v)).join("&prime;&times;")}&prime; FoV<br>` +
+    `Bortle ${state.bortle} &middot; ${state.place.label}`;
+
+  $("scopeHint").innerHTML = `${rig.scope.aperture_mm} mm aperture &middot; ${scale.toFixed(2)}&Prime;/px`;
+  $("correctorHint").textContent = `${Math.round(rig.focalLengthMm)} mm effective`;
+  $("cameraHint").innerHTML =
+    `${camera.read_noise_e.toFixed(1)} e&minus; read noise &middot; ` +
+    (camera.builtin_ir_cut ? `H&alpha; ${Math.round(camera.ha_transmission * 100)}%` : "no built-in IR cut");
+  $("bortleHint").textContent = state.bortleTouched
+    ? `SQM ${BORTLE_SQM[state.bortle].toFixed(1)} mag/arcsec²`
+    : (state.place.bortle_measured ? "measured at this site" : "estimated from town size — check it");
+
+  const kindLabel = { astronomical: "Astronomical dark (UTC)", nautical: "Nautical dark (UTC)",
+                      civil: "Civil twilight (UTC)", none: "No usable darkness" };
+  $("darkKind").textContent = kindLabel[night.darknessKind];
+  $("darkWindow").textContent = night.darkStart ? `${hhmmUTC(night.darkStart)} – ${hhmmUTC(night.darkEnd)}` : "—";
+  $("darkHours").textContent = `${night.darkHours.toFixed(1)} h`;
+  $("moonIllum").textContent = `${Math.round(night.illumination * 100)}% lit`;
+  $("moonUp").textContent = night.moonUpHours > 0
+    ? `up ${night.moonUpHours.toFixed(1)} h of dark` : "below horizon all night";
+  drawMoon(night.illumination);
+
+  // Charts show the dark window only — the grid runs noon to noon, and 17
+  // hours of daylight either side would squash the part that matters.
+  const darkIdx = night.dark.map((v, i) => (v ? i : -1)).filter((i) => i >= 0);
+  const lo = darkIdx.length ? darkIdx[0] : 0;
+  const hi = darkIdx.length ? darkIdx[darkIdx.length - 1] : night.times.length - 1;
+  const crop = (arr) => arr.slice(lo, hi + 1);
+  const labels = crop(night.times.map(hhmmUTC));
+
+  $("axStart").textContent = labels[0];
+  $("axEnd").textContent = labels[labels.length - 1];
+  // Keep the moon's track off the floor of the frame on nights it never rises.
+  const moonTrack = crop(night.moonAlt);
+  const moonFloor = Math.min(-40, Math.floor(Math.min(...moonTrack) / 10) * 10);
+  drawChart($("moonChart"), {
+    values: moonTrack, labels, yMin: moonFloor, yMax: 90, height: 84,
+    color: "var(--moon)", fill: "var(--moon-fill)", refLine: 0, refLabel: "horizon", unit: "°",
+    aria: `Moon altitude through the night of ${state.date}`,
+  });
+
+  const cli =
+    `astroplanner plan --date ${state.date} --place "${state.place.name}" --bortle ${state.bortle} ` +
+    `--camera ${camera.key} --scope ${rig.scope.key}` +
+    (rig.correctorLabel === "native" ? "" : ` --corrector "${rig.correctorLabel}"`);
+  $("prov").textContent = cli;
+  $("provenance").textContent =
+    "Same model as the command line: ephemeris, Krisciunas & Schaefer moonlight, Glover sub-exposure. " +
+    "The browser build is checked target-by-target against the Python engine (web/validate.mjs).";
+
+  const list = $("targets"), empty = $("empty");
+  list.innerHTML = "";
+
+  if (night.darknessKind === "none") {
+    empty.hidden = false;
+    empty.innerHTML =
+      `<h2>The sun never sets far enough here on this date</h2>
+       <p>At ${state.place.label} on ${state.date} the sun stays above &minus;6°, so there is no
+       usable darkness at all. Try a date closer to the equinoxes, or a site further from the pole.</p>`;
+    document.querySelector("#dataTable tbody").innerHTML = "";
+    return;
+  }
+
+  const ranked = rankTargets(night, {
+    camera, focalLengthMm: rig.focalLengthMm, apertureMm: rig.apertureMm,
+    bortle: state.bortle, targets: DATA.targets, filters: DATA.filters,
+  });
+
+  if (!ranked.length) {
+    empty.hidden = false;
+    empty.innerHTML =
+      `<h2>Nothing in the catalog clears 30° tonight</h2>
+       <p>Every target in the bundled catalog stays below the altitude floor during darkness at
+       this site on this date.</p>`;
+    document.querySelector("#dataTable tbody").innerHTML = "";
+    return;
+  }
+  empty.hidden = true;
+
+  const shown = ranked.slice(0, TOP_N);
+  // One bar scale for the whole page, so modes are comparable across targets.
+  const qMax = Math.max(1.2, ...shown.flatMap((r) =>
+    MODE_KEYS.map((k) => (r.modeAdvice.scores[k].available ? r.modeAdvice.scores[k].skyQuality : 0))));
+
+  shown.forEach((r, i) => {
+    const t = r.target, advice = r.modeAdvice;
+    const li = document.createElement("li");
+    li.className = "target";
+    li.style.setProperty("--edge", t.line_emitter ? "var(--emitter)" : "var(--broad)");
+    const chip = t.line_emitter ? "chip-emit" : "chip-broad";
+
+    const modeRows = MODE_KEYS.map((key) => {
+      const m = advice.scores[key];
+      const picked = key === advice.recommended;
+      const name = `<span class="mname">${picked ? "▸ " : ""}${m.label}</span>`;
+      if (!m.available) {
+        const why = m.note.includes("IR-cut") ? "built-in IR cut" : m.note;
+        return `<div class="mode off">${name}<span class="na">${why}</span></div>`;
+      }
+      return `<div class="mode${picked ? " pick" : ""}">
+                ${name}
+                <div class="bar"><i style="width:${Math.min(m.skyQuality / qMax, 1) * 100}%"></i>
+                  <u style="left:${Math.min(1 / qMax, 1) * 100}%"></u></div>
+                <span class="mq">${m.skyQuality.toFixed(2)}</span>
+                <span class="msub">${m.recommendedSubS}s</span>
+              </div>`;
+    }).join("");
+
+    li.innerHTML =
+      `<div class="rank">${i + 1}</div>
+       <div class="col-id">
+         <h3 class="tname">${t.name}</h3>
+         <span class="tid">${t.id} &middot; ${t.size_arcmin}&prime;</span>
+         <div class="chips">
+           <span class="chip ${chip}">${TYPE_NAMES[t.type] ?? t.type}</span>
+           <span class="chip chip-pick">${advice.scores[advice.recommended].label}</span>
+         </div>
+         <div class="stats">
+           <span><b>${r.usableHours.toFixed(1)}</b> h</span>
+           <span>peak <b>${Math.round(r.maxAltDeg)}°</b></span>
+           <span>moon <b>${Math.round(r.meanMoonSepDeg)}°</b></span>
+           <span>cost <b>${r.moonBrighteningMag >= 0.005 ? "−" + r.moonBrighteningMag.toFixed(2) + " mag" : "none"}</b></span>
+         </div>
+       </div>
+       <div class="col-chart">
+         <div class="chart" data-alt="${i}"><div class="tip"></div></div>
+       </div>
+       <div class="col-modes">
+         <div class="modehead"><span>Imaging mode</span><span>SkyQual &middot; sub</span></div>
+         ${modeRows}
+         <p class="why">${advice.reason.charAt(0).toUpperCase() + advice.reason.slice(1)}.
+            ${advice.caution ? "<b>Note:</b> " + advice.caution + "." : ""}</p>
+       </div>`;
+    list.appendChild(li);
+  });
+
+  shown.forEach((r, i) => {
+    drawChart(list.querySelector(`[data-alt="${i}"]`), {
+      values: crop(r.altTrack), labels, yMin: 0, yMax: 90, height: 62,
+      color: r.target.line_emitter ? "var(--emitter)" : "var(--broad)", fill: "var(--sky-fill)",
+      refLine: 30, refLabel: "30° floor", unit: "°",
+      aria: `${r.target.name} altitude, peaking at ${Math.round(r.maxAltDeg)} degrees`,
+    });
+  });
+
+  document.querySelector("#dataTable tbody").innerHTML = ranked.map((r) => {
+    const m = r.modeAdvice.scores[r.modeAdvice.recommended];
+    return `<tr><td>${r.target.name}</td><td>${TYPE_NAMES[r.target.type] ?? r.target.type}</td><td>${r.score.toFixed(2)}</td>
+      <td>${r.usableHours.toFixed(1)}</td><td>${Math.round(r.maxAltDeg)}°</td>
+      <td>${Math.round(r.meanMoonSepDeg)}°</td>
+      <td>${r.moonBrighteningMag >= 0.005 ? "−" + r.moonBrighteningMag.toFixed(2) : "—"}</td>
+      <td>${m.label}</td><td>${m.skyQuality.toFixed(2)}</td><td>${m.recommendedSubS}s</td>
+      <td>${m.skyEPerS.toFixed(2)}</td></tr>`;
+  }).join("");
+
+  const phaseTargets = jumpDates(state.date);
+  document.querySelectorAll(".switch button").forEach((b) => {
+    const iso = phaseTargets[b.dataset.jump];
+    b.setAttribute("aria-pressed", String(iso === state.date));
+    b.textContent = (b.dataset.jump === "new" ? "New moon · " : "Full moon · ") + shortDate(iso);
+    b.dataset.iso = iso;
+  });
+}
+
+/* Nearest new/full moon on or after the current date, found by sampling the
+ * same illumination model the plan uses rather than a synodic-period formula. */
+function jumpDates(fromISO) {
+  const [y, m, d] = fromISO.split("-").map(Number);
+  const start = Date.UTC(y, m - 1, d);
+  let best = { new: null, full: null }, bestVal = { new: 1, full: 0 };
+  for (let i = 0; i <= 30; i++) {
+    const ms = start + i * 86400000;
+    const jd = julianDay(ms + 6 * 3600000);
+    const s = sunPosition(jd), mo = moonPosition(jd);
+    const elong = angularSeparation(s.ra, s.dec, mo.ra, mo.dec);
+    const phase = Math.atan2(s.distKm * Math.sin(elong * Math.PI / 180),
+      mo.distKm - s.distKm * Math.cos(elong * Math.PI / 180)) * 180 / Math.PI;
+    const illum = (1 + Math.cos(phase * Math.PI / 180)) / 2;
+    if (illum < bestVal.new) { bestVal.new = illum; best.new = ms; }
+    if (illum > bestVal.full) { bestVal.full = illum; best.full = ms; }
+  }
+  const iso = (ms) => new Date(ms).toISOString().slice(0, 10);
+  return { new: iso(best.new), full: iso(best.full) };
+}
+
+const shortDate = (iso) => {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("en-US",
+    { month: "short", day: "numeric", timeZone: "UTC" });
+};
+
+/* ---------- wiring ---------- */
+$("placeInput").addEventListener("input", (e) => showResults(searchPlaces(e.target.value)));
+$("placeInput").addEventListener("focus", (e) => { if (e.target.value) showResults(searchPlaces(e.target.value)); });
+$("placeInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    const hits = searchPlaces(e.target.value);
+    if (hits.length) { e.preventDefault(); pickPlace(hits[0]); }
+  } else if (e.key === "Escape") {
+    $("placeResults").classList.remove("on");
+    syncPlaceInput();
+  }
+});
+document.addEventListener("click", (e) => {
+  if (!e.target.closest("#placeResults") && e.target !== $("placeInput")) {
+    $("placeResults").classList.remove("on");
+    $("placeInput").setAttribute("aria-expanded", "false");
+  }
+});
+
+$("dateInput").addEventListener("change", (e) => { if (e.target.value) { state.date = e.target.value; render(); } });
+$("bortleInput").addEventListener("change", (e) => {
+  state.bortle = Number(e.target.value); state.bortleTouched = true; render();
+});
+$("scopeInput").addEventListener("change", (e) => { state.scope = e.target.value; syncCorrectors(); render(); });
+$("correctorInput").addEventListener("change", (e) => { state.corrector = e.target.value; render(); });
+$("cameraInput").addEventListener("change", (e) => { state.camera = e.target.value; render(); });
+
+document.querySelectorAll(".switch button").forEach((b) =>
+  b.addEventListener("click", () => {
+    state.date = b.dataset.iso;
+    $("dateInput").value = state.date;
+    render();
+  }));
+
+let raf;
+addEventListener("resize", () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(render); });
+
+buildControls();
+render();
+</script>

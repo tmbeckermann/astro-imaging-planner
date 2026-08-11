@@ -21,6 +21,10 @@ full moon can beat an unfiltered sub under a dark sky. That is captured by
 `sky_quality` (1.0 = unfiltered under this site's moonless sky), which is
 what the ranking multiplies in — so on a bright night emission targets rise
 and galaxies sink, from physics rather than a special case.
+
+Alongside the SNR-optimal filter, every target carries advice in the three
+modes people actually own hardware for — full spectrum, visible (UV/IR cut),
+duo-band — see `recommend_mode`.
 """
 
 from dataclasses import dataclass
@@ -30,12 +34,146 @@ import numpy as np
 from .catalog import Target, load_targets
 from .ephemeris import NightPlanContext, target_track
 from .exposure import ExposureResult, optimal_sub_exposure
-from .filters import FILTERS, Filter
+from .filters import (
+    FILTERS,
+    MODE_KEYS,
+    Filter,
+    mode_available,
+    mode_filter,
+    mode_label,
+)
 from .moon import brightening_mag, sky_brightness_with_moon
 from .sensors import Camera
 from .sky import sky_electron_rate, sqm_from_bortle
 
 MIN_ALT_DEG = 30.0
+
+# How much more SNR full spectrum must deliver before it is worth recommending
+# over the colour-correct visible train. See `recommend_mode`.
+FULL_SPECTRUM_MARGIN = 1.15
+
+
+@dataclass(frozen=True)
+class ModeScore:
+    """What one imaging mode would achieve on one target tonight."""
+    mode: str                # full / visible / line
+    label: str               # what to call it for this camera
+    filter_key: str          # the concrete filter the mode resolves to
+    available: bool          # False = this camera or this filter bag can't do it
+    sky_quality: float       # SNR, 1.0 = visible train under a moonless sky here
+    sky_e_per_s: float
+    recommended_sub_s: int
+    note: str = ""
+
+
+@dataclass(frozen=True)
+class ModeAdvice:
+    recommended: str
+    reason: str
+    scores: dict[str, ModeScore]
+    caution: str = ""
+
+    @property
+    def best(self) -> ModeScore:
+        return self.scores[self.recommended]
+
+
+def recommend_mode(
+    line_emitter: bool,
+    camera: Camera,
+    rate_for,
+    reference_snr: float,
+    allowed_filter_keys: set[str] | None = None,
+) -> ModeAdvice:
+    """Pick between full spectrum, visible (UV/IR cut), and duo-band.
+
+    The three modes are not three points on one axis, so this is not a plain
+    argmax over SNR:
+
+    * For an emission target a line filter is not a close call. It passes the
+      nebula's Ha/OIII while cutting continuum sky ~20-40x, so it wins by a
+      factor of several against either broadband mode, at any Bortle class and
+      with or without the moon. (The win is site-independent under a flat sky
+      model, which is exactly why it is worth owning one filter rather than
+      driving somewhere darker.)
+
+    * Between the two broadband modes the model says something more
+      interesting: it is close to a tie. Dropping the UV/IR cut opens roughly
+      1.6x more sky but only ~1.3x more target, because the near-IR is where
+      the OH airglow bands live and most deep-sky continuum is not especially
+      NIR-bright. Net, full spectrum is worth about 2% in SNR — and costs true
+      star colour and tight stars in any refractor that is not corrected out
+      to 1000 nm. So visible wins ties, and full spectrum has to clear
+      FULL_SPECTRUM_MARGIN to be recommended. That reproduces the standard
+      field advice (always put a UV/IR cut on a modified camera) from the
+      photon budget rather than from folklore.
+    """
+    scores: dict[str, ModeScore] = {}
+    for mode in MODE_KEYS:
+        filt = mode_filter(mode, camera, allowed_filter_keys)
+        allowed = allowed_filter_keys is None or filt.key in allowed_filter_keys
+        available = mode_available(mode, camera) and allowed
+        rate = rate_for(filt)
+        snr = snr_quality(filt, line_emitter, rate, camera)
+        note = ""
+        if not mode_available(mode, camera):
+            note = "needs a camera without a built-in IR-cut filter"
+        elif not allowed:
+            note = "not in the filters you listed"
+        scores[mode] = ModeScore(
+            mode=mode,
+            label=mode_label(mode, camera, filt),
+            filter_key=filt.key,
+            available=available,
+            sky_quality=float(snr / reference_snr),
+            sky_e_per_s=float(rate),
+            recommended_sub_s=optimal_sub_exposure(camera.read_noise_e, rate).recommended_s,
+            note=note,
+        )
+
+    usable = {k: v for k, v in scores.items() if v.available}
+    if not usable:  # every mode ruled out by --filters
+        return ModeAdvice("visible", "no listed filter can shoot this target", scores)
+
+    caution = ""
+    if line_emitter and "line" in usable:
+        pick = "line"
+        ratio = scores["line"].sky_quality / max(scores["visible"].sky_quality, 1e-9)
+        reason = (
+            f"line emitter: {scores['line'].label} delivers {ratio:.1f}x the SNR "
+            f"of a visible train here"
+        )
+        if camera.ha_transmission < 0.5:
+            caution = (
+                f"this camera passes only {camera.ha_transmission:.0%} of Ha, so the result "
+                f"will be OIII-dominated — modifying the camera buys more than the filter does"
+            )
+    else:
+        best_key = max(usable, key=lambda k: usable[k].sky_quality)
+        vis = usable.get("visible")
+        full = usable.get("full")
+        if best_key == "full" and vis is not None:
+            edge = full.sky_quality / max(vis.sky_quality, 1e-9)
+            if edge < FULL_SPECTRUM_MARGIN:
+                pick = "visible"
+                reason = (
+                    f"broadband target: full spectrum is only {edge - 1:+.0%} SNR, "
+                    f"not worth the colour cast and IR star bloat"
+                )
+            else:
+                pick = "full"
+                reason = f"broadband target: full spectrum is worth {edge - 1:+.0%} SNR here"
+        else:
+            pick = best_key
+            reason = "highest SNR of the modes available"
+            if not line_emitter and best_key == "visible":
+                reason = "broadband target: the colour-correct train is also the deepest here"
+            elif line_emitter and best_key != "line":
+                reason = "line emitter, but no line filter available — broadband it is"
+        if not line_emitter and not mode_available("full", camera):
+            caution = "full spectrum unavailable: this camera's IR-cut filter is built in"
+
+    return ModeAdvice(pick, reason, scores, caution)
 
 
 @dataclass
@@ -53,6 +191,7 @@ class RankedTarget:
     suggested_filter: Filter
     exposure: ExposureResult
     dark_sky_rate: float         # e-/px/s with no moon, for comparison
+    mode_advice: ModeAdvice | None = None   # full spectrum / visible / duo-band
 
 
 def fov_fit_score(target_size_arcmin: float, fov_arcmin: tuple[float, float]) -> float:
@@ -65,19 +204,22 @@ def fov_fit_score(target_size_arcmin: float, fov_arcmin: tuple[float, float]) ->
     return max(0.9 / ratio, 0.15)  # spills out of frame
 
 
-def snr_quality(filt: Filter, line_emitter: bool, sky_e_per_s: float) -> float:
+def snr_quality(
+    filt: Filter, line_emitter: bool, sky_e_per_s: float, camera: Camera | None = None
+) -> float:
     """Relative background-limited SNR: target signal / sqrt(sky noise).
 
     This is the figure of merit the filter choice maximizes. It is a
     *relative* number — only ratios between filters/conditions are meaningful.
     """
-    return filt.signal_factor(line_emitter) / np.sqrt(sky_e_per_s)
+    return filt.signal_factor(line_emitter, camera) / np.sqrt(sky_e_per_s)
 
 
 def best_filter(
     line_emitter: bool,
     available: list[Filter],
     rate_for: "callable",
+    camera: Camera | None = None,
 ) -> tuple[Filter, float]:
     """Pick the filter with the highest SNR, given a sky-rate function.
 
@@ -85,7 +227,7 @@ def best_filter(
     also captures colour in one shot, or that narrowband needs far more total
     integration time. Restrict `--filters` to what you actually want to use.
     """
-    scored = [(f, snr_quality(f, line_emitter, rate_for(f))) for f in available]
+    scored = [(f, snr_quality(f, line_emitter, rate_for(f), camera)) for f in available]
     return max(scored, key=lambda pair: pair[1])
 
 
@@ -144,8 +286,8 @@ def rank_targets(
 
         # Choose the filter that maximises SNR under tonight's actual sky,
         # and measure the moon's cost against the best moonless alternative.
-        filt, moonlit_quality = best_filter(t.line_emitter, filters, moonlit_rate)
-        _, dark_quality = best_filter(t.line_emitter, filters, dark_rate_for)
+        filt, moonlit_quality = best_filter(t.line_emitter, filters, moonlit_rate, camera)
+        _, dark_quality = best_filter(t.line_emitter, filters, dark_rate_for, camera)
         mean_rate = moonlit_rate(filt)
         dark_rate = dark_rate_for(filt)
 
@@ -155,7 +297,17 @@ def rank_targets(
         # moonless sky". A narrowband line target can exceed 1.0 even under a
         # full moon; that is precisely why it stays worth shooting.
         reference = snr_quality(FILTERS["none"], False, dark_rate_for(FILTERS["none"]))
-        sky_quality = float(moonlit_quality / reference)
+        advice = recommend_mode(
+            t.line_emitter,
+            camera,
+            moonlit_rate,
+            reference,
+            {f.key for f in filters} if available_filters else None,
+        )
+        # Rank on what you would actually shoot — the recommended mode — not on
+        # the SNR-optimal filter in the abstract. Otherwise a one-shot-colour
+        # rig gets ranked on 3 nm mono narrowband it cannot sensibly use.
+        sky_quality = advice.best.sky_quality
 
         moon_up = usable & (ctx.moon_alt_deg > 0)
         sep_ref = moon_sep[moon_up] if moon_up.any() else moon_sep[usable]
@@ -194,6 +346,7 @@ def rank_targets(
                 suggested_filter=filt,
                 exposure=exp,
                 dark_sky_rate=dark_rate,
+                mode_advice=advice,
             )
         )
 

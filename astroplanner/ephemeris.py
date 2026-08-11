@@ -119,5 +119,13 @@ def target_track(ctx: NightPlanContext, ra_deg: float, dec_deg: float) -> tuple[
         warnings.simplefilter("ignore")
         frame = AltAz(obstime=ctx.times, location=ctx.location)
         alt = coord.transform_to(frame).alt.deg
-        sep = coord.separation(ctx.moon_coord).deg
+        # Order matters here, and getting it wrong is silent. The moon's GCRS
+        # coordinate carries a distance, so `coord.separation(moon)` converts
+        # the moon to ICRS *as a nearby object*: it reports where the moon
+        # would be seen from the solar-system barycentre, which is tens of
+        # degrees from where it is in our sky. Asking the moon for its
+        # separation from a distance-free star direction keeps the comparison
+        # in the observer's frame — it agrees with doing it in AltAz to 1e-9
+        # deg, and that equivalence is pinned by a test.
+        sep = ctx.moon_coord.separation(coord).deg
     return alt, sep

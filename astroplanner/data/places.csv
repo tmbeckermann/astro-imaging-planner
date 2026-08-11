@@ -1,0 +1,100 @@
+name,admin,country,lat,lon,elevation_m,population,bortle,kind
+New York,New York,United States,40.71,-74.01,10,8300000,9,city
+Los Angeles,California,United States,34.05,-118.24,89,3900000,9,city
+Chicago,Illinois,United States,41.88,-87.63,181,2700000,9,city
+Houston,Texas,United States,29.76,-95.37,13,2300000,9,city
+Phoenix,Arizona,United States,33.45,-112.07,331,1600000,8,city
+Philadelphia,Pennsylvania,United States,39.95,-75.17,12,1600000,9,city
+San Antonio,Texas,United States,29.42,-98.49,198,1500000,8,city
+San Diego,California,United States,32.72,-117.16,19,1400000,8,city
+Dallas,Texas,United States,32.78,-96.80,131,1300000,9,city
+San Jose,California,United States,37.34,-121.89,25,1000000,8,city
+Austin,Texas,United States,30.27,-97.74,149,960000,8,city
+Jacksonville,Florida,United States,30.33,-81.66,5,950000,8,city
+Columbus,Ohio,United States,39.96,-83.00,275,910000,8,city
+Indianapolis,Indiana,United States,39.77,-86.16,218,880000,8,city
+San Francisco,California,United States,37.77,-122.42,16,810000,8,city
+Seattle,Washington,United States,47.61,-122.33,53,750000,8,city
+Nashville,Tennessee,United States,36.16,-86.78,169,690000,8,city
+Denver,Colorado,United States,39.74,-104.99,1609,710000,8,city
+Boston,Massachusetts,United States,42.36,-71.06,43,650000,9,city
+Portland,Oregon,United States,45.52,-122.68,15,650000,8,city
+Las Vegas,Nevada,United States,36.17,-115.14,610,650000,8,city
+Detroit,Michigan,United States,42.33,-83.05,183,630000,8,city
+Memphis,Tennessee,United States,35.15,-90.05,79,620000,8,city
+Baltimore,Maryland,United States,39.29,-76.61,10,580000,9,city
+Milwaukee,Wisconsin,United States,43.04,-87.91,188,570000,8,city
+Albuquerque,New Mexico,United States,35.08,-106.65,1619,560000,7,city
+Tucson,Arizona,United States,32.22,-110.97,728,550000,6,city
+Kansas City,Missouri,United States,39.10,-94.58,277,510000,8,city
+Atlanta,Georgia,United States,33.75,-84.39,320,500000,8,city
+Miami,Florida,United States,25.76,-80.19,2,440000,9,city
+Minneapolis,Minnesota,United States,44.98,-93.27,264,430000,8,city
+Cincinnati,Ohio,United States,39.10,-84.51,147,310000,8,city
+Orlando,Florida,United States,28.54,-81.38,25,310000,8,city
+Pittsburgh,Pennsylvania,United States,40.44,-80.00,239,300000,8,city
+Saint Louis,Missouri,United States,38.63,-90.20,142,300000,8,city
+Salt Lake City,Utah,United States,40.76,-111.89,1288,200000,7,city
+Boise,Idaho,United States,43.62,-116.20,824,240000,7,city
+Springfield,Missouri,United States,37.21,-93.29,401,170000,6,city
+Columbia,Missouri,United States,38.95,-92.33,231,130000,6,city
+Flagstaff,Arizona,United States,35.20,-111.65,2106,76000,5,city
+Rolla,Missouri,United States,37.95,-91.77,344,20000,5,city
+Toronto,Ontario,Canada,43.65,-79.38,76,2800000,9,city
+Vancouver,British Columbia,Canada,49.28,-123.12,2,660000,8,city
+Montreal,Quebec,Canada,45.50,-73.57,36,1800000,9,city
+Mexico City,,Mexico,19.43,-99.13,2240,9000000,9,city
+London,England,United Kingdom,51.51,-0.13,11,8900000,9,city
+Edinburgh,Scotland,United Kingdom,55.95,-3.19,47,510000,8,city
+Dublin,,Ireland,53.35,-6.26,20,550000,8,city
+Paris,,France,48.86,2.35,35,2100000,9,city
+Berlin,,Germany,52.52,13.41,34,3700000,9,city
+Amsterdam,,Netherlands,52.37,4.90,-2,870000,9,city
+Zurich,,Switzerland,47.37,8.54,408,430000,8,city
+Vienna,,Austria,48.21,16.37,171,1900000,8,city
+Madrid,,Spain,40.42,-3.70,657,3200000,9,city
+Lisbon,,Portugal,38.72,-9.14,100,540000,8,city
+Rome,,Italy,41.90,12.50,21,2800000,9,city
+Athens,,Greece,37.98,23.73,20,660000,8,city
+Warsaw,,Poland,52.23,21.01,113,1800000,8,city
+Stockholm,,Sweden,59.33,18.07,28,980000,8,city
+Oslo,,Norway,59.91,10.75,23,700000,8,city
+Helsinki,,Finland,60.17,24.94,26,660000,8,city
+Reykjavik,,Iceland,64.15,-21.94,61,140000,6,city
+Moscow,,Russia,55.76,37.62,156,12500000,9,city
+Istanbul,,Turkey,41.01,28.98,39,15500000,9,city
+Cairo,,Egypt,30.04,31.24,23,10000000,9,city
+Dubai,,United Arab Emirates,25.20,55.27,5,3600000,9,city
+Delhi,,India,28.61,77.21,216,32000000,9,city
+Singapore,,Singapore,1.35,103.82,15,5900000,9,city
+Beijing,,China,39.90,116.41,44,21500000,9,city
+Seoul,,South Korea,37.57,126.98,38,9700000,9,city
+Tokyo,,Japan,35.68,139.69,40,13900000,9,city
+Sydney,New South Wales,Australia,-33.87,151.21,58,5300000,9,city
+Melbourne,Victoria,Australia,-37.81,144.96,31,5100000,9,city
+Perth,Western Australia,Australia,-31.95,115.86,15,2100000,8,city
+Auckland,,New Zealand,-36.85,174.76,26,1600000,8,city
+Johannesburg,,South Africa,-26.20,28.05,1753,5600000,9,city
+Cape Town,,South Africa,-33.92,18.42,25,4600000,8,city
+Sao Paulo,,Brazil,-23.55,-46.63,760,12300000,9,city
+Buenos Aires,,Argentina,-34.60,-58.38,25,3100000,9,city
+Santiago,,Chile,-33.45,-70.67,570,6200000,9,city
+Broemmelsiek Park,Missouri,United States,38.72,-90.83,180,0,5,site
+Danville Conservation Area,Missouri,United States,38.88,-91.50,240,0,4,site
+Mark Twain National Forest,Missouri,United States,37.60,-91.30,400,0,3,site
+Cherry Springs State Park,Pennsylvania,United States,41.66,-77.82,700,0,2,site
+Big Bend National Park,Texas,United States,29.25,-103.25,1140,0,1,site
+Death Valley National Park,California,United States,36.51,-117.08,-50,0,2,site
+Natural Bridges National Monument,Utah,United States,37.60,-110.01,1980,0,2,site
+Great Basin National Park,Nevada,United States,38.98,-114.30,2080,0,2,site
+Kitt Peak National Observatory,Arizona,United States,31.96,-111.60,2096,0,2,site
+Mauna Kea,Hawaii,United States,19.82,-155.47,4205,0,1,site
+Mont-Megantic Dark Sky Reserve,Quebec,Canada,45.46,-71.15,1100,0,2,site
+Galloway Forest Park,Scotland,United Kingdom,55.15,-4.45,300,0,2,site
+Brecon Beacons,Wales,United Kingdom,51.88,-3.43,400,0,3,site
+Pic du Midi,,France,42.94,0.14,2877,0,2,site
+La Palma Roque de los Muchachos,Canary Islands,Spain,28.76,-17.89,2396,0,1,site
+Cerro Paranal,,Chile,-24.63,-70.40,2635,0,1,site
+NamibRand Nature Reserve,,Namibia,-25.00,16.00,1000,0,1,site
+Aoraki Mackenzie Dark Sky Reserve,,New Zealand,-43.73,170.10,760,0,2,site
+Warrumbungle National Park,New South Wales,Australia,-31.28,149.00,500,0,2,site

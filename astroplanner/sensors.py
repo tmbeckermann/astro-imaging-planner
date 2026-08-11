@@ -4,6 +4,19 @@ Read noise values are at the "typical deep-sky" gain setting for each camera
 (usually the HCG-mode knee, e.g. gain 100 on IMX533/571-class ZWO cameras).
 QE is the approximate peak quantum efficiency. All values are close enough for
 exposure planning; override any of them from the CLI for your exact settings.
+
+Two fields exist for the filter question rather than the exposure question:
+
+`ha_transmission` is how much of the 656 nm Ha line the camera's own stack
+passes before any filter is fitted. Dedicated astro cameras ship with a plain
+AR window, so ~1.0. A stock consumer camera's IR-cut filter starts rolling off
+right where Ha lives and passes only ~20% of it — which is why emission
+nebulae look so thin on an unmodified DSLR, and why a duo-band bolted onto one
+is mostly an OIII filter.
+
+`builtin_ir_cut` says whether that filter is glued in front of the sensor. If
+it is, "full spectrum" is not a mode you can select — you would have to modify
+the camera first.
 """
 
 from dataclasses import dataclass
@@ -21,6 +34,8 @@ class Camera:
     qe: float                # peak quantum efficiency, 0..1
     gain_e_per_adu: float    # e-/ADU at that gain setting (approximate)
     color: bool
+    ha_transmission: float = 1.0   # fraction of Ha the camera stack passes
+    builtin_ir_cut: bool = False   # True = IR-cut glued in, cannot go full spectrum
 
     @property
     def width_mm(self) -> float:
@@ -29,6 +44,10 @@ class Camera:
     @property
     def height_mm(self) -> float:
         return self.height_px * self.pixel_um / 1000.0
+
+    @property
+    def mono(self) -> bool:
+        return not self.color
 
     def pixel_scale(self, focal_length_mm: float) -> float:
         """Image scale in arcsec/pixel at a given focal length."""
@@ -51,9 +70,13 @@ CAMERAS: dict[str, Camera] = {
         Camera("asi2600mm", "ZWO ASI2600MM Pro (IMX571M)", 3.76, 6248, 4176, 1.0, "gain 100 (HCG)", 0.85, 0.25, False),
         Camera("asi6200mm", "ZWO ASI6200MM Pro (IMX455)", 3.76, 9576, 6388, 1.2, "gain 100 (HCG)", 0.80, 0.25, False),
         Camera("asi294mc", "ZWO ASI294MC Pro (IMX294)", 4.63, 4144, 2822, 1.2, "gain 120 (HCG)", 0.75, 0.23, True),
+        Camera("asi585mc", "ZWO ASI585MC (IMX585)", 2.90, 3840, 2160, 0.9, "gain 252 (HCG)", 0.91, 0.13, True),
         Camera("asi1600mm", "ZWO ASI1600MM Pro (MN34230)", 3.80, 4656, 3520, 1.7, "gain 139 (unity)", 0.60, 1.0, False),
         Camera("asi183mc", "ZWO ASI183MC Pro (IMX183)", 2.40, 5496, 3672, 1.6, "gain 111 (unity)", 0.84, 1.0, True),
-        Camera("dslr", "Generic modern DSLR/mirrorless (APS-C)", 3.90, 6000, 4000, 2.5, "ISO 800-1600", 0.55, 0.5, True),
+        Camera("dslr", "Stock DSLR/mirrorless (APS-C)", 3.90, 6000, 4000, 2.5, "ISO 800-1600", 0.55, 0.5, True,
+               ha_transmission=0.20, builtin_ir_cut=True),
+        Camera("dslr-mod", "Astro-modified DSLR/mirrorless (APS-C)", 3.90, 6000, 4000, 2.5, "ISO 800-1600", 0.55, 0.5, True,
+               ha_transmission=0.97),
     ]
 }
 

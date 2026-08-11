@@ -141,7 +141,11 @@ def test_narrowband_buys_absolute_snr_on_line_targets():
     assert not m31.suggested_filter.line_filter
     assert veil.sky_quality > 1.0        # better than unfiltered at dark sky
     assert m31.sky_quality < 0.5         # galaxy just eats the moonlight
-    assert veil.sky_quality > 5 * m31.sky_quality
+    # sky_quality reports the mode this rig would actually shoot — a duo-band
+    # on a one-shot-colour camera, not the 3 nm mono filter that wins the
+    # abstract SNR contest. Still nearly 4x the galaxy under the same moon.
+    assert veil.mode_advice.best.filter_key == "duoband"
+    assert veil.sky_quality > 3 * m31.sky_quality
 
 
 def test_galaxies_compete_on_a_dark_night_but_not_a_moonlit_one():
@@ -177,3 +181,30 @@ def test_fov_fit():
     assert fov_fit_score(50, (200, 150)) == 1.0          # comfortable
     assert fov_fit_score(1, (200, 150)) < 0.2            # tiny target
     assert fov_fit_score(600, (200, 150)) < 0.5          # overflows frame
+
+
+def test_moon_separation_is_measured_in_the_observers_sky():
+    # Regression: astropy's separation() converts the moon's GCRS coordinate
+    # (which carries a distance) into ICRS as a *nearby object*, reporting the
+    # direction it would have from the solar-system barycentre. Called the
+    # wrong way round it was silently returning separations tens of degrees
+    # off, which fed straight into the moonlight model.
+    import warnings
+
+    from astropy.coordinates import AltAz, SkyCoord
+    from astropy import units as u
+
+    from astroplanner.ephemeris import target_track
+
+    ctx = build_night(FULL_MOON, 38.6, -90.2)
+    ra, dec = 328.35, 47.27            # IC5146
+    _, sep = target_track(ctx, ra, dec)
+
+    i = len(ctx.times) // 2
+    coord = SkyCoord(ra=ra * u.deg, dec=dec * u.deg)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        frame = AltAz(obstime=ctx.times[i], location=ctx.location)
+        in_sky = (coord.transform_to(frame)
+                  .separation(ctx.moon_coord[i].transform_to(frame)).deg)
+    assert sep[i] == pytest.approx(in_sky, abs=1e-6)

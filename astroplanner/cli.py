@@ -1,12 +1,14 @@
 """Command-line interface.
 
+    astroplanner plan     --date 2026-08-02 --place "st louis" --bortle 7 \
+                          --camera asi533mc --scope gt71
     astroplanner plan     --date 2026-08-02 --lat 38.6 --lon -90.2 --bortle 7 \
                           --camera asi533mc --fl 500 --aperture 80
-    astroplanner exposure --bortle 7 --camera asi533mc --fl 500 --aperture 80 --filter duoband
+    astroplanner exposure --bortle 7 --camera asi533mc --scope gt71 --filter duoband
     astroplanner analyze  Light_M31_120s.fits
     astroplanner log add  --date 2026-08-02 --target M31 --filter duoband --sub 120 --subs 90
     astroplanner log list
-    astroplanner cameras | filters | targets
+    astroplanner cameras | scopes | filters | targets | places <query>
 """
 
 import argparse
@@ -18,16 +20,21 @@ from .catalog import load_targets
 from .ephemeris import build_night
 from .exposure import optimal_sub_exposure, stack_noise_penalty
 from .filters import FILTERS, get_filter
+from .geocode import resolve as resolve_place
+from .geocode import search as search_places
 from .scoring import rank_targets
 from .sensors import CAMERAS, get_camera
 from .sessionlog import DEFAULT_DB, SessionLog
 from .sky import sky_electron_rate, sqm_from_bortle
+from .telescopes import TELESCOPES, get_telescope
 
 
 def _rig_args(p: argparse.ArgumentParser):
     p.add_argument("--camera", default="asi533mc", help="camera key (see 'cameras')")
-    p.add_argument("--fl", type=float, required=True, help="focal length, mm")
-    p.add_argument("--aperture", type=float, required=True, help="aperture, mm")
+    p.add_argument("--scope", help="telescope key (see 'scopes'); sets --fl and --aperture")
+    p.add_argument("--corrector", help="reducer/corrector on the scope (see 'scopes')")
+    p.add_argument("--fl", type=float, help="focal length, mm (overrides --scope)")
+    p.add_argument("--aperture", type=float, help="aperture, mm (overrides --scope)")
     p.add_argument("--read-noise", type=float, help="override read noise, e-")
     p.add_argument("--qe", type=float, help="override QE, 0..1")
 
@@ -44,9 +51,56 @@ def _resolve_camera(args):
     return cam
 
 
+def _resolve_optics(args) -> tuple[float, float, str]:
+    """(focal_length_mm, aperture_mm, label) from --scope and/or --fl/--aperture."""
+    label = ""
+    fl = aperture = None
+    if args.scope:
+        scope = get_telescope(args.scope)
+        fl, aperture = scope.train(args.corrector)
+        label = scope.name
+        if args.corrector and args.corrector.lower() != "native":
+            label += f" + {args.corrector}"
+    elif args.corrector:
+        raise SystemExit("--corrector needs --scope; with --fl just give the effective length")
+    fl = args.fl if args.fl else fl
+    aperture = args.aperture if args.aperture else aperture
+    if fl is None or aperture is None:
+        raise SystemExit(
+            "Give a rig: either --scope KEY (see 'astroplanner scopes') or "
+            "--fl MM --aperture MM."
+        )
+    return fl, aperture, label
+
+
+def _resolve_site(args) -> tuple[float, float, float, str]:
+    """(lat, lon, elevation_m, label) from --place or --lat/--lon."""
+    label = ""
+    lat, lon, elev = args.lat, args.lon, args.elevation
+    if args.place:
+        place = resolve_place(args.place, online=not args.offline)
+        lat = args.lat if args.lat is not None else place.lat
+        lon = args.lon if args.lon is not None else place.lon
+        elev = args.elevation if args.elevation is not None else place.elevation_m
+        label = place.label
+        if args.bortle is None:
+            args.bortle = place.bortle_estimate
+            how = "measured" if place.bortle_is_measured else "estimated from population"
+            print(f"Site: {place.label}  ({lat:+.2f}, {lon:+.2f})  "
+                  f"Bortle {args.bortle} [{how}]", file=sys.stderr)
+    if lat is None or lon is None:
+        raise SystemExit("Give a site: either --place NAME or --lat DEG --lon DEG.")
+    if args.bortle is None:
+        raise SystemExit("Give --bortle 1-9 (or use --place, which suggests one).")
+    return lat, lon, (elev or 0.0), label
+
+
 def cmd_plan(args) -> int:
     cam = _resolve_camera(args)
-    ctx = build_night(args.date, args.lat, args.lon, args.elevation)
+    fl, aperture, scope_label = _resolve_optics(args)
+    lat, lon, elevation, site_label = _resolve_site(args)
+    args.lat, args.lon, args.fl, args.aperture = lat, lon, fl, aperture
+    ctx = build_night(args.date, lat, lon, elevation)
     if ctx.darkness_kind == "none":
         print("The sun never gets below -6 deg on this date at this site; no usable darkness.")
         return 1
@@ -66,13 +120,16 @@ def cmd_plan(args) -> int:
         targets=subset,
     )
     fov_w, fov_h = cam.fov_arcmin(args.fl)
-    print(f"Night of {args.date}  |  lat {args.lat:+.2f} lon {args.lon:+.2f}  |  Bortle {args.bortle}")
+    where = f"{site_label}  ({args.lat:+.2f}, {args.lon:+.2f})" if site_label else \
+            f"lat {args.lat:+.2f} lon {args.lon:+.2f}"
+    print(f"Night of {args.date}  |  {where}  |  Bortle {args.bortle}")
     moon_hours = float((ctx.dark & (ctx.moon_alt_deg > 0)).sum()) * ctx.step_hours
     print(f"Darkness ({ctx.darkness_kind}): {ctx.dark_start.strftime('%H:%M')}"
           f"-{ctx.dark_end.strftime('%H:%M')} UTC  ({ctx.dark_hours:.1f} h)"
           f"  |  Moon {ctx.moon_illumination*100:.0f}% illuminated,"
           f" up {moon_hours:.1f} h of darkness")
-    print(f"Rig: {cam.name}, {args.fl:.0f} mm f/{args.fl/args.aperture:.1f}"
+    rig = f"{cam.name}, {scope_label + ', ' if scope_label else ''}{args.fl:.0f} mm f/{args.fl/args.aperture:.1f}"
+    print(f"Rig: {rig}"
           f"  |  FoV {fov_w:.0f}' x {fov_h:.0f}'  |  {cam.pixel_scale(args.fl):.2f}\"/px")
     print()
     if not ranked:
@@ -80,36 +137,53 @@ def cmd_plan(args) -> int:
         return 0
 
     hdr = (f"{'#':>2} {'ID':<8} {'Name':<26} {'Score':>5} {'Hrs':>4} {'MaxAlt':>6} "
-           f"{'MoonSep':>7} {'MoonCost':>8} {'SkyQual':>7} {'Window (UTC)':<13} {'Filter':<8} {'Sub':>5}")
+           f"{'MoonSep':>7} {'MoonCost':>8} {'SkyQual':>7} {'Window (UTC)':<13} "
+           f"{'Mode':<18} {'Sub':>5}")
     print(hdr)
     print("-" * len(hdr))
     for i, r in enumerate(ranked[: args.top], 1):
         cost = f"-{r.moon_brightening_mag:.2f}m" if r.moon_brightening_mag >= 0.005 else "     -"
+        mode = r.mode_advice.best
         print(
             f"{i:>2} {r.target.id:<8} {r.target.name:<26} {r.score:>5.2f} "
             f"{r.usable_hours:>4.1f} {r.max_alt_deg:>5.0f}° {r.mean_moon_sep_deg:>6.0f}° {cost:>8} "
             f"{r.sky_quality:>7.2f} "
-            f"{r.best_window[0]}-{r.best_window[1]:<7} {r.suggested_filter.key:<8} {r.exposure.recommended_s:>4}s"
+            f"{r.best_window[0]}-{r.best_window[1]:<7} {mode.label:<18} {mode.recommended_sub_s:>4}s"
         )
     print()
     top = ranked[0]
-    print(f"Best pick: {top.target.name} ({top.target.id}) — {top.suggested_filter.name}, "
-          f"{top.exposure.recommended_s}s subs "
-          f"(sky {top.exposure.sky_e_per_s:.2f} e-/px/s, exact optimum {top.exposure.optimal_s:.0f}s).")
+    advice = top.mode_advice
+    print(f"Best pick: {top.target.name} ({top.target.id}) — shoot it in "
+          f"{advice.best.label}, {advice.best.recommended_sub_s}s subs "
+          f"(sky {advice.best.sky_e_per_s:.2f} e-/px/s).")
+    print(f"  Why: {advice.reason}.")
+    if advice.caution:
+        print(f"  Note: {advice.caution}.")
+    print("  Mode comparison (SkyQual, 1.00 = visible train under a moonless sky here):")
+    for key in ("full", "visible", "line"):
+        m = advice.scores[key]
+        mark = "->" if key == advice.recommended else "  "
+        detail = f"{m.sky_quality:>6.2f}  {m.recommended_sub_s:>4}s subs" if m.available \
+                 else f"{'  n/a':>6}  {m.note}"
+        print(f"   {mark} {m.label:<20} {detail}")
     if top.moon_brightening_mag >= 0.05:
         print(f"Moonlight brightens its sky by {top.moon_brightening_mag:.2f} mag/arcsec² "
               f"({top.moon_penalty*100:.0f}% SNR cost vs. a moonless night; "
               f"dark-sky rate would be {top.dark_sky_rate:.2f} e-/px/s).")
-    if top.suggested_filter.line_filter:
-        print(f"Line filter suggested: it delivers {top.sky_quality:.1f}x the SNR of an "
-              f"unfiltered frame under this site's moonless sky.")
-    print("SkyQual: achievable SNR, 1.00 = unfiltered under a moonless sky at this site.")
+    if args.filters or args.show_filter:
+        print(f"SNR-optimal filter from the ones listed: {top.suggested_filter.name} "
+              f"({top.sky_quality:.2f} SkyQual, {top.exposure.recommended_s}s subs).")
+    print("SkyQual: achievable SNR, 1.00 = visible (UV/IR-cut) under a moonless sky at this site.")
     return 0
 
 
 def cmd_exposure(args) -> int:
     cam = _resolve_camera(args)
+    args.fl, args.aperture, scope_label = _resolve_optics(args)
     filt = get_filter(args.filter)
+    if filt.needs_ir_cut_removed and cam.builtin_ir_cut:
+        print(f"Note: {cam.name} has a built-in IR-cut filter, so '{filt.key}' is not a mode "
+              f"it can shoot — showing the numbers anyway.", file=sys.stderr)
     sqm = args.sqm if args.sqm else sqm_from_bortle(args.bortle)
     scale = cam.pixel_scale(args.fl)
     if args.sky_rate:
@@ -121,7 +195,8 @@ def cmd_exposure(args) -> int:
     res = optimal_sub_exposure(cam.read_noise_e, rate, args.noise_increase)
 
     print(f"Camera: {cam.name}  (read noise {cam.read_noise_e:.1f} e- @ {cam.gain_setting}, QE {cam.qe:.0%})")
-    print(f"Optics: {args.fl:.0f} mm f/{args.fl/args.aperture:.1f}  ->  {scale:.2f}\"/px")
+    print(f"Optics: {scope_label + ', ' if scope_label else ''}{args.fl:.0f} mm "
+          f"f/{args.fl/args.aperture:.1f}  ->  {scale:.2f}\"/px")
     print(f"Filter: {filt.name}")
     print(f"Sky:    {rate:.3f} e-/px/s  [{src}]")
     print()
@@ -156,14 +231,44 @@ def cmd_analyze(args) -> int:
 
 def cmd_cameras(_args) -> int:
     for key, c in sorted(CAMERAS.items()):
-        print(f"{key:<10} {c.name:<38} {c.pixel_um}um  RN {c.read_noise_e:.1f}e- @ {c.gain_setting}  QE {c.qe:.0%}")
+        stack = "mono" if c.mono else "OSC"
+        ha = "" if c.ha_transmission >= 0.9 else f"  Ha {c.ha_transmission:.0%} (IR-cut built in)"
+        print(f"{key:<10} {c.name:<40} {c.pixel_um}um  {c.width_px}x{c.height_px}  "
+              f"RN {c.read_noise_e:.1f}e- @ {c.gain_setting}  QE {c.qe:.0%}  {stack}{ha}")
+    return 0
+
+
+def cmd_scopes(_args) -> int:
+    for key, t in sorted(TELESCOPES.items(), key=lambda kv: kv[1].focal_length_mm):
+        extras = [label for label, _ in t.correctors if label != "native"]
+        opts = f"  [{'; '.join(extras)}]" if extras else ""
+        print(f"{key:<12} {t.name:<36} {t.aperture_mm:>5.0f} mm  {t.focal_length_mm:>6.0f} mm "
+              f"f/{t.f_ratio:<4.1f} {t.kind}{opts}")
+    return 0
+
+
+def cmd_places(args) -> int:
+    hits = search_places(args.query, limit=args.limit, online=not args.offline)
+    if not hits:
+        print(f"No place matched '{args.query}'.")
+        return 1
+    for p in hits:
+        how = "measured" if p.bortle_is_measured else "est."
+        print(f"{p.label:<48} {p.lat:>7.2f} {p.lon:>8.2f}  {p.elevation_m:>5.0f} m  "
+              f"Bortle {p.bortle_estimate} ({how})  [{p.source}]")
+    print()
+    print("Use with: astroplanner plan --place \"<name>\" --date YYYY-MM-DD ...")
+    print("Bortle for a town is a population estimate — check lightpollutionmap.info "
+          "and pass --bortle to override.")
     return 0
 
 
 def cmd_filters(_args) -> int:
     for key, f in FILTERS.items():
         kind = "line" if f.line_filter else "broadband"
-        print(f"{key:<9} {f.name:<36} sky x{f.sky_bandwidth_factor:<5} moon x{f.moon_susceptibility:<5} {kind}")
+        needs = "  (needs a modified camera)" if f.needs_ir_cut_removed else ""
+        print(f"{key:<9} {f.name:<36} sky x{f.sky_bandwidth_factor:<5} moon x{f.moon_susceptibility:<5} "
+              f"{kind}{needs}")
     return 0
 
 
@@ -203,12 +308,17 @@ def main(argv: list[str] | None = None) -> int:
 
     sp = sub.add_parser("plan", help="rank tonight's best targets")
     sp.add_argument("--date", required=True, help="YYYY-MM-DD (evening of)")
-    sp.add_argument("--lat", type=float, required=True)
-    sp.add_argument("--lon", type=float, required=True, help="east positive")
-    sp.add_argument("--elevation", type=float, default=0.0, help="site elevation, m")
-    sp.add_argument("--bortle", type=int, required=True, choices=range(1, 10))
+    sp.add_argument("--place", help="site by name, e.g. --place \"cherry springs\"")
+    sp.add_argument("--lat", type=float)
+    sp.add_argument("--lon", type=float, help="east positive")
+    sp.add_argument("--elevation", type=float, help="site elevation, m")
+    sp.add_argument("--offline", action="store_true", help="never call the online geocoder")
+    sp.add_argument("--bortle", type=int, choices=range(1, 10),
+                    help="sky class 1-9; --place suggests one if omitted")
     _rig_args(sp)
     sp.add_argument("--filters", help="comma list of filters you own (default: all)")
+    sp.add_argument("--show-filter", action="store_true",
+                    help="also print the SNR-optimal filter, not just the mode")
     sp.add_argument("--type", help="only these target types, e.g. galaxy,cluster")
     sp.add_argument("--min-alt", type=float, default=30.0)
     sp.add_argument("--top", type=int, default=5)
@@ -231,8 +341,15 @@ def main(argv: list[str] | None = None) -> int:
     sa.set_defaults(func=cmd_analyze)
 
     sub.add_parser("cameras", help="list known cameras").set_defaults(func=cmd_cameras)
+    sub.add_parser("scopes", help="list known telescopes").set_defaults(func=cmd_scopes)
     sub.add_parser("filters", help="list known filters").set_defaults(func=cmd_filters)
     sub.add_parser("targets", help="list the target catalog").set_defaults(func=cmd_targets)
+
+    spl = sub.add_parser("places", help="search observing sites and towns")
+    spl.add_argument("query")
+    spl.add_argument("--limit", type=int, default=8)
+    spl.add_argument("--offline", action="store_true", help="bundled gazetteer only")
+    spl.set_defaults(func=cmd_places)
 
     sl = sub.add_parser("log", help="session logger")
     slsub = sl.add_subparsers(dest="logcmd", required=True)
