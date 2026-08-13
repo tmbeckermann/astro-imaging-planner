@@ -7,7 +7,6 @@ requires-python = ">=3.10"
 dependencies = [
     "numpy>=1.24",
     "astropy>=6.0",
-    "astroplan>=0.9",
 ]
 
 [project.optional-dependencies]
