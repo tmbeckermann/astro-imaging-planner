@@ -34,6 +34,10 @@ class Telescope:
     # "you cannot get there, shoot more subs" rather than a number you cannot
     # dial in. None means no known limit, which is not the same as unlimited.
     max_sub_s: float | None = None
+    # True when the aperture is inferred from a plausible f-number rather than
+    # published. Every sky rate scales with aperture squared, so a guess here is
+    # not a detail — it has to travel with the number and be visible.
+    aperture_assumed: bool = False
     spec_note: str = ""
 
     @property
@@ -80,6 +84,17 @@ TELESCOPES: dict[str, Telescope] = {
                   fixed_camera="imx662", builtin_filters=("none", "cls", "duoband-wide"),
                   max_sub_s=90,
                   spec_note="LP, nebula and Ha/Hb/OIII filters; the dual-band is what is modelled"),
+        # The wide-angle module. Its spec sheet repeats the telephoto's "30 mm
+        # aperture", which cannot be the entrance pupil: 30 mm at 6.7 mm focal
+        # length is f/0.22, and no lens in air can go below f/0.5. Modelled at
+        # f/2.4, ordinary for a module this size — so it collects about 1% of
+        # the light the telephoto does, and every number here moves with the
+        # square of that assumption. Replace it with --aperture the moment you
+        # have the real figure.
+        Telescope("dwarf-mini-wide", "DwarfLab DWARF mini (wide-angle)", 2.8, 6.7, "smart",
+                  fixed_camera="os02k10", builtin_filters=("none",), max_sub_s=90,
+                  aperture_assumed=True,
+                  spec_note="aperture assumed f/2.4; the filters sit in front of the telephoto"),
         Telescope("equinox2", "Unistellar eQuinox 2", 114, 450, "smart",
                   fixed_camera="imx347", builtin_filters=("none",),
                   spec_note="no filter slot: narrowband is not available on this instrument"),

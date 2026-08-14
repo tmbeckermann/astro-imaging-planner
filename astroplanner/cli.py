@@ -33,6 +33,8 @@ from .units import (
     UNIT_SYSTEMS,
     format_aperture,
     format_elevation,
+    format_focal_length,
+    format_fov,
     get_zone,
     local_hhmm,
     zone_abbrev,
@@ -179,16 +181,19 @@ def cmd_plan(args) -> int:
           f"  |  Moon {ctx.moon_illumination*100:.0f}% illuminated,"
           f" up {moon_hours:.1f} h of darkness")
     rig = (f"{cam.name}, {scope_label + ', ' if scope_label else ''}"
-           f"{format_aperture(args.aperture, args.units)} at {args.fl:.0f} mm "
+           f"{format_aperture(args.aperture, args.units)} at {format_focal_length(args.fl)} "
            f"f/{args.fl/args.aperture:.1f}")
     print(f"Rig: {rig}"
-          f"  |  FoV {fov_w:.0f}' x {fov_h:.0f}'  |  {cam.pixel_scale(args.fl):.2f}\"/px")
+          f"  |  FoV {format_fov(fov_w, fov_h)}  |  {cam.pixel_scale(args.fl):.2f}\"/px")
     if scope is not None and scope.integrated:
         fitted = ", ".join(FILTERS[k].name for k in (scope.builtin_filters or ()))
         print(f"     Integrated instrument: sensor and filters are fixed — {fitted}"
               f"{'. ' + scope.spec_note if scope.spec_note else ''}")
         if scope.max_sub_s:
             print(f"     Longest sub it will take: {scope.max_sub_s:.0f}s")
+        if scope.aperture_assumed:
+            print(f"     Aperture is ASSUMED, not published: every sky rate and sub length below "
+                  f"scales with its square. Override with --aperture.")
     print()
     if not ranked:
         print(f"No catalog targets rise above {args.min_alt:.0f} deg during darkness tonight.")
@@ -259,7 +264,7 @@ def cmd_exposure(args) -> int:
 
     print(f"Camera: {cam.name}  (read noise {cam.read_noise_e:.1f} e- @ {cam.gain_setting}, QE {cam.qe:.0%})")
     print(f"Optics: {scope_label + ', ' if scope_label else ''}"
-          f"{format_aperture(args.aperture, args.units)} at {args.fl:.0f} mm "
+          f"{format_aperture(args.aperture, args.units)} at {format_focal_length(args.fl)} "
           f"f/{args.fl/args.aperture:.1f}  ->  {scale:.2f}\"/px")
     print(f"Filter: {filt.name}")
     print(f"Sky:    {rate:.3f} e-/px/s  [{src}]")
@@ -309,8 +314,9 @@ def cmd_scopes(_args) -> int:
         if t.integrated:
             fitted = "+".join(t.builtin_filters or ())
             cap = f"; max {t.max_sub_s:.0f}s" if t.max_sub_s else ""
-            opts = f"  [sensor {t.fixed_camera}; filters {fitted}{cap}]"
-        print(f"{key:<12} {t.name:<36} {t.aperture_mm:>5.0f} mm  {t.focal_length_mm:>6.0f} mm "
+            guess = "; aperture ASSUMED" if t.aperture_assumed else ""
+            opts = f"  [sensor {t.fixed_camera}; filters {fitted}{cap}{guess}]"
+        print(f"{key:<16} {t.name:<36} {t.aperture_mm:>6.1f} mm  {t.focal_length_mm:>6.1f} mm "
               f"f/{t.f_ratio:<4.1f} {t.kind}{opts}")
     return 0
 

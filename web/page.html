@@ -827,9 +827,18 @@ const fmtElevation = (m) => state.units === "imperial"
 
 // Telescopes are sold as 8-inch and as 80 mm in the same shop, so imperial
 // shows both rather than pretending one of them is unfamiliar.
-const fmtAperture = (mm) => state.units === "imperial"
+// ...but below an inch nobody does: a camera lens's entrance pupil is a
+// millimetre figure everywhere it is printed.
+const fmtMm = (mm) => (mm < 10 ? mm.toFixed(1) : Math.round(mm).toString());
+
+const fmtAperture = (mm) => state.units === "imperial" && mm >= 25.4
   ? `${(mm / MM_PER_INCH).toFixed(1)}&Prime; (${Math.round(mm)} mm)`
-  : `${Math.round(mm)} mm`;
+  : `${fmtMm(mm)} mm`;
+
+// Arcminutes for a telescope, degrees once the field is constellation-sized.
+const fmtFov = ([w, h]) => Math.max(w, h) >= 120
+  ? `${(w / 60).toFixed(1)}° × ${(h / 60).toFixed(1)}°`
+  : `${Math.round(w)}′ × ${Math.round(h)}′`;
 
 /* ---------- controls ---------- */
 const $ = (id) => document.getElementById(id);
@@ -1144,12 +1153,12 @@ function render() {
   $("rig").innerHTML =
     `<b>${camera.name}</b><br>${rig.scope.name}` +
     `${rig.correctorLabel === "native" ? "" : " + " + rig.correctorLabel}<br>` +
-    `${fmtAperture(rig.apertureMm)} at ${Math.round(rig.focalLengthMm)}&thinsp;mm ` +
+    `${fmtAperture(rig.apertureMm)} at ${fmtMm(rig.focalLengthMm)}&thinsp;mm ` +
     `f/${(rig.focalLengthMm / rig.apertureMm).toFixed(1)}<br>` +
-    `${scale.toFixed(2)}&Prime;/px &middot; ${fov.map((v) => Math.round(v)).join("&prime;&times;")}&prime; FoV<br>` +
+    `${scale.toFixed(2)}&Prime;/px &middot; ${fmtFov(fov)} FoV<br>` +
     `Bortle ${state.bortle} &middot; ${state.place.label}`;
 
-  $("correctorHint").textContent = `${Math.round(rig.focalLengthMm)} mm effective`;
+  $("correctorHint").textContent = `${fmtMm(rig.focalLengthMm)} mm effective`;
   $("cameraHint").innerHTML = rig.scope.fixed_camera
     ? `<span class="locked">Bonded to the ${rig.scope.name}</span> &middot; ` +
       `${camera.read_noise_e.toFixed(1)} e&minus; read noise`
@@ -1159,7 +1168,10 @@ function render() {
   $("scopeHint").innerHTML = rig.scope.builtin_filters
     ? `${fmtAperture(rig.scope.aperture_mm)} &middot; fitted: ` +
       rig.scope.builtin_filters.map((k) => DATA.filters[k].name.split(" (")[0]).join(", ") +
-      (rig.scope.max_sub_s ? ` &middot; max ${rig.scope.max_sub_s}s subs` : "")
+      (rig.scope.max_sub_s ? ` &middot; max ${rig.scope.max_sub_s}s subs` : "") +
+      (rig.scope.aperture_assumed
+        ? ` &middot; <span class="locked">aperture assumed f/${(rig.scope.focal_length_mm / rig.scope.aperture_mm).toFixed(1)}</span>`
+        : "")
     : `${fmtAperture(rig.scope.aperture_mm)} aperture &middot; ${scale.toFixed(2)}&Prime;/px`;
   const basis = { measured: "measured at this site",
                   typical: "typical for a city this size — check it",

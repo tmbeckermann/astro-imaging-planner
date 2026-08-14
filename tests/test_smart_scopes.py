@@ -8,7 +8,7 @@ from astroplanner.sensors import get_camera
 from astroplanner.sky import sky_electron_rate, sqm_from_bortle
 from astroplanner.telescopes import TELESCOPES, get_telescope
 
-SMART = ["seestar50", "dwarf2", "dwarf3", "dwarf-mini", "equinox2"]
+SMART = ["seestar50", "dwarf2", "dwarf3", "dwarf-mini", "dwarf-mini-wide", "equinox2"]
 
 
 def advise(scope_key, line_emitter, bortle=6):
@@ -27,7 +27,7 @@ def test_the_smart_scopes_are_all_there():
     for key in SMART:
         scope = get_telescope(key)
         assert scope.integrated
-        assert scope.fixed_camera in {"imx462", "imx415", "imx678", "imx347", "imx662"}
+        assert scope.fixed_camera in {"imx462", "imx415", "imx678", "imx347", "imx662", "os02k10"}
         assert scope.builtin_filters, key
         assert scope.kind == "smart"
 
@@ -143,3 +143,41 @@ def test_the_mini_also_carries_a_light_pollution_filter():
     mini = get_telescope("dwarf-mini")
     assert "cls" in mini.builtin_filters
     assert "duoband-wide" in mini.builtin_filters
+
+
+def test_the_wide_angle_module_is_a_different_instrument():
+    # Different lens, different sensor, no filter in front of it — so it is its
+    # own entry rather than a corrector on the telephoto.
+    wide = get_telescope("dwarf-mini-wide")
+    tele = get_telescope("dwarf-mini")
+    assert wide.fixed_camera != tele.fixed_camera
+    assert wide.builtin_filters == ("none",)
+    assert wide.max_sub_s == tele.max_sub_s == 90
+
+
+def test_the_wide_angle_aperture_is_flagged_as_an_assumption():
+    # Its spec sheet repeats the telephoto's 30 mm, which at 6.7 mm focal
+    # length would be f/0.22 — below the f/0.5 limit for a lens in air. So the
+    # aperture here is inferred, and every sky rate scales with its square.
+    wide = get_telescope("dwarf-mini-wide")
+    assert wide.aperture_assumed
+    assert wide.f_ratio == pytest.approx(2.4, abs=0.05)
+    assert 6.7 / 30 < 0.5                      # the spec-sheet reading is impossible
+    assert not get_telescope("dwarf-mini").aperture_assumed
+
+
+def test_a_wide_field_ranks_big_targets_and_buries_small_ones():
+    # 48 degrees across at 89 arcsec/pixel is a constellation camera. The
+    # field-of-view term should say so: a 10-arcminute galaxy is 0.6% of the
+    # frame and has no business being the top pick.
+    from astroplanner.catalog import load_targets
+    from astroplanner.scoring import fov_fit_score
+
+    wide = get_telescope("dwarf-mini-wide")
+    cam = get_camera(wide.fixed_camera)
+    fov = cam.fov_arcmin(wide.focal_length_mm)
+    assert min(fov) / 60 > 20                  # degrees, not arcminutes
+    by_id = {t.id: t for t in load_targets()}
+    assert fov_fit_score(by_id["IC1396"].size_arcmin, fov) > \
+           fov_fit_score(by_id["M57"].size_arcmin, fov)
+    assert fov_fit_score(by_id["M57"].size_arcmin, fov) == pytest.approx(0.15)

@@ -83,6 +83,7 @@ CAMERAS: dict[str, Camera] = {
         Camera("imx678", "DWARF 3 sensor (IMX678)", 2.00, 3840, 2160, 1.0, "built-in gain", 0.85, 0.5, True),
         Camera("imx347", "Unistellar eQuinox 2 sensor (IMX347)", 2.40, 2454, 1854, 2.0, "built-in gain", 0.75, 0.5, True),
         Camera("imx662", "DWARF mini sensor (IMX662)", 2.90, 1920, 1080, 1.0, "built-in gain", 0.85, 0.5, True),
+        Camera("os02k10", "DWARF mini wide sensor (OS02K10)", 2.90, 1920, 1080, 2.5, "built-in gain", 0.65, 0.5, True),
         Camera("dslr", "Stock DSLR/mirrorless (APS-C)", 3.90, 6000, 4000, 2.5, "ISO 800-1600", 0.55, 0.5, True,
                ha_transmission=0.20, builtin_ir_cut=True),
         Camera("dslr-mod", "Astro-modified DSLR/mirrorless (APS-C)", 3.90, 6000, 4000, 2.5, "ISO 800-1600", 0.55, 0.5, True,

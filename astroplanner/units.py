@@ -55,8 +55,25 @@ def format_elevation(metres: float, units: str = IMPERIAL) -> str:
     return f"{metres:,.0f} m"
 
 
+# Below about an inch, nobody quotes a telescope in inches — a camera lens's
+# entrance pupil is a millimetre figure in every catalogue that prints one.
+SMALLEST_APERTURE_IN_INCHES_MM = 25.4
+
+
 def format_aperture(mm: float, units: str = IMPERIAL) -> str:
     """Imperial shows both, because telescopes are sold both ways."""
-    if units == IMPERIAL:
+    if units == IMPERIAL and mm >= SMALLEST_APERTURE_IN_INCHES_MM:
         return f'{mm / MM_PER_INCH:.1f}" ({mm:.0f} mm)'
-    return f"{mm:.0f} mm"
+    return f"{mm:.1f} mm" if mm < 10 else f"{mm:.0f} mm"
+
+
+def format_focal_length(mm: float) -> str:
+    """A 6.7 mm wide-angle lens is not a 7 mm one; keep the decimal where it counts."""
+    return f"{mm:.1f} mm" if mm < 10 else f"{mm:.0f} mm"
+
+
+def format_fov(width_arcmin: float, height_arcmin: float) -> str:
+    """Arcminutes for a telescope, degrees once the field is constellation-sized."""
+    if max(width_arcmin, height_arcmin) >= 120:
+        return f"{width_arcmin / 60:.1f}° x {height_arcmin / 60:.1f}°"
+    return f"{width_arcmin:.0f}' x {height_arcmin:.0f}'"

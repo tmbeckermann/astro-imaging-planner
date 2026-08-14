@@ -80,3 +80,26 @@ def test_nashville_is_in_the_gazetteer_and_is_central():
     assert (round(city.lat, 1), round(city.lon, 1)) == (36.2, -86.8)
     # Longitude puts it squarely in the default zone the CLI ships with.
     assert -105 < city.lon < -82
+
+
+def test_small_optics_are_not_quoted_in_inches():
+    # A 2.8 mm wide-angle entrance pupil is 0.1 inches. Nobody writes that, and
+    # printing it invites the reader to think a digit was lost.
+    assert format_aperture(2.8) == "2.8 mm"
+    assert format_aperture(2.8, METRIC) == "2.8 mm"
+    assert format_aperture(24) == "24 mm"           # the DWARF II's telephoto
+    # An inch is the cutoff: above it, both figures are useful.
+    assert format_aperture(30) == '1.2" (30 mm)'
+    assert format_aperture(203) == '8.0" (203 mm)'  
+
+
+def test_short_focal_lengths_keep_their_decimal():
+    from astroplanner.units import format_focal_length
+    assert format_focal_length(6.7) == "6.7 mm"     # not "7 mm"
+    assert format_focal_length(150) == "150 mm"
+
+
+def test_a_constellation_sized_field_is_quoted_in_degrees():
+    from astroplanner.units import format_fov
+    assert format_fov(45, 34) == "45' x 34'"        # a telescope's field
+    assert format_fov(2857, 1607) == "47.6° x 26.8°"  # a wide-angle lens's
