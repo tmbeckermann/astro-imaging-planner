@@ -188,3 +188,48 @@ themes, no console errors, no horizontal overflow.
 lost GitHub access partway through (an org-level policy denial — "an org admin
 must connect the Claude GitHub App"), so the bundle in §3 is the canonical
 copy of the history.
+
+## 6. Resuming in a new session (and getting this pushed)
+
+Nothing here was ever pushed: the session that wrote it lost GitHub access
+partway through. The history is intact in the bundle, so a new session only has
+to publish it.
+
+**Paste this into a fresh Claude Code session** (run `claude` from inside the
+unzipped folder, or start a Claude Code web session with the repo attached):
+
+> This is astro-imaging-planner. Read HANDOFF.md, then README.md.
+>
+> The work is finished and verified but has never been pushed — the session
+> that wrote it lost GitHub access. Your job is to publish it.
+>
+> 1. Confirm it still passes before you touch anything:
+>    `pip install -e ".[dev]" && pytest` (107 tests) and
+>    `python web/export_data.py && python web/dump_reference.py && node web/validate.mjs`.
+> 2. If there is no .git directory here, restore the history from the bundle:
+>    `git clone astro-imaging-planner.bundle ../astro-planner-git` and work there.
+>    That bundle is the canonical history — do not start a fresh repo over it.
+> 3. Push to https://github.com/tmbeckermann/astro (the planner's own remote,
+>    where this belongs) and open a draft pull request. If that repo is not
+>    reachable, say so rather than pushing somewhere else, and tell me exactly
+>    which error you got.
+>
+> If GitHub refuses with "an org admin must connect the Claude GitHub App",
+> that is the same block the previous session hit: the Claude GitHub App needs
+> access to the repository at github.com/settings/installations, and a session
+> started before the grant will not pick it up. Report it and stop rather than
+> retrying.
+
+**What "verified" means**, so a new session does not have to take it on faith:
+107 tests, and a JavaScript port checked target-by-target against the Python
+engine across twelve site/date/rig combinations. Both commands are above; both
+should be green before and after any change.
+
+**If you would rather push it yourself**, no AI needed:
+
+```bash
+git clone astro-imaging-planner.bundle astro-planner-git
+cd astro-planner-git
+git remote set-url origin https://github.com/tmbeckermann/astro.git
+git push -u origin main
+```
