@@ -191,9 +191,10 @@ def cmd_plan(args) -> int:
               f"{'. ' + scope.spec_note if scope.spec_note else ''}")
         if scope.max_sub_s:
             print(f"     Longest sub it will take: {scope.max_sub_s:.0f}s")
-        if scope.aperture_assumed:
-            print(f"     Aperture is ASSUMED, not published: every sky rate and sub length below "
-                  f"scales with its square. Override with --aperture.")
+        if scope.assumed:
+            what = " and ".join(scope.assumed)
+            print(f"     The {what} here is INFERRED, not published: every sky rate and sub "
+                  f"length below depends on it. Override with --aperture / --fl.")
     print()
     if not ranked:
         print(f"No catalog targets rise above {args.min_alt:.0f} deg during darkness tonight.")
@@ -314,7 +315,7 @@ def cmd_scopes(_args) -> int:
         if t.integrated:
             fitted = "+".join(t.builtin_filters or ())
             cap = f"; max {t.max_sub_s:.0f}s" if t.max_sub_s else ""
-            guess = "; aperture ASSUMED" if t.aperture_assumed else ""
+            guess = f"; {'+'.join(t.assumed)} ASSUMED" if t.assumed else ""
             opts = f"  [sensor {t.fixed_camera}; filters {fitted}{cap}{guess}]"
         print(f"{key:<16} {t.name:<36} {t.aperture_mm:>6.1f} mm  {t.focal_length_mm:>6.1f} mm "
               f"f/{t.f_ratio:<4.1f} {t.kind}{opts}")

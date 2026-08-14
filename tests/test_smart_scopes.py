@@ -8,7 +8,8 @@ from astroplanner.sensors import get_camera
 from astroplanner.sky import sky_electron_rate, sqm_from_bortle
 from astroplanner.telescopes import TELESCOPES, get_telescope
 
-SMART = ["seestar50", "dwarf2", "dwarf3", "dwarf-mini", "dwarf-mini-wide", "equinox2"]
+SMART = ["seestar50", "dwarf2", "dwarf3", "dwarf3-wide", "dwarf-mini",
+         "dwarf-mini-wide", "equinox2"]
 
 
 def advise(scope_key, line_emitter, bortle=6):
@@ -40,7 +41,7 @@ def test_published_fields_of_view_reproduce():
     expected_deg = {                 # (width, height) as published
         "seestar50": (1.29, 0.73),
         "dwarf2": (3.0, 1.7),
-        "dwarf3": (2.9, 1.6),
+        "dwarf3": (2.9, 1.6),      # 3856 x 2180 at 2.0 um, per the app
         "equinox2": (0.75, 0.57),    # 45' x 34'
         "dwarf-mini": (2.13, 1.20),  # 30 mm f/5, IMX662 at 1920x1080
     }
@@ -156,14 +157,31 @@ def test_the_wide_angle_module_is_a_different_instrument():
 
 
 def test_the_wide_angle_aperture_is_flagged_as_an_assumption():
-    # Its spec sheet repeats the telephoto's 30 mm, which at 6.7 mm focal
-    # length would be f/0.22 — below the f/0.5 limit for a lens in air. So the
-    # aperture here is inferred, and every sky rate scales with its square.
-    wide = get_telescope("dwarf-mini-wide")
-    assert wide.aperture_assumed
-    assert wide.f_ratio == pytest.approx(2.4, abs=0.05)
+    # The mini's spec sheet repeats the telephoto's 30 mm, which at 6.7 mm
+    # focal length would be f/0.22 — below the f/0.5 limit for a lens in air.
+    # The DWARF 3's published wide module (3.4 mm at the same 6.7 mm) is the
+    # basis instead, but it is still an inference for the mini.
+    mini_wide = get_telescope("dwarf-mini-wide")
+    assert mini_wide.assumed == ("aperture",) and mini_wide.aperture_assumed
+    assert mini_wide.f_ratio == pytest.approx(2.0, abs=0.05)
     assert 6.7 / 30 < 0.5                      # the spec-sheet reading is impossible
-    assert not get_telescope("dwarf-mini").aperture_assumed
+
+    # The DWARF 3's optics are published, so only its sensor is inferred.
+    d3_wide = get_telescope("dwarf3-wide")
+    assert d3_wide.assumed == ("sensor",) and not d3_wide.aperture_assumed
+    assert (d3_wide.aperture_mm, d3_wide.focal_length_mm) == (3.4, 6.7)
+
+    # Published entries claim nothing.
+    for key in ("dwarf3", "dwarf-mini", "seestar50", "equinox2"):
+        assert get_telescope(key).assumed == (), key
+
+
+def test_the_dwarf3_telephoto_matches_the_figures_from_the_app():
+    # Aperture 35 mm at 150 mm, IMX678 at 3856 x 2180 on 2.00 um pixels.
+    scope, cam = get_telescope("dwarf3"), get_camera("imx678")
+    assert (scope.aperture_mm, scope.focal_length_mm) == (35.0, 150.0)
+    assert scope.f_ratio == pytest.approx(4.29, abs=0.01)
+    assert (cam.width_px, cam.height_px, cam.pixel_um) == (3856, 2180, 2.00)
 
 
 def test_a_wide_field_ranks_big_targets_and_buries_small_ones():

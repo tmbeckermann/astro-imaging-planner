@@ -80,7 +80,7 @@ CAMERAS: dict[str, Camera] = {
         # because the optics do not illuminate the whole chip.
         Camera("imx462", "Seestar S50 sensor (IMX462)", 2.90, 1920, 1080, 0.9, "built-in gain", 0.80, 0.5, True),
         Camera("imx415", "DWARF II sensor (IMX415)", 1.45, 3840, 2160, 1.6, "built-in gain", 0.78, 0.5, True),
-        Camera("imx678", "DWARF 3 sensor (IMX678)", 2.00, 3840, 2160, 1.0, "built-in gain", 0.85, 0.5, True),
+        Camera("imx678", "DWARF 3 tele sensor (IMX678)", 2.00, 3856, 2180, 1.0, "built-in gain", 0.85, 0.5, True),
         Camera("imx347", "Unistellar eQuinox 2 sensor (IMX347)", 2.40, 2454, 1854, 2.0, "built-in gain", 0.75, 0.5, True),
         Camera("imx662", "DWARF mini sensor (IMX662)", 2.90, 1920, 1080, 1.0, "built-in gain", 0.85, 0.5, True),
         Camera("os02k10", "DWARF mini wide sensor (OS02K10)", 2.90, 1920, 1080, 2.5, "built-in gain", 0.65, 0.5, True),

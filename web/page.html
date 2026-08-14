@@ -1169,8 +1169,8 @@ function render() {
     ? `${fmtAperture(rig.scope.aperture_mm)} &middot; fitted: ` +
       rig.scope.builtin_filters.map((k) => DATA.filters[k].name.split(" (")[0]).join(", ") +
       (rig.scope.max_sub_s ? ` &middot; max ${rig.scope.max_sub_s}s subs` : "") +
-      (rig.scope.aperture_assumed
-        ? ` &middot; <span class="locked">aperture assumed f/${(rig.scope.focal_length_mm / rig.scope.aperture_mm).toFixed(1)}</span>`
+      (rig.scope.assumed?.length
+        ? ` &middot; <span class="locked">${rig.scope.assumed.join(" and ")} inferred</span>`
         : "")
     : `${fmtAperture(rig.scope.aperture_mm)} aperture &middot; ${scale.toFixed(2)}&Prime;/px`;
   const basis = { measured: "measured at this site",

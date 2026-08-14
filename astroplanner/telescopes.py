@@ -34,11 +34,16 @@ class Telescope:
     # "you cannot get there, shoot more subs" rather than a number you cannot
     # dial in. None means no known limit, which is not the same as unlimited.
     max_sub_s: float | None = None
-    # True when the aperture is inferred from a plausible f-number rather than
-    # published. Every sky rate scales with aperture squared, so a guess here is
-    # not a detail — it has to travel with the number and be visible.
-    aperture_assumed: bool = False
+    # Which parts of this entry are inferred rather than published, e.g.
+    # ("aperture",) or ("sensor",). Sky rates scale with aperture squared and
+    # with pixel scale squared, so an inference in either is not a footnote —
+    # it travels with every number the planner prints from it.
+    assumed: tuple[str, ...] = ()
     spec_note: str = ""
+
+    @property
+    def aperture_assumed(self) -> bool:
+        return "aperture" in self.assumed
 
     @property
     def integrated(self) -> bool:
@@ -84,17 +89,24 @@ TELESCOPES: dict[str, Telescope] = {
                   fixed_camera="imx662", builtin_filters=("none", "cls", "duoband-wide"),
                   max_sub_s=90,
                   spec_note="LP, nebula and Ha/Hb/OIII filters; the dual-band is what is modelled"),
-        # The wide-angle module. Its spec sheet repeats the telephoto's "30 mm
-        # aperture", which cannot be the entrance pupil: 30 mm at 6.7 mm focal
-        # length is f/0.22, and no lens in air can go below f/0.5. Modelled at
-        # f/2.4, ordinary for a module this size — so it collects about 1% of
-        # the light the telephoto does, and every number here moves with the
-        # square of that assumption. Replace it with --aperture the moment you
-        # have the real figure.
-        Telescope("dwarf-mini-wide", "DwarfLab DWARF mini (wide-angle)", 2.8, 6.7, "smart",
+        # The wide-angle modules. The DWARF 3's optics are published (3.4 mm at
+        # 6.7 mm, f/2.0); its sensor is not confirmed here, so the pixel scale
+        # is inferred from the mini's wide module.
+        #
+        # The mini's own spec sheet repeats the telephoto's "30 mm aperture",
+        # which cannot be the entrance pupil: 30 mm at 6.7 mm focal length is
+        # f/0.22, and no lens in air can go below f/0.5. Since the mini's wide
+        # lens has the same 6.7 mm focal length as the DWARF 3's, that
+        # instrument's published 3.4 mm is a far better basis than a generic
+        # guess — but it is still an inference, and stays flagged as one.
+        Telescope("dwarf3-wide", "DwarfLab DWARF 3 (wide-angle)", 3.4, 6.7, "smart",
+                  fixed_camera="os02k10", builtin_filters=("none",),
+                  assumed=("sensor",),
+                  spec_note="optics published; sensor taken from the mini's wide module"),
+        Telescope("dwarf-mini-wide", "DwarfLab DWARF mini (wide-angle)", 3.4, 6.7, "smart",
                   fixed_camera="os02k10", builtin_filters=("none",), max_sub_s=90,
-                  aperture_assumed=True,
-                  spec_note="aperture assumed f/2.4; the filters sit in front of the telephoto"),
+                  assumed=("aperture",),
+                  spec_note="aperture taken from the DWARF 3's published wide module (f/2.0)"),
         Telescope("equinox2", "Unistellar eQuinox 2", 114, 450, "smart",
                   fixed_camera="imx347", builtin_filters=("none",),
                   spec_note="no filter slot: narrowband is not available on this instrument"),

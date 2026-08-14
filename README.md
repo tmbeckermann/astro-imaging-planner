@@ -178,14 +178,18 @@ usable pixel count is cross-checked against each maker's quoted field of view,
 which a test pins (Seestar 1.29 x 0.73 deg, DWARF II 3.0 x 1.7, DWARF 3 2.9 x
 1.6, DWARF mini 2.1 x 1.2, eQuinox 2 45' x 34').
 
-The DWARF mini's wide-angle module is a separate entry (`dwarf-mini-wide`),
-because it is a different lens on a different sensor with no filter in front of
-it. Its aperture is **assumed**, and flagged everywhere it appears: the spec
-sheet repeats the telephoto's "30 mm", which at 6.7 mm focal length would be
-f/0.22 — below the f/0.5 limit for any lens in air. It is modelled at f/2.4,
-ordinary for a module that size, which makes it collect about 1% of the light
-the telephoto does. Every sky rate and sub length scales with the square of
-that guess, so pass `--aperture` once you have the real figure.
+The wide-angle modules are separate entries (`dwarf3-wide`,
+`dwarf-mini-wide`), because each is a different lens on a different sensor with
+no filter in front of it. The DWARF 3's wide optics are published — 3.4 mm at
+6.7 mm, f/2.0 — and the mini's are inferred from them, since the mini's own
+spec sheet repeats the telephoto's "30 mm", which at 6.7 mm focal length would
+be f/0.22, below the f/0.5 limit for any lens in air.
+
+Anything inferred is listed in the entry's `assumed` field and shown wherever
+the scope is described (`aperture ASSUMED`, `sensor ASSUMED`). That matters
+because sky rate scales with aperture squared *and* pixel scale squared: a
+wrong inference in either does not look wrong in the output, it just is.
+Override with `--aperture` / `--fl` / `--camera`.
 
 Where an instrument states a longest exposure it will take, that ceiling is
 modelled: the DWARF mini stops at 90 s, and under a dark sky its dual-band
