@@ -162,12 +162,17 @@ def test_a_fifteen_second_ceiling_bites_at_every_site_worth_driving_to():
     assert advise("dwarf2", line_emitter=False, bortle=9).scores["visible"].recommended_sub_s == 5
 
 
-def test_the_mini_also_carries_a_light_pollution_filter():
-    # Its filter set is richer than the other DWARFs': LP as well as the
-    # dual-band, which matters under a city sky.
-    mini = get_telescope("dwarf-mini")
-    assert "cls" in mini.builtin_filters
-    assert "duoband-wide" in mini.builtin_filters
+def test_an_astro_filter_position_is_not_assumed_to_reject_light_pollution():
+    # The DWARFs list a filter called "Astro". Whether it merely cuts UV/IR or
+    # also notches light pollution is not stated, and the two differ by ~1.4x in
+    # SNR under a city sky. Modelled as the plain UV/IR cut: understating a
+    # filter costs you a target, overstating it costs you the night.
+    for key in ("dwarf-mini", "dwarf3"):
+        assert "cls" not in get_telescope(key).builtin_filters, key
+        assert get_telescope(key).builtin_filters == ("none", "duoband-wide"), key
+    # The wide lenses see the astro position but not the dual-band.
+    for key in ("dwarf3-wide", "dwarf-mini-wide"):
+        assert get_telescope(key).builtin_filters == ("none",), key
 
 
 def test_the_wide_angle_module_is_a_different_instrument():
@@ -180,15 +185,17 @@ def test_the_wide_angle_module_is_a_different_instrument():
     assert wide.max_sub_s == tele.max_sub_s == 90
 
 
-def test_the_wide_angle_aperture_is_flagged_as_an_assumption():
-    # The mini's spec sheet repeats the telephoto's 30 mm, which at 6.7 mm
-    # focal length would be f/0.22 — below the f/0.5 limit for a lens in air.
-    # The DWARF 3's published wide module (3.4 mm at the same 6.7 mm) is the
-    # basis instead, but it is still an inference for the mini.
+def test_every_optical_figure_is_now_published():
+    # The mini's full table gives 3.4 mm on the wide lens, which is what was
+    # inferred from the DWARF 3's identical module. Nothing optical is left
+    # guessed: what remains unstated is which of its two 2.9 um sensors sits
+    # behind which lens, and that moves read noise and QE, not geometry.
     mini_wide = get_telescope("dwarf-mini-wide")
-    assert mini_wide.assumed == ("aperture",) and mini_wide.aperture_assumed
+    assert (mini_wide.aperture_mm, mini_wide.focal_length_mm) == (3.4, 6.7)
     assert mini_wide.f_ratio == pytest.approx(2.0, abs=0.05)
-    assert 6.7 / 30 < 0.5                      # the spec-sheet reading is impossible
+    assert not mini_wide.aperture_assumed
+    for key in ("dwarf-mini", "dwarf-mini-wide"):
+        assert get_telescope(key).assumed == ("sensor pairing",), key
 
     # The DWARF 3's wide module is fully published now — optics from the
     # comparison table, sensor geometry from its 45 mm equivalent.
@@ -197,7 +204,7 @@ def test_the_wide_angle_aperture_is_flagged_as_an_assumption():
     assert (d3_wide.aperture_mm, d3_wide.focal_length_mm) == (3.4, 6.7)
 
     # Published entries claim nothing.
-    for key in ("dwarf2", "dwarf3", "dwarf-mini", "seestar50", "equinox2"):
+    for key in ("dwarf2", "dwarf3", "seestar50", "equinox2"):
         assert get_telescope(key).assumed == (), key
 
 
@@ -209,7 +216,7 @@ def test_the_dwarf3_telephoto_matches_its_published_figures():
     assert (scope.aperture_mm, scope.focal_length_mm) == (35.0, 150.0)
     assert scope.f_ratio == pytest.approx(4.29, abs=0.01)
     assert (cam.width_px, cam.height_px, cam.pixel_um) == (3840, 2160, 2.00)
-    assert scope.builtin_filters == ("none", "cls", "duoband-wide")
+    assert scope.builtin_filters == ("none", "duoband-wide")
 
 
 def test_a_wide_field_ranks_big_targets_and_buries_small_ones():
@@ -282,3 +289,32 @@ def test_an_unknown_focal_length_does_not_move_the_sub_length():
     # ...and the surviving wide entries are both f/2.0.
     for key in ("dwarf3-wide", "dwarf-mini-wide"):
         assert get_telescope(key).f_ratio == pytest.approx(2.0, abs=0.05), key
+
+
+def test_the_minis_published_diagonals_and_equivalents_reproduce():
+    # Its table gives two independent cross-checks per lens: a diagonal field
+    # of view and a 35 mm-equivalent focal length. Both follow from 1920 x 1080
+    # at 2.9 um, and both would break if the pixel pitch or count were wrong.
+    import math
+
+    for key, equiv, diag_deg in [("dwarf-mini", 1016, 2.45), ("dwarf-mini-wide", 45, 50.59)]:
+        scope, cam = get_telescope(key), get_camera(get_telescope(key).fixed_camera)
+        diag_mm = math.hypot(cam.width_mm, cam.height_mm)
+        got_equiv = scope.focal_length_mm * 43.267 / diag_mm
+        got_diag = 2 * math.degrees(math.atan(diag_mm / 2 / scope.focal_length_mm))
+        assert got_equiv == pytest.approx(equiv, rel=0.02), f"{key}: {got_equiv:.0f} mm equivalent"
+        assert got_diag == pytest.approx(diag_deg, rel=0.02), f"{key}: {got_diag:.2f} deg diagonal"
+
+
+def test_the_minis_stated_sensor_size_contradicts_its_own_table():
+    # Guarding a documented spec-sheet error: the mini's table also prints
+    # "Sensor Size 7.712 x 4.352 mm", which is a 3856 x 2176 array at 2.0 um —
+    # the DWARF 3's sensor, not this one. Taking it at face value would give a
+    # 3.4-degree telephoto field against the 2.45 degrees the same table
+    # publishes, so the resolution and pixel size win.
+    import math
+
+    cam = get_camera(get_telescope("dwarf-mini").fixed_camera)
+    assert (cam.width_mm, cam.height_mm) == pytest.approx((5.568, 3.132), rel=1e-3)
+    bogus = 2 * math.degrees(math.atan(math.hypot(7.712, 4.352) / 2 / 150))
+    assert bogus > 3.3                      # what the stated size would imply

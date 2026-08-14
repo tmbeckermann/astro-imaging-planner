@@ -196,10 +196,21 @@ Pixel counts are the *delivered image*, not the sensor's array — an IMX415 is
 an independent check on pixel pitch and count together.
 
 Anything inferred is listed in the entry's `assumed` field and shown wherever
-the scope is described (`aperture ASSUMED`, `sensor ASSUMED`). That matters
-because sky rate scales with aperture squared *and* pixel scale squared: a
-wrong inference in either does not look wrong in the output, it just is.
-Override with `--aperture` / `--fl` / `--camera`.
+the scope is described, naming the flag that fixes it. That matters because
+sky rate scales with aperture squared *and* pixel scale squared: a wrong
+inference in either does not look wrong in the output, it just is.
+
+Every optical figure in the database is now published. What remains flagged is
+the DWARF mini's *sensor pairing* — it ships a Sony IMX662 and an OmniVision
+OS02K10, both 1920 x 1080 on 2.9 um pixels, and does not say which lens
+carries which. The geometry is settled either way; only read noise and QE turn
+on it (`--read-noise` / `--qe`).
+
+Two filter positions are read conservatively. The DWARFs list one called
+"Astro", and whether it merely cuts UV/IR or also notches light pollution is
+not stated — the two differ by about 1.4x in SNR under a city sky. It is
+modelled as the plain UV/IR cut, because understating a filter costs you a
+target while overstating it costs you the night.
 
 Where an instrument states a longest exposure it will take, that ceiling is
 modelled: the DWARF mini stops at 90 s, and under a dark sky its dual-band

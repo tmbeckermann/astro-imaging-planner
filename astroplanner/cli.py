@@ -193,8 +193,11 @@ def cmd_plan(args) -> int:
             print(f"     Longest sub it will take: {scope.max_sub_s:.0f}s")
         if scope.assumed:
             what = " and ".join(scope.assumed)
-            print(f"     The {what} here is INFERRED, not published: every sky rate and sub "
-                  f"length below depends on it. Override with --aperture / --fl.")
+            fix = {"aperture": "--aperture", "focal length": "--fl",
+                   "sensor": "--camera", "sensor pairing": "--read-noise / --qe"}
+            how = ", ".join(sorted({fix.get(a, "--aperture / --fl") for a in scope.assumed}))
+            print(f"     The {what} here is INFERRED, not published, and the numbers below "
+                  f"depend on it. Override with {how}.")
     print()
     if not ranked:
         print(f"No catalog targets rise above {args.min_alt:.0f} deg during darkness tonight.")

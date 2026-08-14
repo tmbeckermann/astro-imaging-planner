@@ -84,13 +84,15 @@ TELESCOPES: dict[str, Telescope] = {
                   spec_note="built-in filters are VIS and IR-pass — no dual-band. If you bought "
                             "the magnetic one, add it with --filters none,duoband-wide"),
         Telescope("dwarf3", "DwarfLab DWARF 3 (telephoto)", 35, 150, "smart",
-                  fixed_camera="imx678", builtin_filters=("none", "cls", "duoband-wide"),
+                  fixed_camera="imx678", builtin_filters=("none", "duoband-wide"),
                   max_sub_s=60,
-                  spec_note="built-in VIS, astro and dual-band filters; 60 s in EQ mode"),
+                  spec_note="VIS, astro and dual-band positions; astro is modelled as a plain "
+                            "UV/IR cut. 60 s in EQ mode"),
         Telescope("dwarf-mini", "DwarfLab DWARF mini (telephoto)", 30, 150, "smart",
-                  fixed_camera="imx662", builtin_filters=("none", "cls", "duoband-wide"),
-                  max_sub_s=90,
-                  spec_note="LP, nebula and Ha/Hb/OIII filters; the dual-band is what is modelled"),
+                  fixed_camera="imx662", builtin_filters=("none", "duoband-wide"),
+                  max_sub_s=90, assumed=("sensor pairing",),
+                  spec_note="filter positions are dark shutter, astro and dual-band; the astro "
+                            "one is modelled as a plain UV/IR cut, not a light-pollution filter"),
         # The wide-angle modules. The DWARF 3's optics are published (3.4 mm at
         # 6.7 mm, f/2.0); its sensor is not confirmed here, so the pixel scale
         # is inferred from the mini's wide module.
@@ -107,13 +109,14 @@ TELESCOPES: dict[str, Telescope] = {
         # dwarf2-wide entry: you cannot plan a session on a lens the instrument
         # will not expose through.
         Telescope("dwarf3-wide", "DwarfLab DWARF 3 (wide-angle)", 3.4, 6.7, "smart",
-                  fixed_camera="imx678-wide", builtin_filters=("none", "cls"),
+                  fixed_camera="imx678-wide", builtin_filters=("none",),
                   max_sub_s=60,
-                  spec_note="astro filter is shared with the telephoto; no dual-band on this lens"),
+                  spec_note="the astro filter reaches this lens; the dual-band does not"),
         Telescope("dwarf-mini-wide", "DwarfLab DWARF mini (wide-angle)", 3.4, 6.7, "smart",
                   fixed_camera="os02k10", builtin_filters=("none",), max_sub_s=90,
-                  assumed=("aperture",),
-                  spec_note="aperture taken from the DWARF 3's published wide module (f/2.0)"),
+                  assumed=("sensor pairing",),
+                  spec_note="both sensors are 2.9 um, so only read noise and QE turn on which "
+                            "lens carries which"),
         Telescope("equinox2", "Unistellar eQuinox 2", 114, 450, "smart",
                   fixed_camera="imx347", builtin_filters=("none",),
                   spec_note="no filter slot: narrowband is not available on this instrument"),

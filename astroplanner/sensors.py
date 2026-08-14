@@ -93,6 +93,10 @@ CAMERAS: dict[str, Camera] = {
         Camera("imx678-wide", "DWARF 3 wide sensor (IMX678, 1080p)", 2.92, 1920, 1080, 1.0, "built-in gain", 0.85, 0.5, True),
         Camera("imx347", "Unistellar eQuinox 2 sensor (IMX347)", 2.40, 2454, 1854, 2.0, "built-in gain", 0.75, 0.5, True),
         Camera("imx662", "DWARF mini sensor (IMX662)", 2.90, 1920, 1080, 1.0, "built-in gain", 0.85, 0.5, True),
+        # The mini ships a Sony IMX662 and an OmniVision OS02K10, both 1920 x
+        # 1080 on 2.9 um pixels, but does not say which lens carries which. The
+        # geometry is therefore settled either way; only read noise and QE turn
+        # on the pairing, so the entries flag it rather than the sensor.
         Camera("os02k10", "DWARF mini wide sensor (OS02K10)", 2.90, 1920, 1080, 2.5, "built-in gain", 0.65, 0.5, True),
         Camera("dslr", "Stock DSLR/mirrorless (APS-C)", 3.90, 6000, 4000, 2.5, "ISO 800-1600", 0.55, 0.5, True,
                ha_transmission=0.20, builtin_ir_cut=True),
