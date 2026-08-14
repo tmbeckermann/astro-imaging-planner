@@ -27,8 +27,8 @@ A command-line astrophotography assistant:
   (`--place "cherry springs"`), paste coordinates or a maps link, and pick a
   telescope by key (`--scope gt71 --corrector "0.8x reducer"`) instead of
   typing focal lengths.
-- **Smart telescopes as what they are** — a Seestar S50, DWARF II, DWARF 3 or
-  Unistellar eQuinox 2 is not a tube you choose a camera for: the sensor is
+- **Smart telescopes as what they are** — a Seestar S50, DWARF II, DWARF 3,
+  DWARF mini or Unistellar eQuinox 2 is not a tube you choose a camera for: the sensor is
   bonded in and the filters are whatever the maker fitted. Pick one and the
   camera follows, and the advice is limited to filters that instrument
   physically has. An eQuinox 2 has no filter slot, so it is told to shoot
@@ -176,7 +176,13 @@ integration time. Use `--filters` to constrain it to what you'll really use.
 Aperture and focal length are the makers' published figures; the sensor's
 usable pixel count is cross-checked against each maker's quoted field of view,
 which a test pins (Seestar 1.29 x 0.73 deg, DWARF II 3.0 x 1.7, DWARF 3 2.9 x
-1.6, eQuinox 2 45' x 34'). Read noise and QE are nominal for the sensor rather
+1.6, DWARF mini 2.1 x 1.2, eQuinox 2 45' x 34').
+
+Where an instrument states a longest exposure it will take, that ceiling is
+modelled: the DWARF mini stops at 90 s, and under a dark sky its dual-band
+optimum runs past that, so the plan says you are read-noise limited and should
+shoot more subs rather than longer ones. An unknown ceiling stays unknown
+rather than being guessed at as "unlimited". Read noise and QE are nominal for the sensor rather
 than measured for your unit — override with `--read-noise` / `--qe`.
 
 Their built-in dual-band filters are modelled as *wide* (~2x20 nm), not as the

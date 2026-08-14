@@ -46,6 +46,11 @@ def shots(outdir: pathlib.Path):
     def act_equinox(pg):
         pg.select_option("#scopeInput", "equinox2")
 
+    def act_mini(pg):
+        pg.select_option("#scopeInput", "dwarf-mini")
+        pg.fill("#placeInput", "cherry springs")
+        pg.keyboard.press("Enter")
+
     def act_paste_coords(pg):
         pg.fill("#placeInput", "36.0289, -86.6656")
         pg.keyboard.press("Enter")
@@ -63,6 +68,7 @@ def shots(outdir: pathlib.Path):
         ("dark", 1280, 1500, "page-dark-site", act_darksite),
         ("dark", 1280, 1500, "page-seestar", act_seestar),
         ("dark", 1280, 1500, "page-equinox2", act_equinox),
+        ("dark", 1280, 1200, "page-dwarf-mini", act_mini),
         ("dark", 1280, 900, "page-paste-coords", act_paste_coords),
         ("dark", 1280, 900, "page-utc-metric", act_utc_metric),
         ("dark", 1280, 900, "page-pacific", act_pacific),

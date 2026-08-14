@@ -74,6 +74,7 @@ for (const ref of reference) {
     targets,
     filters,
     allowedFilterKeys: ref.allowed_filters ? new Set(ref.allowed_filters) : null,
+    maxSubS: ref.max_sub_s ?? 1200,
   });
   const byId = Object.fromEntries(ranked.map((r) => [r.target.id, r]));
 
@@ -127,6 +128,9 @@ for (const ref of reference) {
     // tightly, and only demand the rung match when the optimum is not sitting
     // on the boundary.
     const mode = got.modeAdvice.scores[got.modeAdvice.recommended];
+    if (mode.subCapped !== rt.sub_capped) {
+      fail(`${ref.label}/${rt.id}: sub-capped flag ${mode.subCapped} != ${rt.sub_capped}`);
+    }
     const exact = optimalSub(camera.read_noise_e, mode.skyEPerS).optimal;
     const exactRel = (exact - rt.sub_exact_s) / rt.sub_exact_s;
     track("subExact", exactRel);

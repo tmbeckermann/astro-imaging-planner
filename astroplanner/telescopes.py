@@ -29,6 +29,11 @@ class Telescope:
     # can act on and advice that assumes a filter drawer you do not have.
     fixed_camera: str | None = None
     builtin_filters: tuple[str, ...] | None = None
+    # Longest sub the instrument will actually take. A sealed instrument can
+    # have a ceiling below its own optimum, in which case the honest advice is
+    # "you cannot get there, shoot more subs" rather than a number you cannot
+    # dial in. None means no known limit, which is not the same as unlimited.
+    max_sub_s: float | None = None
     spec_note: str = ""
 
     @property
@@ -71,6 +76,10 @@ TELESCOPES: dict[str, Telescope] = {
         Telescope("dwarf3", "DwarfLab DWARF 3 (telephoto)", 35, 150, "smart",
                   fixed_camera="imx678", builtin_filters=("none", "duoband-wide"),
                   spec_note="switchable built-in VIS and dual-band filters"),
+        Telescope("dwarf-mini", "DwarfLab DWARF mini (telephoto)", 30, 150, "smart",
+                  fixed_camera="imx662", builtin_filters=("none", "cls", "duoband-wide"),
+                  max_sub_s=90,
+                  spec_note="LP, nebula and Ha/Hb/OIII filters; the dual-band is what is modelled"),
         Telescope("equinox2", "Unistellar eQuinox 2", 114, 450, "smart",
                   fixed_camera="imx347", builtin_filters=("none",),
                   spec_note="no filter slot: narrowband is not available on this instrument"),

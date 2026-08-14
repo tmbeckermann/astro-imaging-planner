@@ -64,6 +64,7 @@ class ModeScore:
     sky_e_per_s: float
     recommended_sub_s: int
     note: str = ""
+    sub_capped: bool = False   # the instrument cannot expose as long as it wants to
 
 
 @dataclass(frozen=True)
@@ -84,6 +85,7 @@ def recommend_mode(
     rate_for,
     reference_snr: float,
     allowed_filter_keys: set[str] | None = None,
+    max_sub_s: float = 1200.0,
 ) -> ModeAdvice:
     """Pick between full spectrum, visible (UV/IR cut), and duo-band.
 
@@ -115,6 +117,7 @@ def recommend_mode(
         available = mode_available(mode, camera) and allowed
         rate = rate_for(filt)
         snr = snr_quality(filt, line_emitter, rate, camera)
+        exposure = optimal_sub_exposure(camera.read_noise_e, rate, max_sub_s=max_sub_s)
         note = ""
         if not mode_available(mode, camera):
             note = "needs a camera without a built-in IR-cut filter"
@@ -127,8 +130,9 @@ def recommend_mode(
             available=available,
             sky_quality=float(snr / reference_snr),
             sky_e_per_s=float(rate),
-            recommended_sub_s=optimal_sub_exposure(camera.read_noise_e, rate).recommended_s,
+            recommended_sub_s=exposure.recommended_s,
             note=note,
+            sub_capped=exposure.optimal_s > max_sub_s,
         )
 
     usable = {k: v for k, v in scores.items() if v.available}
@@ -241,6 +245,7 @@ def rank_targets(
     available_filters: list[str] | None = None,
     min_alt_deg: float = MIN_ALT_DEG,
     targets: list[Target] | None = None,
+    max_sub_s: float = 1200.0,
 ) -> list[RankedTarget]:
     targets = targets if targets is not None else load_targets()
     filters = [FILTERS[k] for k in (available_filters or list(FILTERS))]
@@ -304,6 +309,7 @@ def rank_targets(
             moonlit_rate,
             reference,
             {f.key for f in filters} if available_filters else None,
+            max_sub_s,
         )
         # Rank on what you would actually shoot — the recommended mode — not on
         # the SNR-optimal filter in the abstract. Otherwise a one-shot-colour
@@ -331,7 +337,7 @@ def rank_targets(
             ctx.times[idx[-1]].strftime("%H:%M"),
         )
         window_idx = (int(idx[0]), int(idx[-1]))
-        exp = optimal_sub_exposure(camera.read_noise_e, mean_rate)
+        exp = optimal_sub_exposure(camera.read_noise_e, mean_rate, max_sub_s=max_sub_s)
 
         ranked.append(
             RankedTarget(

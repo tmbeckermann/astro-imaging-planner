@@ -33,6 +33,7 @@ CASES = [
     ("smart-seestar",      "2026-08-11",  36.16,  -86.78, 8, None,        "seestar50",  None),
     ("smart-dwarf3",       "2026-09-15",  36.16,  -86.78, 5, None,        "dwarf3",     None),
     ("smart-equinox2",     "2026-10-20",  41.66,  -77.82, 2, None,        "equinox2",   None),
+    ("smart-dwarf-mini",   "2026-08-11",  41.66,  -77.82, 2, None,        "dwarf-mini", None),
 ]
 
 
@@ -45,11 +46,13 @@ def run(case) -> dict:
     ranked = rank_targets(
         ctx, cam, fl, aperture, bortle, targets=load_targets(),
         available_filters=list(scope.builtin_filters) if scope.builtin_filters else None,
+        max_sub_s=scope.max_sub_s or 1200.0,
     )
     return {
         "label": label, "date": date, "lat": lat, "lon": lon, "bortle": bortle,
         "camera": cam.key, "scope": scope_key, "corrector": corrector,
         "allowed_filters": list(scope.builtin_filters) if scope.builtin_filters else None,
+        "max_sub_s": scope.max_sub_s,
         "focal_length_mm": fl, "aperture_mm": aperture,
         "night": {
             "darkness_kind": ctx.darkness_kind,
@@ -76,6 +79,7 @@ def run(case) -> dict:
                 "sub_s": r.mode_advice.best.recommended_sub_s,
                 "sub_exact_s": optimal_sub_exposure(
                     cam.read_noise_e, r.mode_advice.best.sky_e_per_s).optimal_s,
+                "sub_capped": r.mode_advice.best.sub_capped,
                 "mode_sky_rate": r.mode_advice.best.sky_e_per_s,
                 "mode_quality": {k: v.sky_quality for k, v in r.mode_advice.scores.items()},
                 "mode_available": {k: v.available for k, v in r.mode_advice.scores.items()},

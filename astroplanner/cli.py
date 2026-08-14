@@ -164,6 +164,7 @@ def cmd_plan(args) -> int:
         available_filters=_resolve_filters(args, scope),
         min_alt_deg=args.min_alt,
         targets=subset,
+        max_sub_s=(scope.max_sub_s if scope and scope.max_sub_s else 1200.0),
     )
     fov_w, fov_h = cam.fov_arcmin(args.fl)
     zone = get_zone(args.tz)
@@ -186,6 +187,8 @@ def cmd_plan(args) -> int:
         fitted = ", ".join(FILTERS[k].name for k in (scope.builtin_filters or ()))
         print(f"     Integrated instrument: sensor and filters are fixed — {fitted}"
               f"{'. ' + scope.spec_note if scope.spec_note else ''}")
+        if scope.max_sub_s:
+            print(f"     Longest sub it will take: {scope.max_sub_s:.0f}s")
     print()
     if not ranked:
         print(f"No catalog targets rise above {args.min_alt:.0f} deg during darkness tonight.")
@@ -213,6 +216,9 @@ def cmd_plan(args) -> int:
           f"{advice.best.label}, {advice.best.recommended_sub_s}s subs "
           f"(sky {advice.best.sky_e_per_s:.2f} e-/px/s).")
     print(f"  Why: {advice.reason}.")
+    if advice.best.sub_capped:
+        print(f"  Its optimum is longer than this instrument's {scope.max_sub_s:.0f}s ceiling, so "
+              f"you are read-noise limited: shoot more subs rather than longer ones.")
     if advice.caution:
         print(f"  Note: {advice.caution}.")
     print("  Mode comparison (SkyQual, 1.00 = visible train under a moonless sky here):")
@@ -302,7 +308,8 @@ def cmd_scopes(_args) -> int:
         opts = f"  [{'; '.join(extras)}]" if extras else ""
         if t.integrated:
             fitted = "+".join(t.builtin_filters or ())
-            opts = f"  [sensor {t.fixed_camera}; filters {fitted}]"
+            cap = f"; max {t.max_sub_s:.0f}s" if t.max_sub_s else ""
+            opts = f"  [sensor {t.fixed_camera}; filters {fitted}{cap}]"
         print(f"{key:<12} {t.name:<36} {t.aperture_mm:>5.0f} mm  {t.focal_length_mm:>6.0f} mm "
               f"f/{t.f_ratio:<4.1f} {t.kind}{opts}")
     return 0

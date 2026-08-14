@@ -31,7 +31,7 @@ astro-imaging-planner/
 │  ├─ units.py                timezone and imperial/metric presentation
 │  ├─ catalog.py, analyze.py, sessionlog.py, xisf_reader.py
 │  └─ data/                   targets.csv (58 targets), places.csv (99 places)
-├─ tests/                  ← 90 tests, pytest
+├─ tests/                  ← 93 tests, pytest
 ├─ web/
 │  ├─ webcore.js              the whole model ported to JavaScript
 │  ├─ page.html               page template (data + core are inlined at build)
@@ -50,7 +50,7 @@ astro-imaging-planner/
 cd astro-imaging-planner
 python3 -m venv .venv && . .venv/bin/activate     # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"                           # numpy + astropy, ~1 min
-pytest                                            # 90 passing
+pytest                                            # 93 passing
 
 astroplanner plan --date 2026-08-11 --place nashville --camera asi533mc --scope gt71
 astroplanner scopes          # what telescopes it knows
@@ -106,7 +106,7 @@ Paste this to orient it:
 >   eight sites/dates/rigs. If you change the model in Python, re-run
 >   `python web/export_data.py && python web/dump_reference.py && node
 >   web/validate.mjs` and fix any drift before you call the change done.
-> - Run `pytest` before and after. 90 tests currently pass.
+> - Run `pytest` before and after. 93 tests currently pass.
 > - The sky model assumes a flat spectrum. Several results depend on that
 >   (the moon's fractional cost cancelling across filters, narrowband's
 >   advantage being site-independent). Don't "fix" those — they're
@@ -151,9 +151,9 @@ docstring. Skim these before changing anything:
 
 ## 5. State of things
 
-**Working and verified:** 90 tests pass. The JS port matches the Python engine
-on ranking order, recommended mode, sub length and SkyQual for all 394 ranked
-targets across eleven sites, dates and rigs (including three smart telescopes); ephemeris agrees with astropy to
+**Working and verified:** 93 tests pass. The JS port matches the Python engine
+on ranking order, recommended mode, sub length and SkyQual for all 430 ranked
+targets across twelve sites, dates and rigs (including four smart telescopes); ephemeris agrees with astropy to
 0.15° (moon) and 0.008° (targets). The page renders clean in Chromium, both
 themes, no console errors, no horizontal overflow.
 

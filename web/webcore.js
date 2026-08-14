@@ -304,13 +304,15 @@ export function modeLabel(mode, filter) {
   return MODE_LABELS[mode];
 }
 
-export function recommendMode(lineEmitter, camera, rateFor, referenceSnr, filters, allowedKeys) {
+export function recommendMode(lineEmitter, camera, rateFor, referenceSnr, filters, allowedKeys,
+                              maxSubS = 1200) {
   const scores = {};
   for (const mode of MODE_KEYS) {
     const filter = modeFilter(mode, camera, filters, allowedKeys);
     const allowedByBag = !allowedKeys || allowedKeys.has(filter.key);
     const hardwareOk = mode !== "full" || !camera.builtin_ir_cut;
     const rate = rateFor(filter);
+    const exposure = optimalSub(camera.read_noise_e, rate, 5, maxSubS);
     let note = "";
     if (!hardwareOk) note = "needs a camera without a built-in IR-cut filter";
     else if (!allowedByBag) note = "not fitted to this rig";
@@ -321,7 +323,8 @@ export function recommendMode(lineEmitter, camera, rateFor, referenceSnr, filter
       available: hardwareOk && allowedByBag,
       skyQuality: snrQuality(filter, lineEmitter, rate, camera) / referenceSnr,
       skyEPerS: rate,
-      recommendedSubS: optimalSub(camera.read_noise_e, rate).recommended,
+      recommendedSubS: exposure.recommended,
+      subCapped: exposure.optimal > maxSubS,
       note,
     };
   }
@@ -383,7 +386,7 @@ export function fovFitScore(sizeArcmin, fov) {
 export function rankTargets(night, opts) {
   const {
     camera, focalLengthMm, apertureMm, bortle, targets, filters,
-    minAltDeg = MIN_ALT_DEG, allowedFilterKeys = null,
+    minAltDeg = MIN_ALT_DEG, allowedFilterKeys = null, maxSubS = 1200,
   } = opts;
   const darkSqm = BORTLE_SQM[bortle];
   const scale = pixelScale(camera.pixel_um, focalLengthMm);
@@ -429,7 +432,7 @@ export function rankTargets(night, opts) {
     const moonPenalty = Math.min(Math.max(1 - moonlitBest.q / darkBest.q, 0), 0.95);
 
     const advice = recommendMode(
-      t.line_emitter, camera, moonlitRate, reference, filters, allowedFilterKeys
+      t.line_emitter, camera, moonlitRate, reference, filters, allowedFilterKeys, maxSubS
     );
     const mode = advice.scores[advice.recommended];
     const skyQuality = mode.skyQuality;
@@ -454,7 +457,7 @@ export function rankTargets(night, opts) {
       // while the UTC strings stay comparable against the Python engine.
       windowMs: [night.times[usableIdx[0]], night.times[usableIdx[usableIdx.length - 1]]],
       suggestedFilter: moonlitBest.f,
-      exposure: optimalSub(camera.read_noise_e, moonlitRate(moonlitBest.f)),
+      exposure: optimalSub(camera.read_noise_e, moonlitRate(moonlitBest.f), 5, maxSubS),
       darkSkyRate: darkRate(moonlitBest.f),
       modeAdvice: advice,
       altTrack: alt,

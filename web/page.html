@@ -1158,7 +1158,8 @@ function render() {
                              : "no built-in IR cut");
   $("scopeHint").innerHTML = rig.scope.builtin_filters
     ? `${fmtAperture(rig.scope.aperture_mm)} &middot; fitted: ` +
-      rig.scope.builtin_filters.map((k) => DATA.filters[k].name.split(" (")[0]).join(", ")
+      rig.scope.builtin_filters.map((k) => DATA.filters[k].name.split(" (")[0]).join(", ") +
+      (rig.scope.max_sub_s ? ` &middot; max ${rig.scope.max_sub_s}s subs` : "")
     : `${fmtAperture(rig.scope.aperture_mm)} aperture &middot; ${scale.toFixed(2)}&Prime;/px`;
   const basis = { measured: "measured at this site",
                   typical: "typical for a city this size — check it",
@@ -1230,6 +1231,7 @@ function render() {
     bortle: state.bortle, targets: DATA.targets, filters: DATA.filters,
     allowedFilterKeys: rig.scope.builtin_filters
       ? new Set(rig.scope.builtin_filters) : null,
+    maxSubS: rig.scope.max_sub_s ?? 1200,
   });
 
   if (!ranked.length) {
@@ -1296,6 +1298,10 @@ function render() {
          <div class="modehead"><span>Imaging mode</span><span>SkyQual &middot; sub</span></div>
          ${modeRows}
          <p class="why">${advice.reason.charAt(0).toUpperCase() + advice.reason.slice(1)}.
+            ${advice.scores[advice.recommended].subCapped
+              ? `<b>Capped:</b> its optimum is longer than this instrument's ` +
+                `${rig.scope.max_sub_s}s ceiling, so you are read-noise limited — ` +
+                `shoot more subs, not longer ones.` : ""}
             ${advice.caution ? "<b>Note:</b> " + advice.caution + "." : ""}</p>
        </div>`;
     list.appendChild(li);

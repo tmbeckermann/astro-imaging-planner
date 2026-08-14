@@ -8,7 +8,7 @@ from astroplanner.sensors import get_camera
 from astroplanner.sky import sky_electron_rate, sqm_from_bortle
 from astroplanner.telescopes import TELESCOPES, get_telescope
 
-SMART = ["seestar50", "dwarf2", "dwarf3", "equinox2"]
+SMART = ["seestar50", "dwarf2", "dwarf3", "dwarf-mini", "equinox2"]
 
 
 def advise(scope_key, line_emitter, bortle=6):
@@ -19,13 +19,15 @@ def advise(scope_key, line_emitter, bortle=6):
     scale = cam.pixel_scale(fl)
     rate = lambda f: sky_electron_rate(sqm, aperture, scale, cam.qe, f)
     reference = snr_quality(FILTERS["none"], False, rate(FILTERS["none"]), cam)
-    return recommend_mode(line_emitter, cam, rate, reference, set(scope.builtin_filters))
+    return recommend_mode(line_emitter, cam, rate, reference, set(scope.builtin_filters),
+                          max_sub_s=scope.max_sub_s or 1200.0)
 
 
 def test_the_smart_scopes_are_all_there():
     for key in SMART:
         scope = get_telescope(key)
-        assert scope.integrated and scope.fixed_camera in {"imx462", "imx415", "imx678", "imx347"}
+        assert scope.integrated
+        assert scope.fixed_camera in {"imx462", "imx415", "imx678", "imx347", "imx662"}
         assert scope.builtin_filters, key
         assert scope.kind == "smart"
 
@@ -40,6 +42,7 @@ def test_published_fields_of_view_reproduce():
         "dwarf2": (3.0, 1.7),
         "dwarf3": (2.9, 1.6),
         "equinox2": (0.75, 0.57),    # 45' x 34'
+        "dwarf-mini": (2.13, 1.20),  # 30 mm f/5, IMX662 at 1920x1080
     }
     for key, (want_w, want_h) in expected_deg.items():
         scope = get_telescope(key)
@@ -61,7 +64,7 @@ def test_an_instrument_without_a_filter_slot_cannot_be_told_to_use_one():
 
 
 def test_a_built_in_dual_band_is_used_when_there_is_one():
-    for key in ("seestar50", "dwarf2", "dwarf3"):
+    for key in ("seestar50", "dwarf2", "dwarf3", "dwarf-mini"):
         a = advise(key, line_emitter=True)
         assert a.recommended == "line", key
         assert a.scores["line"].filter_key == "duoband-wide"
@@ -107,3 +110,36 @@ def test_ordinary_telescopes_are_not_integrated():
             continue
         assert not scope.integrated, key
         assert scope.builtin_filters is None
+
+
+def test_an_exposure_ceiling_is_reported_rather_than_ignored():
+    # The DWARF mini stops at 90 s. Under a dark sky its dual-band optimum runs
+    # past that, and the honest advice is "you cannot get there" — not a number
+    # you cannot dial into the app.
+    mini = get_telescope("dwarf-mini")
+    assert mini.max_sub_s == 90
+    dark = advise("dwarf-mini", line_emitter=True, bortle=2)
+    line = dark.scores["line"]
+    assert line.sub_capped
+    assert line.recommended_sub_s == 90
+
+    # In a city the sky is bright enough that the optimum fits inside the
+    # ceiling, and nothing is flagged.
+    city = advise("dwarf-mini", line_emitter=True, bortle=8)
+    assert not city.scores["line"].sub_capped
+    assert city.scores["line"].recommended_sub_s < 90
+
+
+def test_instruments_without_a_known_ceiling_do_not_invent_one():
+    # An unknown limit is not the same as no limit, so it stays None rather
+    # than being guessed at.
+    for key in ("seestar50", "dwarf2", "dwarf3", "equinox2"):
+        assert get_telescope(key).max_sub_s is None, key
+
+
+def test_the_mini_also_carries_a_light_pollution_filter():
+    # Its filter set is richer than the other DWARFs': LP as well as the
+    # dual-band, which matters under a city sky.
+    mini = get_telescope("dwarf-mini")
+    assert "cls" in mini.builtin_filters
+    assert "duoband-wide" in mini.builtin_filters
