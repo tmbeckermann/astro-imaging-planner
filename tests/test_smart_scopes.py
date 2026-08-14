@@ -8,8 +8,8 @@ from astroplanner.sensors import get_camera
 from astroplanner.sky import sky_electron_rate, sqm_from_bortle
 from astroplanner.telescopes import TELESCOPES, get_telescope
 
-SMART = ["seestar50", "dwarf2", "dwarf3", "dwarf3-wide", "dwarf-mini",
-         "dwarf-mini-wide", "equinox2"]
+SMART = ["seestar50", "dwarf2", "dwarf2-wide", "dwarf3", "dwarf3-wide",
+         "dwarf-mini", "dwarf-mini-wide", "equinox2"]
 
 
 def advise(scope_key, line_emitter, bortle=6):
@@ -40,7 +40,8 @@ def test_published_fields_of_view_reproduce():
     # illuminated circle rather than the sensor.
     expected_deg = {                 # (width, height) as published
         "seestar50": (1.29, 0.73),
-        "dwarf2": (3.0, 1.7),
+        "dwarf2": (3.21, 1.82),    # 3864 x 2192 at 1.45 um; the table rounds to 180'
+
         "dwarf3": (2.9, 1.6),      # 3856 x 2180 at 2.0 um, per the app
         "equinox2": (0.75, 0.57),    # 45' x 34'
         "dwarf-mini": (2.13, 1.20),  # 30 mm f/5, IMX662 at 1920x1080
@@ -199,3 +200,33 @@ def test_a_wide_field_ranks_big_targets_and_buries_small_ones():
     assert fov_fit_score(by_id["IC1396"].size_arcmin, fov) > \
            fov_fit_score(by_id["M57"].size_arcmin, fov)
     assert fov_fit_score(by_id["M57"].size_arcmin, fov) == pytest.approx(0.15)
+
+
+def test_the_dwarf2_matches_its_published_table():
+    # 24 mm refractor, 100 mm focal length, f4.2, Sony IMX415 at 3864 x 2192.
+    scope, cam = get_telescope("dwarf2"), get_camera("imx415")
+    assert (scope.aperture_mm, scope.focal_length_mm) == (24, 100)
+    assert scope.f_ratio == pytest.approx(4.2, abs=0.05)
+    assert (cam.width_px, cam.height_px, cam.pixel_um) == (3864, 2192, 1.45)
+
+
+def test_an_unknown_focal_length_does_not_move_the_sub_length():
+    # The DWARF II's wide lens publishes f/2.4 but not its focal length. That
+    # is survivable: sky rate per pixel goes as aperture^2 x scale^2, aperture
+    # is FL/N and scale is 206.265*px/FL, so FL cancels. Only the field of view
+    # depends on the guess.
+    from astroplanner.sky import sky_electron_rate
+
+    cam = get_camera("os02k10")
+    sqm = sqm_from_bortle(5)
+    rates = []
+    for fl in (3.2, 6.7, 12.0):                 # any focal length at f/2.4
+        rates.append(sky_electron_rate(sqm, fl / 2.4, cam.pixel_scale(fl), cam.qe,
+                                       FILTERS["none"]))
+    assert rates[0] == pytest.approx(rates[1], rel=1e-9)
+    assert rates[1] == pytest.approx(rates[2], rel=1e-9)
+
+    # ...and the wide entries differ in sub length only through their f-ratios.
+    d2, d3 = get_telescope("dwarf2-wide"), get_telescope("dwarf3-wide")
+    assert d2.f_ratio == pytest.approx(2.4, abs=0.05)
+    assert d3.f_ratio == pytest.approx(2.0, abs=0.05)

@@ -447,7 +447,15 @@ def main(argv: list[str] | None = None) -> int:
     sll.set_defaults(func=cmd_log_list)
 
     args = p.parse_args(argv)
-    return args.func(args)
+    try:
+        return args.func(args)
+    except BrokenPipeError:
+        # `astroplanner scopes | head` closes the pipe on us. That is the
+        # reader's choice, not an error, and a traceback about it is noise.
+        try:
+            sys.stdout.close()
+        finally:
+            return 0
 
 
 if __name__ == "__main__":

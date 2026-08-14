@@ -99,6 +99,19 @@ TELESCOPES: dict[str, Telescope] = {
         # lens has the same 6.7 mm focal length as the DWARF 3's, that
         # instrument's published 3.4 mm is a far better basis than a generic
         # guess — but it is still an inference, and stays flagged as one.
+        # The DWARF II's wide lens: f/2.4 and "2 Megapixel" are published, the
+        # focal length is not. It matters less than it looks. Sky rate per pixel
+        # goes as aperture^2 x pixel-scale^2, aperture is focal length / f-ratio
+        # and pixel scale is 206.265 x pixel / focal length — so the focal
+        # length cancels, and the sub length follows from f/2.4 and the pixel
+        # pitch alone. Only the field of view and the arcsec/pixel figure depend
+        # on the 6.7 mm here, which is taken from its siblings and consistent
+        # with the table's "up to 50 degrees" over 1920 pixels.
+        Telescope("dwarf2-wide", "DwarfLab DWARF II (wide-angle)", 2.79, 6.7, "smart",
+                  fixed_camera="os02k10", builtin_filters=("none",),
+                  assumed=("focal length", "sensor"),
+                  spec_note="f/2.4 published; focal length from its siblings — the sub length "
+                            "does not depend on it, the field of view does"),
         Telescope("dwarf3-wide", "DwarfLab DWARF 3 (wide-angle)", 3.4, 6.7, "smart",
                   fixed_camera="os02k10", builtin_filters=("none",),
                   assumed=("sensor",),
