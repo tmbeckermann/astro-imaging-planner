@@ -80,11 +80,13 @@ TELESCOPES: dict[str, Telescope] = {
                   fixed_camera="imx462", builtin_filters=("none", "duoband-wide"),
                   spec_note="built-in UV/IR cut plus a dual-band"),
         Telescope("dwarf2", "DwarfLab DWARF II (telephoto)", 24, 100, "smart",
-                  fixed_camera="imx415", builtin_filters=("none", "duoband-wide"),
-                  spec_note="dual-band is the optional magnetic filter; drop it with --filters none"),
+                  fixed_camera="imx415", builtin_filters=("none",), max_sub_s=15,
+                  spec_note="built-in filters are VIS and IR-pass — no dual-band. If you bought "
+                            "the magnetic one, add it with --filters none,duoband-wide"),
         Telescope("dwarf3", "DwarfLab DWARF 3 (telephoto)", 35, 150, "smart",
-                  fixed_camera="imx678", builtin_filters=("none", "duoband-wide"),
-                  spec_note="switchable built-in VIS and dual-band filters"),
+                  fixed_camera="imx678", builtin_filters=("none", "cls", "duoband-wide"),
+                  max_sub_s=60,
+                  spec_note="built-in VIS, astro and dual-band filters; 60 s in EQ mode"),
         Telescope("dwarf-mini", "DwarfLab DWARF mini (telephoto)", 30, 150, "smart",
                   fixed_camera="imx662", builtin_filters=("none", "cls", "duoband-wide"),
                   max_sub_s=90,
@@ -99,23 +101,15 @@ TELESCOPES: dict[str, Telescope] = {
         # lens has the same 6.7 mm focal length as the DWARF 3's, that
         # instrument's published 3.4 mm is a far better basis than a generic
         # guess — but it is still an inference, and stays flagged as one.
-        # The DWARF II's wide lens: f/2.4 and "2 Megapixel" are published, the
-        # focal length is not. It matters less than it looks. Sky rate per pixel
-        # goes as aperture^2 x pixel-scale^2, aperture is focal length / f-ratio
-        # and pixel scale is 206.265 x pixel / focal length — so the focal
-        # length cancels, and the sub length follows from f/2.4 and the pixel
-        # pitch alone. Only the field of view and the arcsec/pixel figure depend
-        # on the 6.7 mm here, which is taken from its siblings and consistent
-        # with the table's "up to 50 degrees" over 1920 pixels.
-        Telescope("dwarf2-wide", "DwarfLab DWARF II (wide-angle)", 2.79, 6.7, "smart",
-                  fixed_camera="os02k10", builtin_filters=("none",),
-                  assumed=("focal length", "sensor"),
-                  spec_note="f/2.4 published; focal length from its siblings — the sub length "
-                            "does not depend on it, the field of view does"),
+        # The DWARF II has a wide lens (2.8 mm at 6.8 mm) but no wide-angle
+        # stills and no wide astro mode — its comparison table reads "Wide-Angle
+        # Picture: N/A" and "Astro (Tele)". So there is deliberately no
+        # dwarf2-wide entry: you cannot plan a session on a lens the instrument
+        # will not expose through.
         Telescope("dwarf3-wide", "DwarfLab DWARF 3 (wide-angle)", 3.4, 6.7, "smart",
-                  fixed_camera="os02k10", builtin_filters=("none",),
-                  assumed=("sensor",),
-                  spec_note="optics published; sensor taken from the mini's wide module"),
+                  fixed_camera="imx678-wide", builtin_filters=("none", "cls"),
+                  max_sub_s=60,
+                  spec_note="astro filter is shared with the telephoto; no dual-band on this lens"),
         Telescope("dwarf-mini-wide", "DwarfLab DWARF mini (wide-angle)", 3.4, 6.7, "smart",
                   fixed_camera="os02k10", builtin_filters=("none",), max_sub_s=90,
                   assumed=("aperture",),

@@ -79,8 +79,18 @@ CAMERAS: dict[str, Camera] = {
         # quotes, which on some instruments is smaller than the raw sensor
         # because the optics do not illuminate the whole chip.
         Camera("imx462", "Seestar S50 sensor (IMX462)", 2.90, 1920, 1080, 0.9, "built-in gain", 0.80, 0.5, True),
-        Camera("imx415", "DWARF II tele sensor (IMX415)", 1.45, 3864, 2192, 1.6, "built-in gain", 0.78, 0.5, True),
-        Camera("imx678", "DWARF 3 tele sensor (IMX678)", 2.00, 3856, 2180, 1.0, "built-in gain", 0.85, 0.5, True),
+        # Pixel counts here are the *delivered image*, not the sensor's total
+        # array: an IMX415 is 3864 x 2192 of silicon but writes a 3840 x 2160
+        # picture, and it is the picture you frame with. Both makers' published
+        # 35 mm-equivalent focal lengths confirm it — 675/100 for the DWARF II
+        # and 737/150 for the DWARF 3 imply exactly 1.45 um and 2.00 um pixels
+        # across 3840 x 2160.
+        Camera("imx415", "DWARF II tele sensor (IMX415)", 1.45, 3840, 2160, 1.6, "built-in gain", 0.78, 0.5, True),
+        Camera("imx678", "DWARF 3 tele sensor (IMX678)", 2.00, 3840, 2160, 1.0, "built-in gain", 0.85, 0.5, True),
+        # The DWARF 3's wide lens shares that IMX678 but delivers 1920 x 1080.
+        # Its published 45 mm equivalent over 6.7 mm pins the effective pixel at
+        # 2.92 um, so the readout is resampled rather than a straight crop.
+        Camera("imx678-wide", "DWARF 3 wide sensor (IMX678, 1080p)", 2.92, 1920, 1080, 1.0, "built-in gain", 0.85, 0.5, True),
         Camera("imx347", "Unistellar eQuinox 2 sensor (IMX347)", 2.40, 2454, 1854, 2.0, "built-in gain", 0.75, 0.5, True),
         Camera("imx662", "DWARF mini sensor (IMX662)", 2.90, 1920, 1080, 1.0, "built-in gain", 0.85, 0.5, True),
         Camera("os02k10", "DWARF mini wide sensor (OS02K10)", 2.90, 1920, 1080, 2.5, "built-in gain", 0.65, 0.5, True),

@@ -31,7 +31,7 @@ astro-imaging-planner/
 │  ├─ units.py                timezone and imperial/metric presentation
 │  ├─ catalog.py, analyze.py, sessionlog.py, xisf_reader.py
 │  └─ data/                   targets.csv (58 targets), places.csv (99 places)
-├─ tests/                  ← 102 tests, pytest
+├─ tests/                  ← 105 tests, pytest
 ├─ web/
 │  ├─ webcore.js              the whole model ported to JavaScript
 │  ├─ page.html               page template (data + core are inlined at build)
@@ -50,7 +50,7 @@ astro-imaging-planner/
 cd astro-imaging-planner
 python3 -m venv .venv && . .venv/bin/activate     # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"                           # numpy + astropy, ~1 min
-pytest                                            # 102 passing
+pytest                                            # 105 passing
 
 astroplanner plan --date 2026-08-11 --place nashville --camera asi533mc --scope gt71
 astroplanner scopes          # what telescopes it knows
@@ -106,7 +106,7 @@ Paste this to orient it:
 >   eight sites/dates/rigs. If you change the model in Python, re-run
 >   `python web/export_data.py && python web/dump_reference.py && node
 >   web/validate.mjs` and fix any drift before you call the change done.
-> - Run `pytest` before and after. 102 tests currently pass.
+> - Run `pytest` before and after. 105 tests currently pass.
 > - The sky model assumes a flat spectrum. Several results depend on that
 >   (the moon's fractional cost cancelling across filters, narrowband's
 >   advantage being site-independent). Don't "fix" those — they're
@@ -151,7 +151,7 @@ docstring. Skim these before changing anything:
 
 ## 5. State of things
 
-**Working and verified:** 102 tests pass. The JS port matches the Python engine
+**Working and verified:** 105 tests pass. The JS port matches the Python engine
 on ranking order, recommended mode, sub length and SkyQual for all 430 ranked
 targets across twelve sites, dates and rigs (including four smart telescopes); ephemeris agrees with astropy to
 0.15° (moon) and 0.008° (targets). The page renders clean in Chromium, both

@@ -178,20 +178,22 @@ usable pixel count is cross-checked against each maker's quoted field of view,
 which a test pins (Seestar 1.29 x 0.73 deg, DWARF II 3.0 x 1.7, DWARF 3 2.9 x
 1.6, DWARF mini 2.1 x 1.2, eQuinox 2 45' x 34').
 
-The wide-angle modules are separate entries (`dwarf2-wide`, `dwarf3-wide`,
+The wide-angle modules are separate entries (`dwarf3-wide`,
 `dwarf-mini-wide`), because each is a different lens on a different sensor with
 no filter in front of it. The DWARF 3's wide optics are published — 3.4 mm at
 6.7 mm, f/2.0 — and the mini's are inferred from them, since the mini's own
 spec sheet repeats the telephoto's "30 mm", which at 6.7 mm focal length would
 be f/0.22, below the f/0.5 limit for any lens in air.
 
-The DWARF II's wide lens shows why an inference is not always fatal: its
-f-ratio (f/2.4) is published but its focal length is not, and the focal length
-cancels out of the exposure model. Sky rate per pixel goes as aperture squared
-times pixel scale squared; aperture is focal length / f-ratio and pixel scale
-is 206.265 x pixel / focal length, so the two cancel and the sub length follows
-from the f-ratio and the pixel pitch alone. Only the field of view and the
-arcsec/pixel figure depend on the guess. A test pins that.
+The DWARF II has a wide lens but deliberately has no wide entry: its own
+comparison table reads "Wide-Angle Picture: N/A" and "Astro (Tele)", so the
+lens exists and the exposure mode does not. Planning a session on it would be
+planning something the instrument refuses to take.
+
+Pixel counts are the *delivered image*, not the sensor's array — an IMX415 is
+3864 x 2192 of silicon writing a 3840 x 2160 picture. Both makers' published
+35 mm-equivalent focal lengths confirm which is which, and a test uses them as
+an independent check on pixel pitch and count together.
 
 Anything inferred is listed in the entry's `assumed` field and shown wherever
 the scope is described (`aperture ASSUMED`, `sensor ASSUMED`). That matters

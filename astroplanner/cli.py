@@ -309,7 +309,9 @@ def cmd_cameras(_args) -> int:
 
 
 def cmd_scopes(_args) -> int:
-    for key, t in sorted(TELESCOPES.items(), key=lambda kv: kv[1].focal_length_mm):
+    # Alphabetical by name: you come here to find the scope you own, not to
+    # browse the range of focal lengths.
+    for key, t in sorted(TELESCOPES.items(), key=lambda kv: kv[1].name.lower()):
         extras = [label for label, _ in t.correctors if label != "native"]
         opts = f"  [{'; '.join(extras)}]" if extras else ""
         if t.integrated:

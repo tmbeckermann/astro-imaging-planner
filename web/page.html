@@ -861,13 +861,19 @@ function buildControls() {
   const byKind = {};
   for (const t of DATA.telescopes) (byKind[t.kind] ??= []).push(t);
   const kindNames = { refractor: "Refractors", newtonian: "Newtonians", sct: "Schmidt-Cassegrains",
-                      rc: "Ritchey-Chretiens", rasa: "Astrographs", lens: "Camera lenses" };
-  $("scopeInput").innerHTML = Object.entries(byKind).map(([kind, list]) =>
-    `<optgroup label="${kindNames[kind] ?? kind}">` +
-    list.sort((a, b) => a.focal_length_mm - b.focal_length_mm).map((t) =>
-      `<option value="${t.key}"${t.key === state.scope ? " selected" : ""}>` +
-      `${t.name} — ${t.focal_length_mm} mm f/${t.f_ratio.toFixed(1)}</option>`).join("") +
-    `</optgroup>`).join("");
+                      rc: "Ritchey-Chretiens", rasa: "Astrographs", lens: "Camera lenses",
+                      smart: "Smart telescopes" };
+  // Alphabetical, groups and scopes alike — you are looking for the one you
+  // own, not shopping by focal length.
+  const byLabel = (a, b) => a.localeCompare(b);
+  $("scopeInput").innerHTML = Object.keys(byKind)
+    .sort((a, b) => byLabel(kindNames[a] ?? a, kindNames[b] ?? b))
+    .map((kind) =>
+      `<optgroup label="${kindNames[kind] ?? kind}">` +
+      byKind[kind].sort((a, b) => byLabel(a.name, b.name)).map((t) =>
+        `<option value="${t.key}"${t.key === state.scope ? " selected" : ""}>` +
+        `${t.name} — ${fmtMm(t.focal_length_mm)} mm f/${t.f_ratio.toFixed(1)}</option>`).join("") +
+      `</optgroup>`).join("");
 
   const interchangeable = DATA.cameras.filter((c) => !fixedSensors.has(c.key));
   const bonded = DATA.cameras.filter((c) => fixedSensors.has(c.key));
