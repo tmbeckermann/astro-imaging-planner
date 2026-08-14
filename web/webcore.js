@@ -261,8 +261,16 @@ export function optimalSub(readNoiseE, skyEPerS, noiseIncreasePct = 5, maxSubS =
 
 const NO_FILTER_SKY_FACTOR = 3.4;
 export const FULL_SPECTRUM_MARGIN = 1.15;
-const LINE_PREFERENCE = { osc: ["duoband", "nb7", "nb3"], mono: ["nb3", "nb7", "duoband"] };
-const SHORT_LINE_LABELS = { duoband: "Duo-band", nb7: "Narrowband 7 nm", nb3: "Narrowband 3 nm" };
+const LINE_PREFERENCE = {
+  osc: ["duoband", "duoband-wide", "nb7", "nb3"],
+  mono: ["nb3", "nb7", "duoband", "duoband-wide"],
+};
+const SHORT_LINE_LABELS = {
+  duoband: "Duo-band",
+  "duoband-wide": "Duo-band (wide)",
+  nb7: "Narrowband 7 nm",
+  nb3: "Narrowband 3 nm",
+};
 const MODE_LABELS = { full: "Full spectrum", visible: "Visible (UV/IR cut)", line: "Duo-band" };
 export const MODE_KEYS = ["full", "visible", "line"];
 
@@ -305,7 +313,7 @@ export function recommendMode(lineEmitter, camera, rateFor, referenceSnr, filter
     const rate = rateFor(filter);
     let note = "";
     if (!hardwareOk) note = "needs a camera without a built-in IR-cut filter";
-    else if (!allowedByBag) note = "not in the filters you listed";
+    else if (!allowedByBag) note = "not fitted to this rig";
     scores[mode] = {
       mode,
       label: modeLabel(mode, filter),

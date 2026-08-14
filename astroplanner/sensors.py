@@ -73,6 +73,15 @@ CAMERAS: dict[str, Camera] = {
         Camera("asi585mc", "ZWO ASI585MC (IMX585)", 2.90, 3840, 2160, 0.9, "gain 252 (HCG)", 0.91, 0.13, True),
         Camera("asi1600mm", "ZWO ASI1600MM Pro (MN34230)", 3.80, 4656, 3520, 1.7, "gain 139 (unity)", 0.60, 1.0, False),
         Camera("asi183mc", "ZWO ASI183MC Pro (IMX183)", 2.40, 5496, 3672, 1.6, "gain 111 (unity)", 0.84, 1.0, True),
+        # Sensors inside integrated smart telescopes. You do not choose these —
+        # the instrument comes with them — so they are selected for you when you
+        # pick the scope. Pixel counts are the *usable* field the manufacturer
+        # quotes, which on some instruments is smaller than the raw sensor
+        # because the optics do not illuminate the whole chip.
+        Camera("imx462", "Seestar S50 sensor (IMX462)", 2.90, 1920, 1080, 0.9, "built-in gain", 0.80, 0.5, True),
+        Camera("imx415", "DWARF II sensor (IMX415)", 1.45, 3840, 2160, 1.6, "built-in gain", 0.78, 0.5, True),
+        Camera("imx678", "DWARF 3 sensor (IMX678)", 2.00, 3840, 2160, 1.0, "built-in gain", 0.85, 0.5, True),
+        Camera("imx347", "Unistellar eQuinox 2 sensor (IMX347)", 2.40, 2454, 1854, 2.0, "built-in gain", 0.75, 0.5, True),
         Camera("dslr", "Stock DSLR/mirrorless (APS-C)", 3.90, 6000, 4000, 2.5, "ISO 800-1600", 0.55, 0.5, True,
                ha_transmission=0.20, builtin_ir_cut=True),
         Camera("dslr-mod", "Astro-modified DSLR/mirrorless (APS-C)", 3.90, 6000, 4000, 2.5, "ISO 800-1600", 0.55, 0.5, True,

@@ -85,3 +85,34 @@ def test_bundled_gazetteer_is_well_formed():
         assert -90 <= p.lat <= 90 and -180 <= p.lon <= 180, p.name
         assert p.kind in {"city", "site"}
         assert p.bortle is None or 1 <= p.bortle <= 9
+
+
+def test_a_pasted_position_is_read_as_a_position():
+    # "Pick a point on a map" without shipping a map: drop a pin in whatever
+    # map app you already use, copy, paste.
+    assert geocode.parse_coordinates("36.1627, -86.7816") == (36.1627, -86.7816)
+    assert geocode.parse_coordinates("36.1627 N, 86.7816 W") == pytest.approx((36.1627, -86.7816))
+    lat, lon = geocode.parse_coordinates('36°09\'46"N 86°46\'54"W')
+    assert (lat, lon) == pytest.approx((36.1628, -86.7817), abs=1e-3)
+    assert geocode.parse_coordinates(
+        "https://www.google.com/maps/@36.1627,-86.7816,12z") == (36.1627, -86.7816)
+
+
+def test_southern_and_eastern_hemispheres_survive_the_round_trip():
+    assert geocode.parse_coordinates("-33.87, 151.21") == (-33.87, 151.21)
+    assert geocode.parse_coordinates("33.87 S, 151.21 E") == pytest.approx((-33.87, 151.21))
+
+
+def test_place_names_and_nonsense_are_not_mistaken_for_positions():
+    for text in ["nashville", "", "cherry springs state park", "999, 999", "M31"]:
+        assert geocode.parse_coordinates(text) is None
+
+
+def test_searching_for_a_position_returns_that_exact_spot():
+    hits = geocode.search("36.1627, -86.7816", online=False)
+    assert len(hits) == 1
+    pin = hits[0]
+    assert (pin.lat, pin.lon) == (36.1627, -86.7816)
+    assert pin.source == "coordinates" and pin.kind == "pin"
+    # A bare position says nothing about the sky there, and must not pretend to.
+    assert pin.bortle_basis == "estimated"

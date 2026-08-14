@@ -24,6 +24,7 @@ population heuristic that is honest about being one. Check a real map
 import csv
 import json
 import math
+import re
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
@@ -116,6 +117,76 @@ def load_places() -> list[Place]:
     return places
 
 
+# Decimal pairs, degrees-minutes-seconds, and the @lat,lon or ?q=lat,lon that
+# map applications put in their share links.
+_DECIMAL = re.compile(
+    r"(-?\d{1,3}(?:\.\d+)?)\s*[°]?\s*([NnSs])?[\s,]+(-?\d{1,3}(?:\.\d+)?)\s*[°]?\s*([EeWw])?\s*$"
+)
+_DMS = re.compile(
+    r"""(\d{1,3})\s*[°:\s]\s*(\d{1,2})\s*['′:\s]\s*([\d.]+)?\s*["″]?\s*([NnSs])
+        [\s,]+
+        (\d{1,3})\s*[°:\s]\s*(\d{1,2})\s*['′:\s]\s*([\d.]+)?\s*["″]?\s*([EeWw])""",
+    re.VERBOSE,
+)
+_URL_COORDS = re.compile(r"[@=/](-?\d{1,3}\.\d+),\s*(-?\d{1,3}\.\d+)")
+
+
+def parse_coordinates(text: str) -> tuple[float, float] | None:
+    """Read a latitude/longitude out of whatever the user pasted.
+
+    The realistic way to "pick a point on a map" without shipping a map: drop a
+    pin in whatever mapping app you already use, copy, paste. Handles
+    `36.1627, -86.7816`, `36.1627 N, 86.7816 W`, `36°09'46"N 86°46'54"W`, and
+    the coordinates embedded in a Google or Apple Maps URL.
+
+    Returns None if the text is a place name rather than a position, so callers
+    can fall through to the gazetteer.
+    """
+    raw = text.strip()
+    if not raw:
+        return None
+
+    if "://" in raw or "maps" in raw.lower():
+        m = _URL_COORDS.search(raw)
+        if m:
+            return _validate(float(m.group(1)), float(m.group(2)))
+
+    m = _DMS.search(raw)
+    if m:
+        lat = int(m.group(1)) + int(m.group(2)) / 60 + float(m.group(3) or 0) / 3600
+        lon = int(m.group(5)) + int(m.group(6)) / 60 + float(m.group(7) or 0) / 3600
+        if m.group(4).upper() == "S":
+            lat = -lat
+        if m.group(8).upper() == "W":
+            lon = -lon
+        return _validate(lat, lon)
+
+    m = _DECIMAL.match(raw)
+    if m:
+        lat, lat_hem, lon, lon_hem = float(m.group(1)), m.group(2), float(m.group(3)), m.group(4)
+        if lat_hem and lat_hem.upper() == "S":
+            lat = -abs(lat)
+        if lon_hem and lon_hem.upper() == "W":
+            lon = -abs(lon)
+        return _validate(lat, lon)
+    return None
+
+
+def _validate(lat: float, lon: float) -> tuple[float, float] | None:
+    if -90 <= lat <= 90 and -180 <= lon <= 180:
+        return lat, lon
+    return None
+
+
+def place_from_coordinates(lat: float, lon: float, label: str = "") -> Place:
+    """A Place for a bare position. Sky class is unknown, so it says so."""
+    return Place(
+        name=label or f"{lat:.4f}, {lon:.4f}",
+        admin="", country="", lat=lat, lon=lon, elevation_m=0.0,
+        population=0, bortle=None, kind="pin", source="coordinates",
+    )
+
+
 # People type "st louis" and "Mt. Wilson"; the gazetteer spells them out.
 _ABBREVIATIONS = {"st": "saint", "ste": "sainte", "mt": "mount", "ft": "fort", "pt": "point"}
 
@@ -185,6 +256,9 @@ def search_online(query: str, limit: int = 8, timeout: float = TIMEOUT_S) -> lis
 
 def search(query: str, limit: int = 8, online: bool = True) -> list[Place]:
     """Bundled matches first, topped up from the online geocoder if allowed."""
+    pin = parse_coordinates(query)
+    if pin is not None:                      # a pasted position is not a search
+        return [place_from_coordinates(*pin)]
     results = search_bundled(query, limit)
     if len(results) >= limit or not online:
         return results

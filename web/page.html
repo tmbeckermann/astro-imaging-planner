@@ -203,6 +203,35 @@
 
   .hint b { color: var(--ink-2); font-weight: 600; }
 
+  .siterow { display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap; }
+
+  .locate {
+    appearance: none;
+    border: 1px solid var(--rule);
+    background: var(--raised);
+    color: var(--ink-2);
+    font-family: var(--mono);
+    font-size: .64rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: .2rem .5rem;
+    border-radius: 5px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .locate:hover { color: var(--ink); border-color: var(--muted); }
+  .locate:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .locate[disabled] { opacity: .5; cursor: default; }
+
+  .field select[disabled] {
+    opacity: .7;
+    cursor: not-allowed;
+    background-image: none;
+  }
+
+  .locked { color: var(--accent); }
+
   /* ---- place search results ---- */
   .results {
     position: absolute;
@@ -577,9 +606,12 @@
       <label for="placeInput">Observing site</label>
       <input id="placeInput" type="text" autocomplete="off" role="combobox"
              aria-expanded="false" aria-controls="placeResults" aria-autocomplete="list"
-             placeholder="Search a town or dark-sky site">
+             placeholder="Name, or paste coordinates / a maps link">
       <ul class="results" id="placeResults" role="listbox" aria-label="Matching places"></ul>
-      <span class="hint" id="placeHint"></span>
+      <div class="siterow">
+        <button type="button" class="locate" id="locateBtn">Use my location</button>
+        <span class="hint" id="placeHint"></span>
+      </div>
     </div>
 
     <div class="field">
@@ -730,6 +762,8 @@ const DEFAULTS = __DEFAULTS__;
 
 const cameras = Object.fromEntries(DATA.cameras.map((c) => [c.key, c]));
 const scopes = Object.fromEntries(DATA.telescopes.map((t) => [t.key, t]));
+// Sensors that are bonded into an instrument rather than chosen.
+const fixedSensors = new Set(DATA.telescopes.map((t) => t.fixed_camera).filter(Boolean));
 const TOP_N = 6;
 
 // The catalog's type codes, spelled the way an observer would say them —
@@ -826,12 +860,36 @@ function buildControls() {
       `${t.name} — ${t.focal_length_mm} mm f/${t.f_ratio.toFixed(1)}</option>`).join("") +
     `</optgroup>`).join("");
 
-  $("cameraInput").innerHTML = DATA.cameras.map((c) =>
-    `<option value="${c.key}"${c.key === state.camera ? " selected" : ""}>` +
-    `${c.name}${c.color ? "" : " · mono"}</option>`).join("");
+  const interchangeable = DATA.cameras.filter((c) => !fixedSensors.has(c.key));
+  const bonded = DATA.cameras.filter((c) => fixedSensors.has(c.key));
+  $("cameraInput").innerHTML =
+    interchangeable.map((c) =>
+      `<option value="${c.key}"${c.key === state.camera ? " selected" : ""}>` +
+      `${c.name}${c.color ? "" : " · mono"}</option>`).join("") +
+    `<optgroup label="Built into a smart telescope">` +
+    bonded.map((c) =>
+      `<option value="${c.key}"${c.key === state.camera ? " selected" : ""}>${c.name}</option>`
+    ).join("") + `</optgroup>`;
 
   syncCorrectors();
+  syncCamera();
   syncPlaceInput();
+}
+
+function syncCamera() {
+  const scope = scopes[state.scope];
+  const select = $("cameraInput");
+  if (scope.fixed_camera) {
+    // You cannot put another camera on a Seestar. Showing the choice would be
+    // offering a rig that does not exist.
+    state.camera = scope.fixed_camera;
+    select.value = state.camera;
+    select.disabled = true;
+  } else {
+    if (fixedSensors.has(state.camera)) state.camera = DEFAULTS.camera;
+    select.value = state.camera;
+    select.disabled = false;
+  }
 }
 
 function syncCorrectors() {
@@ -858,7 +916,53 @@ const normalize = (s) =>
   s.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(Boolean)
    .map((w) => ABBREV[w] ?? w).join(" ");
 
+// Mirrors astroplanner/geocode.py::parse_coordinates. The realistic way to
+// "pick a point on a map" without shipping map tiles a strict CSP would block:
+// drop a pin in whatever map app you already use, copy, paste.
+const DECIMAL_RE = /^(-?\d{1,3}(?:\.\d+)?)\s*°?\s*([NnSs])?[\s,]+(-?\d{1,3}(?:\.\d+)?)\s*°?\s*([EeWw])?$/;
+const DMS_RE = /(\d{1,3})\s*[°:\s]\s*(\d{1,2})\s*['′:\s]\s*([\d.]+)?\s*["″]?\s*([NnSs])[\s,]+(\d{1,3})\s*[°:\s]\s*(\d{1,2})\s*['′:\s]\s*([\d.]+)?\s*["″]?\s*([EeWw])/;
+const URL_RE = /[@=/](-?\d{1,3}\.\d+),\s*(-?\d{1,3}\.\d+)/;
+
+function parseCoordinates(text) {
+  const raw = (text ?? "").trim();
+  if (!raw) return null;
+  const ok = (lat, lon) =>
+    lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180 ? { lat, lon } : null;
+
+  if (raw.includes("://") || raw.toLowerCase().includes("maps")) {
+    const m = URL_RE.exec(raw);
+    if (m) return ok(Number(m[1]), Number(m[2]));
+  }
+  let m = DMS_RE.exec(raw);
+  if (m) {
+    let lat = Number(m[1]) + Number(m[2]) / 60 + Number(m[3] ?? 0) / 3600;
+    let lon = Number(m[5]) + Number(m[6]) / 60 + Number(m[7] ?? 0) / 3600;
+    if (m[4].toUpperCase() === "S") lat = -lat;
+    if (m[8].toUpperCase() === "W") lon = -lon;
+    return ok(lat, lon);
+  }
+  m = DECIMAL_RE.exec(raw);
+  if (m) {
+    let lat = Number(m[1]), lon = Number(m[3]);
+    if (m[2] && m[2].toUpperCase() === "S") lat = -Math.abs(lat);
+    if (m[4] && m[4].toUpperCase() === "W") lon = -Math.abs(lon);
+    return ok(lat, lon);
+  }
+  return null;
+}
+
+function pinPlace(lat, lon, label) {
+  return {
+    name: label ?? `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
+    label: label ?? `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
+    lat, lon, elevation_m: 0, population: 0, bortle: null, kind: "pin",
+    bortle_estimate: 4, bortle_basis: "unknown", bortle_measured: false,
+  };
+}
+
 function searchPlaces(query) {
+  const pin = parseCoordinates(query);
+  if (pin) return [pinPlace(pin.lat, pin.lon)];
   const q = normalize(query);
   if (!q) return [];
   const scored = [];
@@ -893,7 +997,9 @@ function showResults(list) {
 
 function pickPlace(p) {
   state.place = p;
-  if (!state.bortleTouched) {
+  // A bare position says nothing about the sky there, so leave the sky class
+  // where the observer set it rather than inventing one from nothing.
+  if (!state.bortleTouched && p.kind !== "pin") {
     state.bortle = p.bortle_estimate;
     $("bortleInput").value = String(state.bortle);
   }
@@ -901,6 +1007,50 @@ function pickPlace(p) {
   $("placeInput").setAttribute("aria-expanded", "false");
   syncPlaceInput();
   render();
+}
+
+/* ---------- where am I ---------- */
+function useMyLocation() {
+  const btn = $("locateBtn"), hint = $("placeHint");
+  if (!navigator.geolocation) {
+    hint.textContent = "This browser has no location service";
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = "Locating…";
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const { latitude, longitude, accuracy } = pos.coords;
+      pickPlace(pinPlace(latitude, longitude, "My location"));
+      // The browser knows its own zone, and if you are standing at the site
+      // that is the zone you want the plan in.
+      const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (ZONES.some(([value]) => value === zone)) {
+        state.tz = zone;
+        $("tzInput").value = zone;
+      }
+      btn.disabled = false;
+      btn.textContent = "Use my location";
+      hint.innerHTML =
+        `<b>${latitude.toFixed(4)}°</b>, <b>${longitude.toFixed(4)}°</b> ` +
+        `· ±${Math.round(accuracy)} m · set the sky class yourself`;
+      render();
+    },
+    (err) => {
+      btn.disabled = false;
+      btn.textContent = "Use my location";
+      // Each of these is a different fix, so say which one happened.
+      const why = {
+        1: "Location permission denied — allow it in the browser's site settings, or paste coordinates instead",
+        2: "Your device could not get a fix — paste coordinates instead",
+        3: "Location request timed out — try again, or paste coordinates",
+      }[err.code] ?? "Location unavailable — paste coordinates instead";
+      hint.textContent = window.isSecureContext
+        ? why
+        : "Location needs a secure page (https). Paste coordinates instead — a maps link works too.";
+    },
+    { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 }
+  );
 }
 
 /* ---------- moon phase disc ---------- */
@@ -999,11 +1149,17 @@ function render() {
     `${scale.toFixed(2)}&Prime;/px &middot; ${fov.map((v) => Math.round(v)).join("&prime;&times;")}&prime; FoV<br>` +
     `Bortle ${state.bortle} &middot; ${state.place.label}`;
 
-  $("scopeHint").innerHTML = `${fmtAperture(rig.scope.aperture_mm)} aperture &middot; ${scale.toFixed(2)}&Prime;/px`;
   $("correctorHint").textContent = `${Math.round(rig.focalLengthMm)} mm effective`;
-  $("cameraHint").innerHTML =
-    `${camera.read_noise_e.toFixed(1)} e&minus; read noise &middot; ` +
-    (camera.builtin_ir_cut ? `H&alpha; ${Math.round(camera.ha_transmission * 100)}%` : "no built-in IR cut");
+  $("cameraHint").innerHTML = rig.scope.fixed_camera
+    ? `<span class="locked">Bonded to the ${rig.scope.name}</span> &middot; ` +
+      `${camera.read_noise_e.toFixed(1)} e&minus; read noise`
+    : `${camera.read_noise_e.toFixed(1)} e&minus; read noise &middot; ` +
+      (camera.builtin_ir_cut ? `H&alpha; ${Math.round(camera.ha_transmission * 100)}%`
+                             : "no built-in IR cut");
+  $("scopeHint").innerHTML = rig.scope.builtin_filters
+    ? `${fmtAperture(rig.scope.aperture_mm)} &middot; fitted: ` +
+      rig.scope.builtin_filters.map((k) => DATA.filters[k].name.split(" (")[0]).join(", ")
+    : `${fmtAperture(rig.scope.aperture_mm)} aperture &middot; ${scale.toFixed(2)}&Prime;/px`;
   const basis = { measured: "measured at this site",
                   typical: "typical for a city this size — check it",
                   estimated: "estimated from town size — check it" };
@@ -1072,6 +1228,8 @@ function render() {
   const ranked = rankTargets(night, {
     camera, focalLengthMm: rig.focalLengthMm, apertureMm: rig.apertureMm,
     bortle: state.bortle, targets: DATA.targets, filters: DATA.filters,
+    allowedFilterKeys: rig.scope.builtin_filters
+      ? new Set(rig.scope.builtin_filters) : null,
   });
 
   if (!ranked.length) {
@@ -1222,9 +1380,12 @@ $("dateInput").addEventListener("change", (e) => { if (e.target.value) { state.d
 $("bortleInput").addEventListener("change", (e) => {
   state.bortle = Number(e.target.value); state.bortleTouched = true; render();
 });
-$("scopeInput").addEventListener("change", (e) => { state.scope = e.target.value; syncCorrectors(); render(); });
+$("scopeInput").addEventListener("change", (e) => {
+  state.scope = e.target.value; syncCorrectors(); syncCamera(); render();
+});
 $("correctorInput").addEventListener("change", (e) => { state.corrector = e.target.value; render(); });
 $("cameraInput").addEventListener("change", (e) => { state.camera = e.target.value; render(); });
+$("locateBtn").addEventListener("click", useMyLocation);
 $("tzInput").addEventListener("change", (e) => { state.tz = e.target.value; render(); });
 $("unitsInput").addEventListener("change", (e) => {
   state.units = e.target.value; syncPlaceInput(); render();

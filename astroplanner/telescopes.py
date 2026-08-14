@@ -20,9 +20,20 @@ class Telescope:
     name: str
     aperture_mm: float
     focal_length_mm: float
-    kind: str                       # refractor / newtonian / sct / rc / rasa / lens
+    kind: str                       # refractor / newtonian / sct / rc / rasa / lens / smart
     # (label, focal-length multiplier). The first entry is the native train.
     correctors: tuple[tuple[str, float], ...] = (("native", 1.0),)
+    # An integrated instrument (a "smart telescope") is not a scope you put a
+    # camera on: the sensor is bonded to it and the filters are whatever the
+    # maker fitted. Modelling that honestly is the difference between advice you
+    # can act on and advice that assumes a filter drawer you do not have.
+    fixed_camera: str | None = None
+    builtin_filters: tuple[str, ...] | None = None
+    spec_note: str = ""
+
+    @property
+    def integrated(self) -> bool:
+        return self.fixed_camera is not None
 
     @property
     def f_ratio(self) -> float:
@@ -44,7 +55,25 @@ class Telescope:
 TELESCOPES: dict[str, Telescope] = {
     t.key: t
     for t in [
-        Telescope("seestar50", "ZWO Seestar S50", 50, 250, "refractor"),
+        # --- integrated smart telescopes -------------------------------------
+        # Aperture and focal length are the manufacturers' published figures.
+        # Pixel counts are the usable field, cross-checked against each maker's
+        # quoted field of view: Seestar 1.29 x 0.73 deg, DWARF II 3.0 x 1.7 deg,
+        # DWARF 3 2.9 x 1.6 deg all reproduce to within a few percent. Read
+        # noise and QE are nominal for the sensor, not measured units — override
+        # with --read-noise / --qe if you have your own numbers.
+        Telescope("seestar50", "ZWO Seestar S50", 50, 250, "smart",
+                  fixed_camera="imx462", builtin_filters=("none", "duoband-wide"),
+                  spec_note="built-in UV/IR cut plus a dual-band"),
+        Telescope("dwarf2", "DwarfLab DWARF II (telephoto)", 24, 100, "smart",
+                  fixed_camera="imx415", builtin_filters=("none", "duoband-wide"),
+                  spec_note="dual-band is the optional magnetic filter; drop it with --filters none"),
+        Telescope("dwarf3", "DwarfLab DWARF 3 (telephoto)", 35, 150, "smart",
+                  fixed_camera="imx678", builtin_filters=("none", "duoband-wide"),
+                  spec_note="switchable built-in VIS and dual-band filters"),
+        Telescope("equinox2", "Unistellar eQuinox 2", 114, 450, "smart",
+                  fixed_camera="imx347", builtin_filters=("none",),
+                  spec_note="no filter slot: narrowband is not available on this instrument"),
         Telescope("redcat51", "William Optics RedCat 51", 51, 250, "refractor"),
         Telescope("raptor61", "Radian Raptor 61", 61, 275, "refractor"),
         Telescope("z61", "William Optics Zenithstar 61", 61, 360, "refractor",

@@ -11,6 +11,7 @@ import pathlib
 
 from astroplanner.catalog import load_targets
 from astroplanner.ephemeris import build_night
+from astroplanner.exposure import optimal_sub_exposure
 from astroplanner.scoring import rank_targets
 from astroplanner.sensors import get_camera
 from astroplanner.telescopes import get_telescope
@@ -27,18 +28,28 @@ CASES = [
     ("southern-hemisphere", "2026-05-20", -33.87,  151.21, 7, "asi294mc",  "fra400",     None),
     ("high-latitude-june", "2026-06-21",  60.17,   24.94, 5, "asi183mc",  "z61",        "0.8x flattener"),
     ("equator-quarter",    "2026-03-05",   1.35,  103.82, 8, "asi585mc",  "raptor61",   None),
+    # Integrated instruments: the sensor and the filter bag come with the scope,
+    # so these also cover the "mode unavailable because it is not fitted" path.
+    ("smart-seestar",      "2026-08-11",  36.16,  -86.78, 8, None,        "seestar50",  None),
+    ("smart-dwarf3",       "2026-09-15",  36.16,  -86.78, 5, None,        "dwarf3",     None),
+    ("smart-equinox2",     "2026-10-20",  41.66,  -77.82, 2, None,        "equinox2",   None),
 ]
 
 
 def run(case) -> dict:
     label, date, lat, lon, bortle, cam_key, scope_key, corrector = case
-    cam = get_camera(cam_key)
-    fl, aperture = get_telescope(scope_key).train(corrector)
+    scope = get_telescope(scope_key)
+    cam = get_camera(cam_key or scope.fixed_camera)
+    fl, aperture = scope.train(corrector)
     ctx = build_night(date, lat, lon)
-    ranked = rank_targets(ctx, cam, fl, aperture, bortle, targets=load_targets())
+    ranked = rank_targets(
+        ctx, cam, fl, aperture, bortle, targets=load_targets(),
+        available_filters=list(scope.builtin_filters) if scope.builtin_filters else None,
+    )
     return {
         "label": label, "date": date, "lat": lat, "lon": lon, "bortle": bortle,
-        "camera": cam_key, "scope": scope_key, "corrector": corrector,
+        "camera": cam.key, "scope": scope_key, "corrector": corrector,
+        "allowed_filters": list(scope.builtin_filters) if scope.builtin_filters else None,
         "focal_length_mm": fl, "aperture_mm": aperture,
         "night": {
             "darkness_kind": ctx.darkness_kind,
@@ -63,6 +74,9 @@ def run(case) -> dict:
                 "mode": r.mode_advice.recommended,
                 "mode_filter": r.mode_advice.best.filter_key,
                 "sub_s": r.mode_advice.best.recommended_sub_s,
+                "sub_exact_s": optimal_sub_exposure(
+                    cam.read_noise_e, r.mode_advice.best.sky_e_per_s).optimal_s,
+                "mode_sky_rate": r.mode_advice.best.sky_e_per_s,
                 "mode_quality": {k: v.sky_quality for k, v in r.mode_advice.scores.items()},
                 "mode_available": {k: v.available for k, v in r.mode_advice.scores.items()},
                 "suggested_filter": r.suggested_filter.key,

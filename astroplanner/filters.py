@@ -79,6 +79,9 @@ FILTERS: dict[str, Filter] = {
                note="notches the worst municipal lines; skews colour balance"),
         Filter("duoband", "Duo-band (Ha + OIII, ~2x7 nm)", 0.16, 0.25, True, line_transmission=0.90,
                note="the one-shot-colour nebula filter"),
+        Filter("duoband-wide", "Wide duo-band (Ha + OIII, ~2x20 nm)", 0.45, 0.45, True,
+               line_transmission=0.92,
+               note="typical of the dual-band built into a smart telescope; check yours"),
         Filter("nb7", "Narrowband 7 nm (Ha or OIII)", 0.08, 0.15, True, line_transmission=0.90,
                note="mono, one line at a time"),
         Filter("nb3", "Narrowband 3 nm (Ha or OIII)", 0.034, 0.08, True, line_transmission=0.85,
@@ -103,8 +106,8 @@ MODE_LABELS = {
 # quarters of the sensor. Mono has no such constraint and takes the narrowest
 # filter on the shelf.
 LINE_PREFERENCE = {
-    "osc": ("duoband", "nb7", "nb3"),
-    "mono": ("nb3", "nb7", "duoband"),
+    "osc": ("duoband", "duoband-wide", "nb7", "nb3"),
+    "mono": ("nb3", "nb7", "duoband", "duoband-wide"),
 }
 
 
@@ -127,6 +130,7 @@ def mode_filter(mode: str, camera=None, allowed_keys: set[str] | None = None) ->
 
 SHORT_LINE_LABELS = {
     "duoband": "Duo-band",
+    "duoband-wide": "Duo-band (wide)",
     "nb7": "Narrowband 7 nm",
     "nb3": "Narrowband 3 nm",
 }

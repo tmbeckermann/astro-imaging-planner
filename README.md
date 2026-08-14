@@ -24,8 +24,16 @@ A command-line astrophotography assistant:
   unmodified DSLR passes ~20% of Ha, so a duo-band on one is mostly an OIII
   filter, and full spectrum is not a mode it can shoot at all.
 - **Site and rig databases** — search observing sites and towns by name
-  (`--place "cherry springs"`), and pick a telescope by key (`--scope gt71
-  --corrector "0.8x reducer"`) instead of typing focal lengths.
+  (`--place "cherry springs"`), paste coordinates or a maps link, and pick a
+  telescope by key (`--scope gt71 --corrector "0.8x reducer"`) instead of
+  typing focal lengths.
+- **Smart telescopes as what they are** — a Seestar S50, DWARF II, DWARF 3 or
+  Unistellar eQuinox 2 is not a tube you choose a camera for: the sensor is
+  bonded in and the filters are whatever the maker fitted. Pick one and the
+  camera follows, and the advice is limited to filters that instrument
+  physically has. An eQuinox 2 has no filter slot, so it is told to shoot
+  emission nebulae broadband instead of being advised to buy narrowband it
+  cannot mount.
 - **Times you'd actually set an alarm for** — everything is computed in UTC and
   displayed in your zone (`--tz`, default `America/Chicago`), with the
   abbreviation the date is actually in, CDT or CST. Elevations and apertures
@@ -59,6 +67,11 @@ with how much to trust it: **measured** at a characterised observing site,
 **typical** for a city that size, or **estimated** from population. Check it on
 lightpollutionmap.info and override with `--bortle`. Coordinates still work:
 `--lat 38.6 --lon -90.2 --bortle 7 --fl 500 --aperture 80`.
+
+Coordinates work wherever a place name does — `--place "36.1627, -86.7816"`,
+`--place "36°09'46\"N 86°46'54\"W"`, or a pasted Google/Apple Maps link. That is
+the practical "pick a point on a map": drop a pin in the map app you already
+use, copy, paste. A bare position carries no sky class, so pass `--bortle`.
 
 Times print in `--tz` (default Central), so a plan reads `21:23-04:23 CDT`
 rather than `02:42-09:30 UTC` — the same instants, in the zone you are standing
@@ -158,11 +171,28 @@ Mode choice maximizes SNR only — it does not know that a broadband filter also
 captures colour in one shot, or that narrowband needs far more total
 integration time. Use `--filters` to constrain it to what you'll really use.
 
+### Smart telescopes
+
+Aperture and focal length are the makers' published figures; the sensor's
+usable pixel count is cross-checked against each maker's quoted field of view,
+which a test pins (Seestar 1.29 x 0.73 deg, DWARF II 3.0 x 1.7, DWARF 3 2.9 x
+1.6, eQuinox 2 45' x 34'). Read noise and QE are nominal for the sensor rather
+than measured for your unit — override with `--read-noise` / `--qe`.
+
+Their built-in dual-band filters are modelled as *wide* (~2x20 nm), not as the
+7 nm filter a filter-wheel rig would use, because that is what these
+instruments ship. It costs about half the narrowband advantage: roughly 2.5x a
+visible train on an emission target rather than 4x. Worth knowing before
+comparing a Seestar's numbers against a cooled-camera rig's.
+
 ## Web page
 
 `web/` builds a single self-contained HTML file with the same model ported to
 JavaScript, so site, date, sky class, telescope, corrector, camera, timezone
-and unit system are all live controls (the browser owns the tz database, so DST
+and unit system are all live controls. The site field takes a name, a pasted
+position or a maps link, and there is a **Use my location** button — browser
+geolocation, which needs a secure page (https or localhost) and the viewer's
+permission, and says which of the two is missing when it fails (the browser owns the tz database, so DST
 and zone abbreviations come out right without shipping a table):
 
 ```bash

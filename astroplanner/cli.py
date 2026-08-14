@@ -39,8 +39,12 @@ from .units import (
 )
 
 
+DEFAULT_CAMERA = "asi533mc"
+
+
 def _rig_args(p: argparse.ArgumentParser):
-    p.add_argument("--camera", default="asi533mc", help="camera key (see 'cameras')")
+    p.add_argument("--camera", help=f"camera key (see 'cameras'); default {DEFAULT_CAMERA}, "
+                                    f"or the built-in sensor of an integrated scope")
     p.add_argument("--scope", help="telescope key (see 'scopes'); sets --fl and --aperture")
     p.add_argument("--corrector", help="reducer/corrector on the scope (see 'scopes')")
     p.add_argument("--fl", type=float, help="focal length, mm (overrides --scope)")
@@ -49,8 +53,15 @@ def _rig_args(p: argparse.ArgumentParser):
     p.add_argument("--qe", type=float, help="override QE, 0..1")
 
 
-def _resolve_camera(args):
-    cam = get_camera(args.camera)
+def _resolve_camera(args, scope=None):
+    """An integrated instrument brings its own sensor; a tube does not."""
+    key = args.camera
+    if key is None:
+        key = scope.fixed_camera if (scope and scope.integrated) else DEFAULT_CAMERA
+    elif scope is not None and scope.integrated and key != scope.fixed_camera:
+        print(f"Note: {scope.name} has its sensor bonded to it; using --camera {key} anyway, "
+              f"which describes a rig that does not exist.", file=sys.stderr)
+    cam = get_camera(key)
     if args.read_noise or args.qe:
         from dataclasses import replace
         cam = replace(
@@ -65,8 +76,8 @@ def _resolve_optics(args) -> tuple[float, float, str]:
     """(focal_length_mm, aperture_mm, label) from --scope and/or --fl/--aperture."""
     label = ""
     fl = aperture = None
-    if args.scope:
-        scope = get_telescope(args.scope)
+    scope = get_telescope(args.scope) if args.scope else None
+    if scope:
         fl, aperture = scope.train(args.corrector)
         label = scope.name
         if args.corrector and args.corrector.lower() != "native":
@@ -81,6 +92,20 @@ def _resolve_optics(args) -> tuple[float, float, str]:
             "--fl MM --aperture MM."
         )
     return fl, aperture, label
+
+
+def _resolve_filters(args, scope) -> list[str] | None:
+    """What is actually in front of the sensor tonight.
+
+    An integrated instrument has the filters its maker fitted and no others, so
+    recommending a 3 nm narrowband for a Unistellar would be advice you cannot
+    take. --filters still wins: it is you telling the planner what you own.
+    """
+    if args.filters:
+        return args.filters.split(",")
+    if scope is not None and scope.builtin_filters:
+        return list(scope.builtin_filters)
+    return None
 
 
 def _presentation_args(p: argparse.ArgumentParser):
@@ -116,7 +141,8 @@ def _resolve_site(args) -> tuple[float, float, float, str]:
 
 
 def cmd_plan(args) -> int:
-    cam = _resolve_camera(args)
+    scope = get_telescope(args.scope) if args.scope else None
+    cam = _resolve_camera(args, scope)
     fl, aperture, scope_label = _resolve_optics(args)
     lat, lon, elevation, site_label = _resolve_site(args)
     args.lat, args.lon, args.fl, args.aperture = lat, lon, fl, aperture
@@ -135,7 +161,7 @@ def cmd_plan(args) -> int:
 
     ranked = rank_targets(
         ctx, cam, args.fl, args.aperture, args.bortle,
-        available_filters=args.filters.split(",") if args.filters else None,
+        available_filters=_resolve_filters(args, scope),
         min_alt_deg=args.min_alt,
         targets=subset,
     )
@@ -156,6 +182,10 @@ def cmd_plan(args) -> int:
            f"f/{args.fl/args.aperture:.1f}")
     print(f"Rig: {rig}"
           f"  |  FoV {fov_w:.0f}' x {fov_h:.0f}'  |  {cam.pixel_scale(args.fl):.2f}\"/px")
+    if scope is not None and scope.integrated:
+        fitted = ", ".join(FILTERS[k].name for k in (scope.builtin_filters or ()))
+        print(f"     Integrated instrument: sensor and filters are fixed — {fitted}"
+              f"{'. ' + scope.spec_note if scope.spec_note else ''}")
     print()
     if not ranked:
         print(f"No catalog targets rise above {args.min_alt:.0f} deg during darkness tonight.")
@@ -204,7 +234,8 @@ def cmd_plan(args) -> int:
 
 
 def cmd_exposure(args) -> int:
-    cam = _resolve_camera(args)
+    scope = get_telescope(args.scope) if args.scope else None
+    cam = _resolve_camera(args, scope)
     args.fl, args.aperture, scope_label = _resolve_optics(args)
     filt = get_filter(args.filter)
     if filt.needs_ir_cut_removed and cam.builtin_ir_cut:
@@ -269,6 +300,9 @@ def cmd_scopes(_args) -> int:
     for key, t in sorted(TELESCOPES.items(), key=lambda kv: kv[1].focal_length_mm):
         extras = [label for label, _ in t.correctors if label != "native"]
         opts = f"  [{'; '.join(extras)}]" if extras else ""
+        if t.integrated:
+            fitted = "+".join(t.builtin_filters or ())
+            opts = f"  [sensor {t.fixed_camera}; filters {fitted}]"
         print(f"{key:<12} {t.name:<36} {t.aperture_mm:>5.0f} mm  {t.focal_length_mm:>6.0f} mm "
               f"f/{t.f_ratio:<4.1f} {t.kind}{opts}")
     return 0

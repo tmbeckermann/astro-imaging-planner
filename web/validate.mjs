@@ -10,7 +10,7 @@
  */
 
 import { readFileSync } from "node:fs";
-import { buildNight, rankTargets } from "./webcore.js";
+import { buildNight, optimalSub, rankTargets } from "./webcore.js";
 
 const data = JSON.parse(readFileSync(new URL("./data.json", import.meta.url)));
 const reference = JSON.parse(readFileSync(new URL("./reference.json", import.meta.url)));
@@ -26,12 +26,13 @@ const TOL = {
   darkHours: 0.11,      // one 6-minute grid step
   skyQualityRel: 0.02,
   scoreRel: 0.02,
+  subExactRel: 0.02,
 };
 
 const GRID_STEP_HOURS = 0.1;   // the 6-minute sampling grid
 const boundaryCases = [];
 let failures = 0;
-const worst = { moonAlt: 0, maxAlt: 0, moonSep: 0, skyQuality: 0, score: 0, illum: 0 };
+const worst = { moonAlt: 0, maxAlt: 0, moonSep: 0, skyQuality: 0, score: 0, illum: 0, subExact: 0 };
 
 function fail(msg) {
   failures++;
@@ -72,6 +73,7 @@ for (const ref of reference) {
     bortle: ref.bortle,
     targets,
     filters,
+    allowedFilterKeys: ref.allowed_filters ? new Set(ref.allowed_filters) : null,
   });
   const byId = Object.fromEntries(ranked.map((r) => [r.target.id, r]));
 
@@ -119,8 +121,25 @@ for (const ref of reference) {
     if (got.modeAdvice.scores[got.modeAdvice.recommended].filterKey !== rt.mode_filter) {
       fail(`${ref.label}/${rt.id}: mode filter mismatch`);
     }
-    if (got.modeAdvice.scores[got.modeAdvice.recommended].recommendedSubS !== rt.sub_s) {
-      fail(`${ref.label}/${rt.id}: sub ${got.modeAdvice.scores[got.modeAdvice.recommended].recommendedSubS}s != ${rt.sub_s}s`);
+    // The sub length is the exact optimum rounded up to a rung of the standard
+    // ladder, so a target whose optimum lands within a hair of a rung can round
+    // either way on a 0.1% difference in sky rate. Check the continuous value
+    // tightly, and only demand the rung match when the optimum is not sitting
+    // on the boundary.
+    const mode = got.modeAdvice.scores[got.modeAdvice.recommended];
+    const exact = optimalSub(camera.read_noise_e, mode.skyEPerS).optimal;
+    const exactRel = (exact - rt.sub_exact_s) / rt.sub_exact_s;
+    track("subExact", exactRel);
+    if (Math.abs(exactRel) > TOL.subExactRel) {
+      fail(`${ref.label}/${rt.id}: exact sub ${exact.toFixed(2)}s != ${rt.sub_exact_s.toFixed(2)}s`);
+    }
+    if (mode.recommendedSubS !== rt.sub_s) {
+      const straddles = Math.min(mode.recommendedSubS, rt.sub_s) >= Math.min(exact, rt.sub_exact_s);
+      if (straddles && Math.abs(exactRel) < 0.01) {
+        boundaryCases.push(`${ref.label}/${rt.id} (sub rung ${rt.sub_s}s vs ${mode.recommendedSubS}s)`);
+      } else {
+        fail(`${ref.label}/${rt.id}: sub ${mode.recommendedSubS}s != ${rt.sub_s}s`);
+      }
     }
     for (const [k, avail] of Object.entries(rt.mode_available)) {
       if (got.modeAdvice.scores[k].available !== avail) {
@@ -151,9 +170,10 @@ console.log(`  moon separation ${worst.moonSep.toFixed(3)} deg`);
 console.log(`  illumination    ${(worst.illum * 100).toFixed(2)} %`);
 console.log(`  sky quality     ${(worst.skyQuality * 100).toFixed(3)} %`);
 console.log(`  score           ${(worst.score * 100).toFixed(3)} %`);
+console.log(`  sub optimum     ${(worst.subExact * 100).toFixed(3)} %`);
 if (boundaryCases.length) {
-  console.log(`\n${boundaryCases.length} target(s) sat within one grid step of the altitude floor ` +
-              `and differ by exactly one 6-minute sample: ${boundaryCases.join(", ")}`);
+  console.log(`\n${boundaryCases.length} target(s) landed on a quantisation boundary (the ` +
+              `6-minute grid or a sub-length rung) and differ by one step: ${boundaryCases.join(", ")}`);
 }
 
 if (failures) {

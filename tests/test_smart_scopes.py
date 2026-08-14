@@ -1,0 +1,109 @@
+"""Integrated instruments: the sensor and the filters are not yours to choose."""
+
+import pytest
+
+from astroplanner.filters import FILTERS
+from astroplanner.scoring import recommend_mode, snr_quality
+from astroplanner.sensors import get_camera
+from astroplanner.sky import sky_electron_rate, sqm_from_bortle
+from astroplanner.telescopes import TELESCOPES, get_telescope
+
+SMART = ["seestar50", "dwarf2", "dwarf3", "equinox2"]
+
+
+def advise(scope_key, line_emitter, bortle=6):
+    scope = get_telescope(scope_key)
+    cam = get_camera(scope.fixed_camera)
+    fl, aperture = scope.train()
+    sqm = sqm_from_bortle(bortle)
+    scale = cam.pixel_scale(fl)
+    rate = lambda f: sky_electron_rate(sqm, aperture, scale, cam.qe, f)
+    reference = snr_quality(FILTERS["none"], False, rate(FILTERS["none"]), cam)
+    return recommend_mode(line_emitter, cam, rate, reference, set(scope.builtin_filters))
+
+
+def test_the_smart_scopes_are_all_there():
+    for key in SMART:
+        scope = get_telescope(key)
+        assert scope.integrated and scope.fixed_camera in {"imx462", "imx415", "imx678", "imx347"}
+        assert scope.builtin_filters, key
+        assert scope.kind == "smart"
+
+
+def test_published_fields_of_view_reproduce():
+    # The check that the aperture/focal-length/pixel-pitch triples are right:
+    # each maker publishes a field of view, and the numbers here have to
+    # produce it. Tolerance is a few percent — makers round, and some quote the
+    # illuminated circle rather than the sensor.
+    expected_deg = {                 # (width, height) as published
+        "seestar50": (1.29, 0.73),
+        "dwarf2": (3.0, 1.7),
+        "dwarf3": (2.9, 1.6),
+        "equinox2": (0.75, 0.57),    # 45' x 34'
+    }
+    for key, (want_w, want_h) in expected_deg.items():
+        scope = get_telescope(key)
+        cam = get_camera(scope.fixed_camera)
+        fl, _ = scope.train()
+        got_w, got_h = (v / 60 for v in cam.fov_arcmin(fl))
+        assert got_w == pytest.approx(want_w, rel=0.07), f"{key} width {got_w:.2f} deg"
+        assert got_h == pytest.approx(want_h, rel=0.07), f"{key} height {got_h:.2f} deg"
+
+
+def test_an_instrument_without_a_filter_slot_cannot_be_told_to_use_one():
+    # The eQuinox 2 has no filter drawer, so "put a duo-band on it" is not
+    # advice — it is a purchase order for a different telescope.
+    a = advise("equinox2", line_emitter=True)
+    assert not a.scores["line"].available
+    assert a.scores["line"].note == "not fitted to this rig"
+    assert a.recommended == "visible"
+    assert "no line filter available" in a.reason
+
+
+def test_a_built_in_dual_band_is_used_when_there_is_one():
+    for key in ("seestar50", "dwarf2", "dwarf3"):
+        a = advise(key, line_emitter=True)
+        assert a.recommended == "line", key
+        assert a.scores["line"].filter_key == "duoband-wide"
+
+
+def test_the_wide_dual_band_wins_less_than_a_7nm_would():
+    # Smart telescopes ship a wide dual-band, not a 7 nm: about 2x a visible
+    # train on an emission target rather than about 4x. Worth knowing before
+    # comparing a Seestar's numbers against a filter-wheel rig's.
+    wide = advise("dwarf3", line_emitter=True)
+    assert 1.8 < wide.scores["line"].sky_quality < 3.0
+    assert FILTERS["duoband-wide"].sky_bandwidth_factor > FILTERS["duoband"].sky_bandwidth_factor
+
+
+def test_broadband_targets_still_get_the_visible_train():
+    for key in SMART:
+        a = advise(key, line_emitter=False)
+        assert a.recommended == "visible", key
+
+
+def test_full_spectrum_is_never_offered_on_a_sealed_instrument():
+    # None of them fit one, so the mode is unavailable whatever the sensor
+    # would allow in principle.
+    for key in SMART:
+        a = advise(key, line_emitter=False)
+        assert not a.scores["full"].available, key
+
+
+def test_a_smart_scope_resolution_is_coarse_and_that_shows():
+    # A 100 mm lens on 1.45 um pixels samples at ~3 arcsec/px. That is the
+    # trade these instruments make for their field, and the planner should
+    # report it rather than flatter it.
+    dwarf2 = get_telescope("dwarf2")
+    scale = get_camera(dwarf2.fixed_camera).pixel_scale(dwarf2.focal_length_mm)
+    assert scale == pytest.approx(2.99, abs=0.05)
+    equinox = get_telescope("equinox2")
+    assert get_camera(equinox.fixed_camera).pixel_scale(equinox.focal_length_mm) < 1.2
+
+
+def test_ordinary_telescopes_are_not_integrated():
+    for key, scope in TELESCOPES.items():
+        if key in SMART:
+            continue
+        assert not scope.integrated, key
+        assert scope.builtin_filters is None

@@ -119,7 +119,7 @@ def recommend_mode(
         if not mode_available(mode, camera):
             note = "needs a camera without a built-in IR-cut filter"
         elif not allowed:
-            note = "not in the filters you listed"
+            note = "not fitted to this rig"
         scores[mode] = ModeScore(
             mode=mode,
             label=mode_label(mode, camera, filt),

@@ -102,7 +102,7 @@ def test_the_mode_respects_the_filters_you_actually_own():
     owned = {"duoband"}                     # a duo-band and nothing else
     a = advise("asi533mc", line_emitter=False, allowed=owned)
     assert not a.scores["visible"].available
-    assert "not in the filters you listed" in a.scores["visible"].note
+    assert "not fitted to this rig" in a.scores["visible"].note
     # A 7 nm filter bag makes 'line' mean the 7 nm filter, not the duo-band.
     b = advise("asi533mc", line_emitter=True, allowed={"nb7", "none"})
     assert b.recommended == "line"
