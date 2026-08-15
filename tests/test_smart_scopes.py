@@ -83,18 +83,25 @@ def test_the_wide_dual_band_wins_less_than_a_7nm_would():
     assert FILTERS["duoband-wide"].sky_bandwidth_factor > FILTERS["duoband"].sky_bandwidth_factor
 
 
-def test_broadband_targets_still_get_the_visible_train():
-    for key in SMART:
+def test_broadband_targets_get_the_colour_correct_train_where_there_is_one():
+    for key in ("seestar50", "dwarf2", "dwarf3", "equinox2"):
         a = advise(key, line_emitter=False)
         assert a.recommended == "visible", key
-
-
-def test_full_spectrum_is_never_offered_on_a_sealed_instrument():
-    # None of them fit one, so the mode is unavailable whatever the sensor
-    # would allow in principle.
-    for key in SMART:
+    # The mini has no UV/IR-cut position, so its broadband option is the open
+    # Astro filter — full spectrum, whether or not that is what you wanted.
+    for key in ("dwarf-mini", "dwarf-mini-wide", "dwarf3-wide"):
         a = advise(key, line_emitter=False)
-        assert not a.scores["full"].available, key
+        assert a.recommended == "full", key
+        assert a.scores["visible"].note == "not fitted to this rig", key
+
+
+def test_full_spectrum_is_offered_only_where_an_open_position_exists():
+    # A DWARF's Astro position passes UV and IR, so those instruments really can
+    # shoot full spectrum. The Seestar and the eQuinox cannot: no open filter.
+    for key in ("dwarf-mini", "dwarf-mini-wide", "dwarf3", "dwarf3-wide"):
+        assert advise(key, line_emitter=False).scores["full"].available, key
+    for key in ("seestar50", "dwarf2", "equinox2"):
+        assert not advise(key, line_emitter=False).scores["full"].available, key
 
 
 def test_a_smart_scope_resolution_is_coarse_and_that_shows():
@@ -162,32 +169,33 @@ def test_a_fifteen_second_ceiling_bites_at_every_site_worth_driving_to():
     assert advise("dwarf2", line_emitter=False, bortle=9).scores["visible"].recommended_sub_s == 5
 
 
-def test_an_astro_filter_position_is_not_assumed_to_reject_light_pollution():
-    # The DWARFs' "Astro" is its own filter entry, not a relabelled CLS.
-    # Whether it merely cuts UV/IR or also notches light pollution is not
-    # stated, and the two differ by ~1.4x in SNR under a city sky, so it is
-    # modelled as the plain UV/IR cut: understating a filter costs you a
-    # target, overstating it costs you the night.
-    assert FILTERS["astro"].sky_bandwidth_factor == FILTERS["none"].sky_bandwidth_factor
-    for key in ("dwarf-mini", "dwarf3", "dwarf3-wide", "dwarf-mini-wide"):
-        assert "cls" not in get_telescope(key).builtin_filters, key
-        assert "astro" in get_telescope(key).builtin_filters, key
+def test_the_astro_position_is_open_not_a_cut_filter():
+    # "Astro" on a DWARF passes UV and IR: it is the open position, so
+    # optically it is full spectrum, not a UV/IR cut. Modelling it as a cut
+    # would promise colour-correct stars the instrument cannot deliver.
+    astro, full, vis = FILTERS["astro"], FILTERS["full"], FILTERS["none"]
+    assert astro.sky_bandwidth_factor == full.sky_bandwidth_factor > vis.sky_bandwidth_factor
+    assert astro.continuum_transmission == full.continuum_transmission
+    assert not astro.colour_true
 
 
-def test_the_mini_has_no_plain_visible_position_so_broadband_means_astro():
-    # Its filter wheel is dark shutter / astro / dual-band. A plan that told
-    # its owner to select "Visible" would be naming a setting the app does not
-    # offer, so the broadband mode resolves to Astro and is labelled that way.
+def test_the_mini_has_no_cut_filter_so_its_broadband_is_full_spectrum():
+    # Its wheel is dark shutter / astro / dual-band. The plan has to say so
+    # rather than naming a "Visible" setting the app does not offer.
     mini = get_telescope("dwarf-mini")
     assert mini.builtin_filters == ("astro", "duoband-wide")
     a = advise("dwarf-mini", line_emitter=False)
-    assert a.recommended == "visible"
-    assert a.scores["visible"].filter_key == "astro"
-    assert a.scores["visible"].label == "Astro (UV/IR cut)"
+    assert a.recommended == "full"
+    assert a.scores["full"].filter_key == "astro"
+    assert a.scores["full"].label == "Astro (UV+vis+IR)"
+    assert not a.scores["visible"].available
+    assert "no UV/IR cut" in a.reason
 
-    # The DWARF 3 has both, and prefers the plain visible one.
+    # The DWARF 3 has both, and the colour-correct one wins on a galaxy.
     d3 = advise("dwarf3", line_emitter=False)
+    assert d3.recommended == "visible"
     assert d3.scores["visible"].filter_key == "none"
+    assert d3.scores["full"].filter_key == "astro"
 
 
 def test_the_wide_angle_module_is_a_different_instrument():
@@ -231,7 +239,7 @@ def test_the_dwarf3_telephoto_matches_its_published_figures():
     assert (scope.aperture_mm, scope.focal_length_mm) == (35.0, 150.0)
     assert scope.f_ratio == pytest.approx(4.29, abs=0.01)
     assert (cam.width_px, cam.height_px, cam.pixel_um) == (3840, 2160, 2.00)
-    assert scope.builtin_filters == ("none", "astro", "duoband-wide")
+    assert scope.builtin_filters == ("astro", "none", "duoband-wide")
 
 
 def test_a_wide_field_ranks_big_targets_and_buries_small_ones():

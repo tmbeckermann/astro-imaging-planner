@@ -172,6 +172,9 @@ def recommend_mode(
             reason = "highest SNR of the modes available"
             if not line_emitter and best_key == "visible":
                 reason = "broadband target: the colour-correct train is also the deepest here"
+            elif not line_emitter and best_key == "full" and vis is None:
+                reason = ("broadband target, and this rig has no UV/IR cut — so broadband "
+                          "means full spectrum, with the star bloat and colour cast that brings")
             elif line_emitter and best_key != "line":
                 reason = "line emitter, but no line filter available — broadband it is"
         if not line_emitter and not mode_available("full", camera):

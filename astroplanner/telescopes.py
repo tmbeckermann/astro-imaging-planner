@@ -85,14 +85,14 @@ TELESCOPES: dict[str, Telescope] = {
                             "position is an IR-pass, which is not a deep-sky broadband option: "
                             "it starts above Ha"),
         Telescope("dwarf3", "DwarfLab DWARF 3 (telephoto)", 35, 150, "smart",
-                  fixed_camera="imx678", builtin_filters=("none", "astro", "duoband-wide"),
+                  fixed_camera="imx678", builtin_filters=("astro", "none", "duoband-wide"),
                   max_sub_s=60,
-                  spec_note="astro, visible and dual-band positions; 60 s in EQ mode"),
+                  spec_note="astro (open), visible (UV/IR cut) and dual-band; 60 s in EQ mode"),
         Telescope("dwarf-mini", "DwarfLab DWARF mini (telephoto)", 30, 150, "smart",
                   fixed_camera="imx662", builtin_filters=("astro", "duoband-wide"),
                   max_sub_s=90, assumed=("sensor pairing",),
-                  spec_note="astro or dual-band — there is no separate visible position, so the "
-                            "broadband mode here means Astro"),
+                  spec_note="astro or dual-band. Astro passes UV and IR, and there is no "
+                            "UV/IR-cut position, so broadband here is full spectrum"),
         # The wide-angle modules. The DWARF 3's optics are published (3.4 mm at
         # 6.7 mm, f/2.0); its sensor is not confirmed here, so the pixel scale
         # is inferred from the mini's wide module.

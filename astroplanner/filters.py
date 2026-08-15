@@ -74,13 +74,14 @@ FILTERS: dict[str, Filter] = {
                note="all the photons silicon can see; bloated stars, no true colour"),
         Filter("none", "Visible (UV/IR cut)", 3.4, 1.00, False, continuum_transmission=1.00,
                note="the colour-correct broadband baseline"),
-        # The DWARFs' "Astro" position. Optically it is the UV/IR cut until a
-        # maker says otherwise — see the module note on why it is not modelled
-        # as a light-pollution filter — but it is a separate entry because on
-        # the DWARF mini it is the *only* broadband filter: that instrument has
-        # no plain visible position to fall back to.
-        Filter("astro", "Astro (UV/IR cut)", 3.4, 1.00, False, continuum_transmission=1.00,
-               note="the broadband position on a DWARF; no separate visible filter on the mini"),
+        # The DWARFs' "Astro" position passes UV and IR — it is the *open*
+        # filter, not a cut one. Optically that makes it full spectrum, which
+        # matters most on the DWARF mini: that instrument has no UV/IR-cut
+        # position at all, so shooting it broadband means shooting full
+        # spectrum, with the star bloat and colour cast that implies.
+        Filter("astro", "Astro (UV + visible + IR)", 5.5, 1.00, False,
+               continuum_transmission=1.30, needs_ir_cut_removed=True, colour_true=False,
+               note="the open position on a DWARF; passes UV and IR, so it is full spectrum"),
         Filter("cls", "CLS / broadband light-pollution", 1.7, 0.65, False,
                continuum_transmission=0.85,
                note="notches the worst municipal lines; skews colour balance"),
@@ -117,16 +118,24 @@ LINE_PREFERENCE = {
     "mono": ("nb3", "nb7", "duoband", "duoband-wide"),
 }
 
-# What "visible" resolves to, in order of preference. An instrument that has no
-# plain UV/IR-cut position still has a broadband one — the DWARF mini's is
-# called Astro — and the mode has to find it rather than report the whole
-# broadband option as unavailable.
-BROADBAND_PREFERENCE = ("none", "astro", "cls")
+# What "visible" resolves to, in order of preference. Only genuine UV/IR-cut
+# trains belong here: a DWARF's Astro position passes UV and IR, so it is a
+# full-spectrum option, not a visible one, and an instrument that has only
+# Astro genuinely cannot shoot a colour-correct broadband frame.
+BROADBAND_PREFERENCE = ("none", "cls")
+
+# ...and what "full spectrum" resolves to. Same optics either way; the name
+# follows whichever the instrument actually offers.
+FULL_PREFERENCE = ("full", "astro")
 
 
 def mode_filter(mode: str, camera=None, allowed_keys: set[str] | None = None) -> Filter:
     """The concrete filter a mode means for this camera and filter bag."""
     if mode == "full":
+        if allowed_keys is not None:
+            owned = [k for k in FULL_PREFERENCE if k in allowed_keys]
+            if owned:
+                return FILTERS[owned[0]]
         return FILTERS["full"]
     if mode == "visible":
         if allowed_keys is not None:
@@ -147,8 +156,13 @@ def mode_filter(mode: str, camera=None, allowed_keys: set[str] | None = None) ->
 
 SHORT_BROADBAND_LABELS = {
     "none": "Visible (UV/IR cut)",
-    "astro": "Astro (UV/IR cut)",
     "cls": "CLS light-pollution",
+}
+
+# Name the position the owner selects in their app.
+SHORT_FULL_LABELS = {
+    "full": "Full spectrum",
+    "astro": "Astro (UV+vis+IR)",
 }
 
 SHORT_LINE_LABELS = {
@@ -173,6 +187,8 @@ def mode_label(mode: str, camera=None, filt: "Filter | None" = None) -> str:
             return "Narrowband Ha/OIII"
     elif mode == "visible" and filt is not None:
         return SHORT_BROADBAND_LABELS.get(filt.key, filt.name)
+    elif mode == "full" and filt is not None:
+        return SHORT_FULL_LABELS.get(filt.key, filt.name)
     return MODE_LABELS[mode]
 
 

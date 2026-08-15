@@ -265,13 +265,18 @@ const LINE_PREFERENCE = {
   osc: ["duoband", "duoband-wide", "nb7", "nb3"],
   mono: ["nb3", "nb7", "duoband", "duoband-wide"],
 };
-// An instrument with no plain UV/IR-cut position still has a broadband one —
-// the DWARF mini's is called Astro.
-const BROADBAND_PREFERENCE = ["none", "astro", "cls"];
+// Only genuine UV/IR-cut trains are "visible": a DWARF's Astro position passes
+// UV and IR, so it is a full-spectrum option, and an instrument that has only
+// Astro cannot shoot a colour-correct broadband frame at all.
+const BROADBAND_PREFERENCE = ["none", "cls"];
+const FULL_PREFERENCE = ["full", "astro"];
 const SHORT_BROADBAND_LABELS = {
   none: "Visible (UV/IR cut)",
-  astro: "Astro (UV/IR cut)",
   cls: "CLS light-pollution",
+};
+const SHORT_FULL_LABELS = {
+  full: "Full spectrum",
+  astro: "Astro (UV+vis+IR)",
 };
 const SHORT_LINE_LABELS = {
   duoband: "Duo-band",
@@ -297,7 +302,13 @@ export function snrQuality(filter, lineEmitter, skyEPerS, camera) {
 }
 
 export function modeFilter(mode, camera, filters, allowedKeys) {
-  if (mode === "full") return filters.full;
+  if (mode === "full") {
+    if (allowedKeys) {
+      const owned = FULL_PREFERENCE.find((k) => allowedKeys.has(k));
+      if (owned) return filters[owned];
+    }
+    return filters.full;
+  }
   if (mode === "visible") {
     if (allowedKeys) {
       const owned = BROADBAND_PREFERENCE.find((k) => allowedKeys.has(k));
@@ -317,6 +328,7 @@ export function modeLabel(mode, filter) {
   if (mode === "line") return SHORT_LINE_LABELS[filter.key] ?? filter.name;
   // Name the position the owner selects in their app, not the model's category.
   if (mode === "visible") return SHORT_BROADBAND_LABELS[filter.key] ?? filter.name;
+  if (mode === "full") return SHORT_FULL_LABELS[filter.key] ?? filter.name;
   return MODE_LABELS[mode];
 }
 
@@ -376,6 +388,7 @@ export function recommendMode(lineEmitter, camera, rateFor, referenceSnr, filter
       pick = bestKey;
       reason = "highest SNR of the modes available";
       if (!lineEmitter && bestKey === "visible") reason = "broadband target: the colour-correct train is also the deepest here";
+      else if (!lineEmitter && bestKey === "full" && !vis) reason = "broadband target, and this rig has no UV/IR cut — so broadband means full spectrum, with the star bloat and colour cast that brings";
       else if (lineEmitter && bestKey !== "line") reason = "line emitter, but no line filter available — broadband it is";
     }
     if (!lineEmitter && camera.builtin_ir_cut) caution = "full spectrum unavailable: this camera's IR-cut filter is built in";

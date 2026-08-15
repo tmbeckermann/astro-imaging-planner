@@ -206,14 +206,14 @@ OS02K10, both 1920 x 1080 on 2.9 um pixels, and does not say which lens
 carries which. The geometry is settled either way; only read noise and QE turn
 on it (`--read-noise` / `--qe`).
 
-Filter positions are named the way the instrument names them. The DWARF mini
-has no plain visible position at all — its wheel is dark shutter, astro and
-dual-band — so its broadband mode resolves to **Astro** and says so, rather
-than telling its owner to select something the app does not offer. Whether
-"Astro" merely cuts UV/IR or also notches light pollution is not stated, and
-the two differ by about 1.4x in SNR under a city sky; it is modelled as the
-plain UV/IR cut, because understating a filter costs you a target while
-overstating it costs you the night.
+Filter positions are named the way the instrument names them, and modelled by
+what they actually pass. A DWARF's **Astro** position is the *open* one — it
+passes UV and IR — so optically it is full spectrum, not a cut filter. That
+matters on the DWARF mini, whose wheel is dark shutter, astro and dual-band:
+it has no UV/IR-cut position at all, so shooting it broadband *is* shooting
+full spectrum, with the star bloat and colour cast that brings, and the plan
+says so instead of promising a colour-correct frame the instrument cannot
+take. The DWARF 3 has both, and its galaxies get the visible position.
 
 ### Gain
 
