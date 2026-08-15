@@ -189,41 +189,57 @@ lost GitHub access partway through (an org-level policy denial — "an org admin
 must connect the Claude GitHub App"), so the bundle in §3 is the canonical
 copy of the history.
 
-## 6. Resuming in a new session (and getting this pushed)
+## 6. Resuming in a new session
 
-Nothing here was ever pushed: the session that wrote it lost GitHub access
-partway through. The history is intact in the bundle, so a new session only has
-to publish it.
+Paste this into a fresh Claude Code session — run `claude` from inside the
+unzipped folder, or start a Claude Code web session with the repo attached.
 
-**Paste this into a fresh Claude Code session** (run `claude` from inside the
-unzipped folder, or start a Claude Code web session with the repo attached):
-
-> This is astro-imaging-planner. Read HANDOFF.md, then README.md.
+> This is astro-imaging-planner: a Python engine plus a self-contained web page
+> that plans a night's deep-sky imaging — what to shoot, in which filter, at
+> what sub length. Read HANDOFF.md and README.md before anything else.
 >
-> The work is finished and verified but has never been pushed — the session
-> that wrote it lost GitHub access. Your job is to publish it.
+> **State.** Finished and verified, never pushed. 108 tests pass, and
+> web/webcore.js (a JavaScript port of the engine) is checked target-by-target
+> against the Python across twelve site/date/rig combinations. Six smart
+> telescopes are modelled as integrated instruments — sensor bonded in, filters
+> fixed — with every optical figure taken from a manufacturer's own spec.
 >
-> 1. Confirm it still passes before you touch anything:
->    `pip install -e ".[dev]" && pytest` (107 tests) and
->    `python web/export_data.py && python web/dump_reference.py && node web/validate.mjs`.
-> 2. If there is no .git directory here, restore the history from the bundle:
->    `git clone astro-imaging-planner.bundle ../astro-planner-git` and work there.
->    That bundle is the canonical history — do not start a fresh repo over it.
-> 3. Push to https://github.com/tmbeckermann/astro (the planner's own remote,
->    where this belongs) and open a draft pull request. If that repo is not
->    reachable, say so rather than pushing somewhere else, and tell me exactly
->    which error you got.
+> **Verify before you touch anything**, so nothing later gets blamed on unknown
+> prior state:
+>   `pip install -e ".[dev]" && pytest`
+>   `python web/export_data.py && python web/dump_reference.py && node web/validate.mjs`
+> Both must be green. Re-run both after any model change and fix drift before
+> calling the change done — the cross-check has caught two real bugs already.
 >
-> If GitHub refuses with "an org admin must connect the Claude GitHub App",
-> that is the same block the previous session hit: the Claude GitHub App needs
-> access to the repository at github.com/settings/installations, and a session
-> started before the grant will not pick it up. Report it and stop rather than
-> retrying.
-
-**What "verified" means**, so a new session does not have to take it on faith:
-107 tests, and a JavaScript port checked target-by-target against the Python
-engine across twelve site/date/rig combinations. Both commands are above; both
-should be green before and after any change.
+> **Publishing it** (the one thing outstanding). If there is no .git here,
+> restore history with `git clone astro-imaging-planner.bundle ../astro-git`
+> and work there — that bundle is the canonical history, do not start a fresh
+> repo over it. Push to https://github.com/tmbeckermann/astro and open a draft
+> PR. If GitHub answers "an org admin must connect the Claude GitHub App", that
+> is the block the original session hit: the App needs access to the repo at
+> github.com/settings/installations, and a session started before the grant
+> will not see it. Report it and stop rather than retrying.
+>
+> **Do not "fix" these** — they are consequences of a flat-spectrum sky model
+> and each is explained in a docstring: the moon's *fractional* SNR cost being
+> identical across filters, a line filter's advantage being independent of how
+> dark the site is, and full spectrum being only ~2% better than a UV/IR cut.
+>
+> **Open items, in the order I would take them:**
+> 1. The DWARF 3 wide-angle sensor is the last inferred figure — its camera
+>    screen in the DwarfLab app would settle it.
+> 2. The DWARF mini ships two 2.9 um sensors and does not say which lens has
+>    which; it moves read noise and QE, not geometry.
+> 3. The DWARFs' "Astro" filter is modelled as a plain UV/IR cut. If it also
+>    notches light pollution it is worth ~1.4x under a city sky.
+> 4. A World Atlas 2015 GeoTIFF reader, so --sqm can be looked up from lat/lon
+>    instead of read off a map by hand.
+> 5. Read-noise-vs-gain curves for the DWARF sensors, which is the only way
+>    gain enters the model.
+>
+> Tell me what you find before making changes, and ask if a spec looks
+> self-contradictory — one maker's table already states a sensor size that
+> contradicts its own field of view.
 
 **If you would rather push it yourself**, no AI needed:
 
