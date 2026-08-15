@@ -642,6 +642,13 @@
     </div>
 
     <div class="field">
+      <label for="sqmInput">Measured SQM</label>
+      <input id="sqmInput" type="number" step="0.01" min="16" max="22.5"
+             placeholder="optional — overrides class">
+      <span class="hint">mag/arcsec² from an atlas or a meter</span>
+    </div>
+
+    <div class="field">
       <label for="scopeInput">Telescope</label>
       <select id="scopeInput"></select>
       <span class="hint" id="scopeHint"></span>
@@ -807,6 +814,7 @@ const state = {
   camera: DEFAULTS.camera,
   tz: DEFAULTS.tz,
   units: DEFAULTS.units,
+  sqm: null,          // a measured value beats the nine-step class
 };
 
 /* ---------- presentation ---------- */
@@ -863,11 +871,14 @@ function buildControls() {
   const kindNames = { refractor: "Refractors", newtonian: "Newtonians", sct: "Schmidt-Cassegrains",
                       rc: "Ritchey-Chretiens", rasa: "Astrographs", lens: "Camera lenses",
                       smart: "Smart telescopes" };
-  // Alphabetical, groups and scopes alike — you are looking for the one you
-  // own, not shopping by focal length.
+  // Smart telescopes first because that is what gets used; the rest
+  // alphabetical, since you are looking for the one you own rather than
+  // shopping by focal length.
   const byLabel = (a, b) => a.localeCompare(b);
+  const groupRank = (kind) => (kind === "smart" ? 0 : 1);
   $("scopeInput").innerHTML = Object.keys(byKind)
-    .sort((a, b) => byLabel(kindNames[a] ?? a, kindNames[b] ?? b))
+    .sort((a, b) => groupRank(a) - groupRank(b) ||
+                    byLabel(kindNames[a] ?? a, kindNames[b] ?? b))
     .map((kind) =>
       `<optgroup label="${kindNames[kind] ?? kind}">` +
       byKind[kind].sort((a, b) => byLabel(a.name, b.name)).map((t) =>
@@ -901,7 +912,7 @@ function syncCamera() {
     select.value = state.camera;
     select.disabled = true;
   } else {
-    if (fixedSensors.has(state.camera)) state.camera = DEFAULTS.camera;
+    if (fixedSensors.has(state.camera)) state.camera = DEFAULTS.fallbackCamera ?? "asi533mc";
     select.value = state.camera;
     select.disabled = false;
   }
@@ -1182,9 +1193,12 @@ function render() {
   const basis = { measured: "measured at this site",
                   typical: "typical for a city this size — check it",
                   estimated: "estimated from town size — check it" };
-  $("bortleHint").textContent = state.bortleTouched
-    ? `SQM ${BORTLE_SQM[state.bortle].toFixed(1)} mag/arcsec²`
-    : basis[state.place.bortle_basis];
+  $("bortleHint").textContent = state.sqm
+    ? `overridden by the measured ${state.sqm.toFixed(2)}`
+    : state.bortleTouched
+      ? `SQM ${BORTLE_SQM[state.bortle].toFixed(1)} mag/arcsec²`
+      : basis[state.place.bortle_basis];
+  $("bortleInput").disabled = state.sqm !== null;
 
   const clock = clockFmt(state.tz);
   const tzName = zoneAbbrev(night.darkStart ?? night.times[0], state.tz);
@@ -1225,6 +1239,7 @@ function render() {
     `astroplanner plan --date ${state.date} --place "${state.place.name}" --bortle ${state.bortle} ` +
     `--camera ${camera.key} --scope ${rig.scope.key}` +
     (rig.correctorLabel === "native" ? "" : ` --corrector "${rig.correctorLabel}"`) +
+    (state.sqm ? ` --sqm ${state.sqm}` : "") +
     ` --tz ${state.tz} --units ${state.units}`;
   $("prov").textContent = cli;
   $("provenance").textContent =
@@ -1246,7 +1261,7 @@ function render() {
 
   const ranked = rankTargets(night, {
     camera, focalLengthMm: rig.focalLengthMm, apertureMm: rig.apertureMm,
-    bortle: state.bortle, targets: DATA.targets, filters: DATA.filters,
+    bortle: state.bortle, darkSqm: state.sqm, targets: DATA.targets, filters: DATA.filters,
     allowedFilterKeys: rig.scope.builtin_filters
       ? new Set(rig.scope.builtin_filters) : null,
     maxSubS: rig.scope.max_sub_s ?? 1200,
@@ -1409,6 +1424,11 @@ $("scopeInput").addEventListener("change", (e) => {
 });
 $("correctorInput").addEventListener("change", (e) => { state.corrector = e.target.value; render(); });
 $("cameraInput").addEventListener("change", (e) => { state.camera = e.target.value; render(); });
+$("sqmInput").addEventListener("input", (e) => {
+  const v = Number(e.target.value);
+  state.sqm = e.target.value !== "" && Number.isFinite(v) && v > 0 ? v : null;
+  render();
+});
 $("locateBtn").addEventListener("click", useMyLocation);
 $("tzInput").addEventListener("change", (e) => { state.tz = e.target.value; render(); });
 $("unitsInput").addEventListener("change", (e) => {

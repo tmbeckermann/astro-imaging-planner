@@ -265,6 +265,14 @@ const LINE_PREFERENCE = {
   osc: ["duoband", "duoband-wide", "nb7", "nb3"],
   mono: ["nb3", "nb7", "duoband", "duoband-wide"],
 };
+// An instrument with no plain UV/IR-cut position still has a broadband one —
+// the DWARF mini's is called Astro.
+const BROADBAND_PREFERENCE = ["none", "astro", "cls"];
+const SHORT_BROADBAND_LABELS = {
+  none: "Visible (UV/IR cut)",
+  astro: "Astro (UV/IR cut)",
+  cls: "CLS light-pollution",
+};
 const SHORT_LINE_LABELS = {
   duoband: "Duo-band",
   "duoband-wide": "Duo-band (wide)",
@@ -290,7 +298,13 @@ export function snrQuality(filter, lineEmitter, skyEPerS, camera) {
 
 export function modeFilter(mode, camera, filters, allowedKeys) {
   if (mode === "full") return filters.full;
-  if (mode === "visible") return filters.none;
+  if (mode === "visible") {
+    if (allowedKeys) {
+      const owned = BROADBAND_PREFERENCE.find((k) => allowedKeys.has(k));
+      if (owned) return filters[owned];
+    }
+    return filters.none;
+  }
   const order = LINE_PREFERENCE[camera && camera.color === false ? "mono" : "osc"];
   if (allowedKeys) {
     const owned = order.find((k) => allowedKeys.has(k));
@@ -301,6 +315,8 @@ export function modeFilter(mode, camera, filters, allowedKeys) {
 
 export function modeLabel(mode, filter) {
   if (mode === "line") return SHORT_LINE_LABELS[filter.key] ?? filter.name;
+  // Name the position the owner selects in their app, not the model's category.
+  if (mode === "visible") return SHORT_BROADBAND_LABELS[filter.key] ?? filter.name;
   return MODE_LABELS[mode];
 }
 
@@ -386,9 +402,11 @@ export function fovFitScore(sizeArcmin, fov) {
 export function rankTargets(night, opts) {
   const {
     camera, focalLengthMm, apertureMm, bortle, targets, filters,
-    minAltDeg = MIN_ALT_DEG, allowedFilterKeys = null, maxSubS = 1200,
+    minAltDeg = MIN_ALT_DEG, allowedFilterKeys = null, maxSubS = 1200, darkSqm: sqmOverride = null,
   } = opts;
-  const darkSqm = BORTLE_SQM[bortle];
+  // A number off an atlas or a meter beats a class: Bortle is a nine-step
+  // ladder over a continuum, and one step is worth ~0.7 mag.
+  const darkSqm = sqmOverride ?? BORTLE_SQM[bortle];
   const scale = pixelScale(camera.pixel_um, focalLengthMm);
   const fov = fovArcmin(camera, focalLengthMm);
   const rateAt = (sqm, filter) => skyElectronRate(sqm, apertureMm, scale, camera.qe, filter);

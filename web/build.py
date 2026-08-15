@@ -21,9 +21,10 @@ DEFAULTS = {
     "place": "Nashville",
     "date": "2026-08-11",
     "bortle": 8,
-    "scope": "gt71",
-    "corrector": "0.8x reducer",
-    "camera": "asi533mc",
+    "fallbackCamera": "asi533mc",
+    "scope": "dwarf-mini",
+    "corrector": "native",
+    "camera": "imx662",
     "tz": "America/Chicago",
     "units": "imperial",
 }

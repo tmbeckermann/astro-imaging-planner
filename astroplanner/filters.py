@@ -74,6 +74,13 @@ FILTERS: dict[str, Filter] = {
                note="all the photons silicon can see; bloated stars, no true colour"),
         Filter("none", "Visible (UV/IR cut)", 3.4, 1.00, False, continuum_transmission=1.00,
                note="the colour-correct broadband baseline"),
+        # The DWARFs' "Astro" position. Optically it is the UV/IR cut until a
+        # maker says otherwise — see the module note on why it is not modelled
+        # as a light-pollution filter — but it is a separate entry because on
+        # the DWARF mini it is the *only* broadband filter: that instrument has
+        # no plain visible position to fall back to.
+        Filter("astro", "Astro (UV/IR cut)", 3.4, 1.00, False, continuum_transmission=1.00,
+               note="the broadband position on a DWARF; no separate visible filter on the mini"),
         Filter("cls", "CLS / broadband light-pollution", 1.7, 0.65, False,
                continuum_transmission=0.85,
                note="notches the worst municipal lines; skews colour balance"),
@@ -110,12 +117,22 @@ LINE_PREFERENCE = {
     "mono": ("nb3", "nb7", "duoband", "duoband-wide"),
 }
 
+# What "visible" resolves to, in order of preference. An instrument that has no
+# plain UV/IR-cut position still has a broadband one — the DWARF mini's is
+# called Astro — and the mode has to find it rather than report the whole
+# broadband option as unavailable.
+BROADBAND_PREFERENCE = ("none", "astro", "cls")
+
 
 def mode_filter(mode: str, camera=None, allowed_keys: set[str] | None = None) -> Filter:
     """The concrete filter a mode means for this camera and filter bag."""
     if mode == "full":
         return FILTERS["full"]
     if mode == "visible":
+        if allowed_keys is not None:
+            owned = [k for k in BROADBAND_PREFERENCE if k in allowed_keys]
+            if owned:
+                return FILTERS[owned[0]]
         return FILTERS["none"]
     if mode == "line":
         mono = bool(camera is not None and not getattr(camera, "color", True))
@@ -128,6 +145,12 @@ def mode_filter(mode: str, camera=None, allowed_keys: set[str] | None = None) ->
     raise KeyError(f"Unknown imaging mode '{mode}'. Known modes: {', '.join(MODE_KEYS)}")
 
 
+SHORT_BROADBAND_LABELS = {
+    "none": "Visible (UV/IR cut)",
+    "astro": "Astro (UV/IR cut)",
+    "cls": "CLS light-pollution",
+}
+
 SHORT_LINE_LABELS = {
     "duoband": "Duo-band",
     "duoband-wide": "Duo-band (wide)",
@@ -137,12 +160,19 @@ SHORT_LINE_LABELS = {
 
 
 def mode_label(mode: str, camera=None, filt: "Filter | None" = None) -> str:
-    """What to call this mode, given the filter it actually resolved to."""
+    """What to call this mode, given the filter it actually resolved to.
+
+    Names follow the instrument, not the model: a DWARF mini owner sets "Astro"
+    in the app, and a plan that says "Visible" is telling them to select
+    something their telescope does not have.
+    """
     if mode == "line":
         if filt is not None:
             return SHORT_LINE_LABELS.get(filt.key, filt.name)
         if camera is not None and not getattr(camera, "color", True):
             return "Narrowband Ha/OIII"
+    elif mode == "visible" and filt is not None:
+        return SHORT_BROADBAND_LABELS.get(filt.key, filt.name)
     return MODE_LABELS[mode]
 
 

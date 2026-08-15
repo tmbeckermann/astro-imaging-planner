@@ -246,12 +246,15 @@ def rank_targets(
     min_alt_deg: float = MIN_ALT_DEG,
     targets: list[Target] | None = None,
     max_sub_s: float = 1200.0,
+    dark_sqm: float | None = None,
 ) -> list[RankedTarget]:
     targets = targets if targets is not None else load_targets()
     filters = [FILTERS[k] for k in (available_filters or list(FILTERS))]
     fov = camera.fov_arcmin(focal_length_mm)
     pixel_scale = camera.pixel_scale(focal_length_mm)
-    dark_sqm = sqm_from_bortle(bortle)
+    # A number off a light-pollution atlas or a meter beats a class: Bortle is
+    # a nine-step ladder over a continuum, and one step is worth ~0.7 mag.
+    dark_sqm = sqm_from_bortle(bortle) if dark_sqm is None else float(dark_sqm)
 
     ranked: list[RankedTarget] = []
     for t in targets:

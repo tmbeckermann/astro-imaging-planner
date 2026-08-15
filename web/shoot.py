@@ -19,14 +19,16 @@ def shots(outdir: pathlib.Path):
     outdir.mkdir(parents=True, exist_ok=True)
     problems = []
 
+    # Order matters: the camera control is disabled while an integrated
+    # instrument is selected, so the scope has to change first.
     def act_mono(pg):
-        pg.select_option("#cameraInput", "asi2600mm")
         pg.select_option("#scopeInput", "edgehd8")
         pg.select_option("#correctorInput", "0.7x reducer")
+        pg.select_option("#cameraInput", "asi2600mm")
 
     def act_stock(pg):
-        pg.select_option("#cameraInput", "dslr")
         pg.select_option("#scopeInput", "samyang135")
+        pg.select_option("#cameraInput", "dslr")
 
     def act_search(pg):
         pg.fill("#placeInput", "cherry")
@@ -56,6 +58,9 @@ def shots(outdir: pathlib.Path):
         pg.fill("#placeInput", "cherry springs")
         pg.keyboard.press("Enter")
 
+    def act_sqm(pg):
+        pg.fill("#sqmInput", "19.35")
+
     def act_paste_coords(pg):
         pg.fill("#placeInput", "36.0289, -86.6656")
         pg.keyboard.press("Enter")
@@ -75,6 +80,7 @@ def shots(outdir: pathlib.Path):
         ("dark", 1280, 1500, "page-equinox2", act_equinox),
         ("dark", 1280, 1200, "page-dwarf-mini", act_mini),
         ("dark", 1280, 1200, "page-dwarf-wide", act_wide),
+        ("dark", 1280, 900, "page-sqm", act_sqm),
         ("dark", 1280, 900, "page-paste-coords", act_paste_coords),
         ("dark", 1280, 900, "page-utc-metric", act_utc_metric),
         ("dark", 1280, 900, "page-pacific", act_pacific),

@@ -206,11 +206,46 @@ OS02K10, both 1920 x 1080 on 2.9 um pixels, and does not say which lens
 carries which. The geometry is settled either way; only read noise and QE turn
 on it (`--read-noise` / `--qe`).
 
-Two filter positions are read conservatively. The DWARFs list one called
-"Astro", and whether it merely cuts UV/IR or also notches light pollution is
-not stated — the two differ by about 1.4x in SNR under a city sky. It is
-modelled as the plain UV/IR cut, because understating a filter costs you a
-target while overstating it costs you the night.
+Filter positions are named the way the instrument names them. The DWARF mini
+has no plain visible position at all — its wheel is dark shutter, astro and
+dual-band — so its broadband mode resolves to **Astro** and says so, rather
+than telling its owner to select something the app does not offer. Whether
+"Astro" merely cuts UV/IR or also notches light pollution is not stated, and
+the two differ by about 1.4x in SNR under a city sky; it is modelled as the
+plain UV/IR cut, because understating a filter costs you a target while
+overstating it costs you the night.
+
+### Gain
+
+Gain enters this model in exactly one place: **read noise**. The optimal sub
+goes as read noise squared, so halving it quarters the sub length — nothing
+else moves, because QE belongs to the sensor and full-well is not modelled.
+Rather than invent a gain curve for cameras whose curves are not published,
+`astroplanner exposure` prints the sensitivity:
+
+```
+Gain changes one thing here — read noise — and the optimum goes as its square:
+  read noise  0.5 e- -> optimum      4s (5s)
+  read noise  1.0 e- -> optimum     17s (30s)  <- this camera's default
+  read noise  2.0 e- -> optimum     67s (90s)
+```
+
+Measure yours from a set of bias frames at the gain you actually use, then
+pass `--read-noise`.
+
+### Sky brightness: a number beats a class
+
+Bortle is a nine-step ladder over a continuum, and one step is worth about
+0.7 mag — a factor of 1.9 in sky flux, and therefore in sub length. If you can
+read a real figure, `--sqm 19.35` (and the page's *Measured SQM* box) takes it
+and overrides the class. Sources, in rough order of convenience:
+
+- **lightpollutionmap.info** — click your site; it reports SQM and an implied
+  Bortle from the VIIRS and World Atlas layers.
+- **The World Atlas 2015 raster** (Falchi et al.) — the dataset those maps are
+  built on, downloadable as a GeoTIFF if you want exact values offline.
+- **Clear Outside / Astrospheric** — forecast sites that also quote a class.
+- **An SQM meter** — the only one that measures *your* sky on *that* night.
 
 Where an instrument states a longest exposure it will take, that ceiling is
 modelled: the DWARF mini stops at 90 s, and under a dark sky its dual-band

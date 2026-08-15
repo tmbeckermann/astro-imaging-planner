@@ -163,16 +163,31 @@ def test_a_fifteen_second_ceiling_bites_at_every_site_worth_driving_to():
 
 
 def test_an_astro_filter_position_is_not_assumed_to_reject_light_pollution():
-    # The DWARFs list a filter called "Astro". Whether it merely cuts UV/IR or
-    # also notches light pollution is not stated, and the two differ by ~1.4x in
-    # SNR under a city sky. Modelled as the plain UV/IR cut: understating a
-    # filter costs you a target, overstating it costs you the night.
-    for key in ("dwarf-mini", "dwarf3"):
+    # The DWARFs' "Astro" is its own filter entry, not a relabelled CLS.
+    # Whether it merely cuts UV/IR or also notches light pollution is not
+    # stated, and the two differ by ~1.4x in SNR under a city sky, so it is
+    # modelled as the plain UV/IR cut: understating a filter costs you a
+    # target, overstating it costs you the night.
+    assert FILTERS["astro"].sky_bandwidth_factor == FILTERS["none"].sky_bandwidth_factor
+    for key in ("dwarf-mini", "dwarf3", "dwarf3-wide", "dwarf-mini-wide"):
         assert "cls" not in get_telescope(key).builtin_filters, key
-        assert get_telescope(key).builtin_filters == ("none", "duoband-wide"), key
-    # The wide lenses see the astro position but not the dual-band.
-    for key in ("dwarf3-wide", "dwarf-mini-wide"):
-        assert get_telescope(key).builtin_filters == ("none",), key
+        assert "astro" in get_telescope(key).builtin_filters, key
+
+
+def test_the_mini_has_no_plain_visible_position_so_broadband_means_astro():
+    # Its filter wheel is dark shutter / astro / dual-band. A plan that told
+    # its owner to select "Visible" would be naming a setting the app does not
+    # offer, so the broadband mode resolves to Astro and is labelled that way.
+    mini = get_telescope("dwarf-mini")
+    assert mini.builtin_filters == ("astro", "duoband-wide")
+    a = advise("dwarf-mini", line_emitter=False)
+    assert a.recommended == "visible"
+    assert a.scores["visible"].filter_key == "astro"
+    assert a.scores["visible"].label == "Astro (UV/IR cut)"
+
+    # The DWARF 3 has both, and prefers the plain visible one.
+    d3 = advise("dwarf3", line_emitter=False)
+    assert d3.scores["visible"].filter_key == "none"
 
 
 def test_the_wide_angle_module_is_a_different_instrument():
@@ -181,7 +196,7 @@ def test_the_wide_angle_module_is_a_different_instrument():
     wide = get_telescope("dwarf-mini-wide")
     tele = get_telescope("dwarf-mini")
     assert wide.fixed_camera != tele.fixed_camera
-    assert wide.builtin_filters == ("none",)
+    assert wide.builtin_filters == ("astro",)
     assert wide.max_sub_s == tele.max_sub_s == 90
 
 
@@ -216,7 +231,7 @@ def test_the_dwarf3_telephoto_matches_its_published_figures():
     assert (scope.aperture_mm, scope.focal_length_mm) == (35.0, 150.0)
     assert scope.f_ratio == pytest.approx(4.29, abs=0.01)
     assert (cam.width_px, cam.height_px, cam.pixel_um) == (3840, 2160, 2.00)
-    assert scope.builtin_filters == ("none", "duoband-wide")
+    assert scope.builtin_filters == ("none", "astro", "duoband-wide")
 
 
 def test_a_wide_field_ranks_big_targets_and_buries_small_ones():
@@ -245,11 +260,14 @@ def test_the_dwarf2_matches_its_published_table():
     assert scope.f_ratio == pytest.approx(4.2, abs=0.05)
     assert (cam.width_px, cam.height_px, cam.pixel_um) == (3840, 2160, 1.45)
     assert scope.max_sub_s == 15
-    assert scope.builtin_filters == ("none",)
+    # Visible built in; the dual-band is the owner's, and its other built-in
+    # position is an IR-pass, which starts above Ha and is no use here.
+    assert scope.builtin_filters == ("none", "duoband-wide")
+    assert "astro" not in scope.builtin_filters
 
     a = advise("dwarf2", line_emitter=True)
-    assert a.recommended == "visible"                 # nothing else is fitted
-    assert "no line filter available" in a.reason
+    assert a.recommended == "line"
+    assert a.scores["visible"].filter_key == "none"
 
 
 def test_the_dwarf2_has_no_wide_angle_rig_because_it_cannot_shoot_one():

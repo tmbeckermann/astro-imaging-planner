@@ -127,7 +127,7 @@ def _resolve_site(args) -> tuple[float, float, float, str]:
         lon = args.lon if args.lon is not None else place.lon
         elev = args.elevation if args.elevation is not None else place.elevation_m
         label = place.label
-        if args.bortle is None:
+        if args.bortle is None and getattr(args, "sqm", None) is None:
             args.bortle = place.bortle_estimate
             how = {"measured": "measured at this site",
                    "typical": "typical for a city this size",
@@ -137,8 +137,9 @@ def _resolve_site(args) -> tuple[float, float, float, str]:
                   f"Bortle {args.bortle} [{how}]", file=sys.stderr)
     if lat is None or lon is None:
         raise SystemExit("Give a site: either --place NAME or --lat DEG --lon DEG.")
-    if args.bortle is None:
-        raise SystemExit("Give --bortle 1-9 (or use --place, which suggests one).")
+    if args.bortle is None and getattr(args, "sqm", None) is None:
+        raise SystemExit("Give --bortle 1-9, or --sqm if you have a measured value "
+                         "(or use --place, which suggests a class).")
     return lat, lon, (elev or 0.0), label
 
 
@@ -167,6 +168,7 @@ def cmd_plan(args) -> int:
         min_alt_deg=args.min_alt,
         targets=subset,
         max_sub_s=(scope.max_sub_s if scope and scope.max_sub_s else 1200.0),
+        dark_sqm=args.sqm,
     )
     fov_w, fov_h = cam.fov_arcmin(args.fl)
     zone = get_zone(args.tz)
@@ -174,7 +176,9 @@ def cmd_plan(args) -> int:
     tzname = zone_abbrev(ctx.dark_start.to_datetime(), zone)
     where = f"{site_label}  ({args.lat:+.2f}, {args.lon:+.2f})" if site_label else \
             f"lat {args.lat:+.2f} lon {args.lon:+.2f}"
-    print(f"Night of {args.date}  |  {where}  |  Bortle {args.bortle}")
+    sky = (f"SQM {args.sqm:.2f} mag/arcsec² [measured]" if args.sqm
+           else f"Bortle {args.bortle} (SQM {sqm_from_bortle(args.bortle):.1f})")
+    print(f"Night of {args.date}  |  {where}  |  {sky}")
     moon_hours = float((ctx.dark & (ctx.moon_alt_deg > 0)).sum()) * ctx.step_hours
     print(f"Darkness ({ctx.darkness_kind}): {clock(ctx.dark_start)}"
           f"-{clock(ctx.dark_end)} {tzname}  ({ctx.dark_hours:.1f} h)"
@@ -278,6 +282,20 @@ def cmd_exposure(args) -> int:
     print(f"Swamp factor       : sky must reach {res.swamp_factor:.1f}x read-noise variance per sub")
     for s in (60, 120, 300, 600):
         print(f"  {s:>4}s subs -> +{stack_noise_penalty(cam.read_noise_e, rate, s):.1f}% stack noise vs ideal")
+
+    # Gain enters this model in exactly one place: read noise. The optimum goes
+    # as read noise squared, so halving it quarters the sub length. Nothing else
+    # here moves — QE is a property of the sensor, and full-well is not modelled
+    # — so rather than invent a gain curve for cameras whose curves are not
+    # published, show the sensitivity and let a measured figure drive it.
+    print()
+    print("Gain changes one thing here — read noise — and the optimum goes as its square:")
+    for rn in sorted({0.5, 1.0, 1.5, 2.0, 3.0, round(cam.read_noise_e, 1)}):
+        res_rn = optimal_sub_exposure(rn, rate, args.noise_increase)
+        mark = "  <- this camera's default" if abs(rn - cam.read_noise_e) < 0.05 else ""
+        print(f"  read noise {rn:>4.1f} e- -> optimum {res_rn.optimal_s:>6.0f}s "
+              f"({res_rn.recommended_s}s){mark}")
+    print("Measure yours from bias frames at the gain you use, then pass --read-noise.")
     return 0
 
 
@@ -396,6 +414,9 @@ def main(argv: list[str] | None = None) -> int:
     sp.add_argument("--offline", action="store_true", help="never call the online geocoder")
     sp.add_argument("--bortle", type=int, choices=range(1, 10),
                     help="sky class 1-9; --place suggests one if omitted")
+    sp.add_argument("--sqm", type=float,
+                    help="measured zenith sky brightness, mag/arcsec^2 — overrides --bortle. "
+                         "Read it off a light-pollution atlas or your own meter")
     _rig_args(sp)
     sp.add_argument("--filters", help="comma list of filters you own (default: all)")
     sp.add_argument("--show-filter", action="store_true",
