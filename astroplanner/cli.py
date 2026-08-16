@@ -379,7 +379,8 @@ def cmd_filters(_args) -> int:
 
 def cmd_targets(_args) -> int:
     for t in load_targets():
-        print(f"{t.id:<9} {t.name:<28} RA {t.ra_deg:7.2f}  Dec {t.dec_deg:+7.2f}  {t.size_arcmin:5.1f}'  {t.type}")
+        print(f"{t.id:<9} {t.name:<28} RA {t.ra_deg:7.2f}  Dec {t.dec_deg:+7.2f}  {t.size_arcmin:5.1f}'  "
+              f"SB {t.surface_brightness_mag:5.1f}  {t.type}")
     return 0
 
 

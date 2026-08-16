@@ -436,6 +436,7 @@
   .chip-emit { background: var(--emitter-bg); color: var(--emitter); border-color: var(--emitter); }
   .chip-broad { background: var(--broad-bg); color: var(--broad); border-color: var(--broad); }
   .chip-pick { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+  .chip-messier { background: transparent; color: var(--muted); border-color: var(--rule); }
 
   .stats {
     display: flex;
@@ -1349,13 +1350,19 @@ function render() {
       .map((pt) => `<span><b>${pt.hours}h</b> SNR ~${pt.snr < 10 ? pt.snr.toFixed(1) : pt.snr.toFixed(0)}</span>`)
       .join("");
 
+    // The catalog names a Messier object by its M-number outright ("M31"),
+    // so this is exactly the objects Messier catalogued — nothing inferred.
+    const messierNum = /^M(\d+)$/.exec(t.id)?.[1];
+    const sbMag = surfaceBrightnessMag(t.mag, t.size_arcmin);
+
     li.innerHTML =
       `<div class="rank">${i + 1}</div>
        <div class="col-id">
          <h3 class="tname">${t.name}</h3>
-         <span class="tid">${t.id} &middot; ${t.size_arcmin}&prime;</span>
+         <span class="tid">${t.id} &middot; ${t.size_arcmin}&prime; &middot; SB ${sbMag.toFixed(1)}</span>
          <div class="chips">
            <span class="chip ${chip}">${TYPE_NAMES[t.type] ?? t.type}</span>
+           ${messierNum ? `<span class="chip chip-messier">Messier ${messierNum}</span>` : ""}
            <span class="chip chip-pick">${advice.scores[advice.recommended].label}</span>
          </div>
          <div class="stats">
