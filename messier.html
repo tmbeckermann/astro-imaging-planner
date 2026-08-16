@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<title>Tonight's Imaging Plan</title>
+<title>Messier Catalog — Best Time to Image</title>
 <style>
   :root {
     --ground: #EEF1F6;
@@ -16,11 +16,7 @@
     --emitter-bg: #FAE6E3;
     --broad: #2E6FB8;
     --broad-bg: #E2ECF8;
-    --moon: #5C6E96;
-    --moon-fill: rgba(92, 110, 150, .16);
-    --qual: #1F7A68;
     --qual-track: #DDE4EC;
-    --sky-fill: rgba(46, 111, 184, .10);
     --field: #FFFFFF;
     --shadow: 0 1px 2px rgba(20, 26, 40, .05), 0 10px 26px -14px rgba(20, 26, 40, .22);
     --serif: Georgia, "Iowan Old Style", "Palatino Linotype", Palatino, "Times New Roman", serif;
@@ -44,11 +40,7 @@
       --emitter-bg: #381916;
       --broad: #5A9EE4;
       --broad-bg: #14273D;
-      --moon: #9FB3D9;
-      --moon-fill: rgba(159, 179, 217, .16);
-      --qual: #3FBBA0;
       --qual-track: #232C46;
-      --sky-fill: rgba(90, 158, 228, .12);
       --field: #0F1526;
       --shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 12px 32px -16px rgba(0, 0, 0, .7);
     }
@@ -69,11 +61,7 @@
     --emitter-bg: #381916;
     --broad: #5A9EE4;
     --broad-bg: #14273D;
-    --moon: #9FB3D9;
-    --moon-fill: rgba(159, 179, 217, .16);
-    --qual: #3FBBA0;
     --qual-track: #232C46;
-    --sky-fill: rgba(90, 158, 228, .12);
     --field: #0F1526;
     --shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 12px 32px -16px rgba(0, 0, 0, .7);
   }
@@ -95,7 +83,7 @@
     padding: clamp(1.5rem, 4vw, 3.5rem) clamp(1rem, 3vw, 2rem) 4rem;
     display: flex;
     flex-direction: column;
-    gap: 1.75rem;
+    gap: 1.5rem;
   }
 
   .eyebrow {
@@ -107,7 +95,6 @@
     margin: 0;
   }
 
-  /* ---- masthead ---- */
   .masthead {
     display: flex;
     flex-wrap: wrap;
@@ -129,22 +116,15 @@
 
   .masthead h1 em { font-style: italic; color: var(--accent); }
 
-  .rig {
+  .navlink {
     font-family: var(--mono);
     font-size: .76rem;
     color: var(--muted);
-    text-align: right;
-    line-height: 1.7;
-    font-variant-numeric: tabular-nums;
   }
 
-  .rig b { color: var(--ink-2); font-weight: 600; }
-
-  .navlink { font-family: var(--mono); font-size: .76rem; color: var(--muted); text-align: right; margin: .3rem 0 0; }
   .navlink a { color: var(--accent); text-decoration: none; }
   .navlink a:hover { text-decoration: underline; }
 
-  /* ---- controls ---- */
   .controls {
     background: var(--surface);
     border: 1px solid var(--rule);
@@ -157,7 +137,7 @@
     align-items: start;
   }
 
-  .field { display: flex; flex-direction: column; gap: .3rem; position: relative; min-width: 0; }
+  .field { display: flex; flex-direction: column; gap: .3rem; min-width: 0; }
 
   .field > label {
     font-family: var(--mono);
@@ -167,7 +147,6 @@
     color: var(--muted);
   }
 
-  .field input,
   .field select {
     appearance: none;
     width: 100%;
@@ -179,9 +158,6 @@
     border-radius: 6px;
     padding: .45rem .6rem;
     line-height: 1.35;
-  }
-
-  .field select {
     background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
                       linear-gradient(135deg, var(--muted) 50%, transparent 50%);
     background-position: right 1.05rem center, right .8rem center;
@@ -190,435 +166,128 @@
     padding-right: 1.9rem;
   }
 
-  .field input:focus-visible,
-  .field select:focus-visible,
-  .switch button:focus-visible,
-  summary:focus-visible,
-  .result:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 1px;
-  }
+  .field select[disabled] { opacity: .7; cursor: not-allowed; background-image: none; }
 
-  .hint {
+  .field select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .hint { font-family: var(--mono); font-size: .64rem; color: var(--muted); }
+
+  .rig-line {
     font-family: var(--mono);
-    font-size: .64rem;
-    color: var(--muted);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .hint b { color: var(--ink-2); font-weight: 600; }
-
-  .siterow { display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap; }
-
-  .locate {
-    appearance: none;
-    border: 1px solid var(--rule);
-    background: var(--raised);
-    color: var(--ink-2);
-    font-family: var(--mono);
-    font-size: .64rem;
-    letter-spacing: .06em;
-    text-transform: uppercase;
-    padding: .2rem .5rem;
-    border-radius: 5px;
-    cursor: pointer;
-    white-space: nowrap;
-  }
-
-  .locate:hover { color: var(--ink); border-color: var(--muted); }
-  .locate:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-  .locate[disabled] { opacity: .5; cursor: default; }
-
-  .field select[disabled] {
-    opacity: .7;
-    cursor: not-allowed;
-    background-image: none;
-  }
-
-  .locked { color: var(--accent); }
-
-  /* ---- place search results ---- */
-  .results {
-    position: absolute;
-    top: calc(100% + .25rem);
-    left: 0;
-    right: 0;
-    z-index: 20;
-    background: var(--surface);
-    border: 1px solid var(--rule);
-    border-radius: 8px;
-    box-shadow: var(--shadow);
-    padding: .25rem;
-    margin: 0;
-    list-style: none;
-    max-height: 17rem;
-    overflow-y: auto;
-    display: none;
-  }
-
-  .results.on { display: block; }
-
-  .result {
-    display: flex;
-    justify-content: space-between;
-    gap: .6rem;
-    align-items: baseline;
-    width: 100%;
-    text-align: left;
-    background: transparent;
-    border: 0;
-    border-radius: 5px;
-    padding: .35rem .5rem;
-    cursor: pointer;
-    font-family: var(--sans);
-    font-size: .82rem;
-    color: var(--ink);
-  }
-
-  .result:hover, .result[aria-selected="true"] { background: var(--raised); }
-
-  .result .rb {
-    font-family: var(--mono);
-    font-size: .68rem;
-    color: var(--muted);
-    white-space: nowrap;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .result .site { color: var(--accent); }
-
-  /* ---- night panel ---- */
-  .night {
-    background: var(--surface);
-    border: 1px solid var(--rule);
-    border-radius: 10px;
-    box-shadow: var(--shadow);
-    padding: 1.25rem clamp(1rem, 2.5vw, 1.5rem) 1.1rem;
-    display: flex;
-    flex-direction: column;
-    gap: .9rem;
-  }
-
-  .night-head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-  }
-
-  .facts { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; }
-  .fact { display: flex; flex-direction: column; gap: .1rem; }
-
-  .fact .v {
-    font-family: var(--mono);
-    font-size: 1.05rem;
-    font-variant-numeric: tabular-nums;
-    color: var(--ink);
-  }
-
-  .fact .k {
-    font-family: var(--mono);
-    font-size: .66rem;
-    letter-spacing: .12em;
-    text-transform: uppercase;
+    font-size: .78rem;
     color: var(--muted);
   }
 
-  .moonbadge { display: flex; align-items: center; gap: .6rem; }
+  .rig-line b { color: var(--ink-2); font-weight: 600; }
 
-  .switch {
-    display: flex;
-    gap: .35rem;
-    background: var(--raised);
-    border: 1px solid var(--rule);
-    border-radius: 8px;
-    padding: .25rem;
-  }
+  .catalog { display: flex; flex-direction: column; gap: .7rem; }
 
-  .switch button {
-    appearance: none;
-    border: 0;
-    background: transparent;
-    color: var(--muted);
-    font-family: var(--sans);
-    font-size: .82rem;
-    font-weight: 600;
-    padding: .4rem .85rem;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background .18s ease, color .18s ease;
-  }
-
-  .switch button:hover { color: var(--ink); }
-
-  .switch button[aria-pressed="true"] {
-    background: var(--surface);
-    color: var(--ink);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, .12);
-  }
-
-  /* ---- charts ---- */
-  .chart { position: relative; width: 100%; }
-  .chart svg { display: block; width: 100%; }
-
-  .tip {
-    position: absolute;
-    pointer-events: none;
-    background: var(--surface);
-    border: 1px solid var(--rule);
-    border-radius: 6px;
-    box-shadow: var(--shadow);
-    padding: .3rem .5rem;
-    font-family: var(--mono);
-    font-size: .7rem;
-    font-variant-numeric: tabular-nums;
-    color: var(--ink);
-    white-space: nowrap;
-    opacity: 0;
-    transition: opacity .12s ease;
-    z-index: 5;
-  }
-
-  .tip.on { opacity: 1; }
-
-  .axis {
-    display: flex;
-    justify-content: space-between;
-    font-family: var(--mono);
-    font-size: .66rem;
-    color: var(--muted);
-    font-variant-numeric: tabular-nums;
-  }
-
-  /* ---- target list ---- */
-  .targets { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .7rem; }
-
-  .target {
+  .mcard {
     background: var(--surface);
     border: 1px solid var(--rule);
     border-left: 3px solid var(--edge, var(--rule));
-    border-radius: 8px;
+    border-radius: 10px;
     box-shadow: var(--shadow);
-    padding: 1rem clamp(.9rem, 2vw, 1.25rem);
+    padding: .85rem 1.1rem;
     display: grid;
-    gap: .5rem 1.25rem;
-    grid-template-columns: 2rem minmax(10rem, 1fr) minmax(11rem, 1.2fr) minmax(15rem, 1.3fr);
+    grid-template-columns: 1fr auto;
+    gap: .5rem 1.2rem;
     align-items: center;
   }
 
-  @media (max-width: 66rem) {
-    .target { grid-template-columns: 2rem 1fr; }
-    .target .col-chart, .target .col-modes { grid-column: 1 / -1; }
-  }
+  .mcard.never { opacity: .6; }
 
-  .rank {
-    font-family: var(--serif);
-    font-size: 1.5rem;
-    color: var(--accent);
-    text-align: center;
+  .mname { font-family: var(--serif); font-size: 1.05rem; margin: 0; }
+
+  .mtid {
+    font-family: var(--mono);
+    font-size: .72rem;
+    color: var(--muted);
     font-variant-numeric: tabular-nums;
-    align-self: start;
   }
 
-  .tname { font-family: var(--serif); font-size: 1.16rem; margin: 0; line-height: 1.25; }
-
-  .tid { font-family: var(--mono); font-size: .72rem; color: var(--muted); letter-spacing: .04em; }
-
-  .chips { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .35rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .3rem; }
 
   .chip {
     font-family: var(--mono);
-    font-size: .66rem;
-    letter-spacing: .06em;
+    font-size: .62rem;
+    letter-spacing: .04em;
     text-transform: uppercase;
-    padding: .16rem .45rem;
-    border-radius: 4px;
-    border: 1px solid transparent;
+    padding: .12rem .5rem;
+    border-radius: 99px;
+    border: 1px solid;
+    white-space: nowrap;
   }
 
   .chip-emit { background: var(--emitter-bg); color: var(--emitter); border-color: var(--emitter); }
   .chip-broad { background: var(--broad-bg); color: var(--broad); border-color: var(--broad); }
   .chip-pick { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
-  .chip-messier { background: transparent; color: var(--muted); border-color: var(--rule); }
 
-  .stats {
-    display: flex;
-    flex-wrap: wrap;
-    gap: .1rem 1rem;
-    font-family: var(--mono);
-    font-size: .7rem;
+  .best-line {
+    font-family: var(--sans);
+    font-size: .78rem;
     color: var(--muted);
-    font-variant-numeric: tabular-nums;
     margin-top: .4rem;
   }
 
-  .stats b { color: var(--ink-2); font-weight: 600; }
+  .best-line b { color: var(--ink-2); font-weight: 600; }
 
-  /* ---- the three imaging modes ---- */
-  .col-modes { display: flex; flex-direction: column; gap: .3rem; }
-
-  .modehead {
-    display: flex;
-    justify-content: space-between;
-    font-family: var(--mono);
-    font-size: .62rem;
-    letter-spacing: .1em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-
-  .mode {
-    display: grid;
-    grid-template-columns: 9.6rem 1fr 2.6rem 2.8rem;
-    align-items: center;
-    gap: .5rem;
-    padding: .18rem .4rem;
-    border-radius: 5px;
-    border-left: 2px solid transparent;
-    font-family: var(--mono);
-    font-size: .7rem;
-    font-variant-numeric: tabular-nums;
-    color: var(--muted);
-  }
-
-  .mode.pick {
-    background: var(--accent-bg);
-    border-left-color: var(--accent);
-    color: var(--ink);
-  }
-
-  .mode.off { opacity: .55; }
-
-  .mode .mname { letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .mode.pick .mname { font-weight: 700; color: var(--accent); }
-  .mode .mq { text-align: right; }
-  .mode .msub { text-align: right; color: var(--ink-2); }
-  .mode.pick .mq, .mode.pick .msub { color: var(--ink); font-weight: 700; }
-
-  .bar { position: relative; height: 5px; background: var(--qual-track); border-radius: 3px; }
-  .bar i { position: absolute; inset: 0 auto 0 0; background: var(--qual); border-radius: 3px; }
-  .mode.pick .bar i { background: var(--accent); }
-  .bar u { position: absolute; top: -2px; bottom: -2px; width: 1px; background: var(--muted); opacity: .8; }
-
-  /* An unavailable mode explains itself on one line across the number columns,
-     so a long reason cannot stretch the row it sits in. */
-  .mode .na {
-    grid-column: 2 / -1;
-    font-size: .66rem;
-    color: var(--muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .why {
-    font-family: var(--sans);
-    font-size: .74rem;
-    color: var(--muted);
-    line-height: 1.45;
-    margin: .15rem 0 0;
-  }
-
-  .why b { color: var(--ink-2); font-weight: 600; }
-
-  /* ---- integration time: SNR at a few milestones, from catalog brightness ---- */
   .returns {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: .15rem .9rem;
     font-family: var(--mono);
-    font-size: .7rem;
+    font-size: .68rem;
     color: var(--muted);
-    font-variant-numeric: tabular-nums;
-    margin-top: .3rem;
-    padding-top: .3rem;
-    border-top: 1px solid var(--rule-soft);
-  }
-
-  .returns .rlabel {
-    font-family: var(--sans);
-    font-size: .62rem;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--muted);
-    flex-basis: 100%;
+    margin-top: .25rem;
   }
 
   .returns b { color: var(--ink-2); font-weight: 600; }
-  .returns .elbow { color: var(--muted); font-style: italic; }
 
-  /* ---- messages ---- */
+  .months {
+    display: flex;
+    align-items: flex-end;
+    gap: .2rem;
+    height: 3rem;
+    min-width: 11rem;
+  }
+
+  .mbar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+  }
+
+  .mbar .bar {
+    width: 100%;
+    max-width: 1rem;
+    min-height: 2px;
+    background: var(--qual-track);
+    border-radius: 2px 2px 0 0;
+  }
+
+  .mbar.best .bar { background: var(--accent); }
+
+  .mbar .mlabel {
+    font-family: var(--mono);
+    font-size: .56rem;
+    color: var(--muted);
+    margin-top: .15rem;
+  }
+
+  .mbar.now .mlabel { color: var(--ink); font-weight: 700; }
+
   .empty {
     background: var(--surface);
     border: 1px solid var(--rule);
     border-radius: 10px;
     box-shadow: var(--shadow);
     padding: 1.5rem;
-    color: var(--ink-2);
-    font-size: .92rem;
-  }
-
-  .empty h2 { font-family: var(--serif); font-weight: 400; font-size: 1.2rem; margin: 0 0 .4rem; }
-
-  /* ---- notes ---- */
-  .notes {
-    border-top: 2px solid var(--rule);
-    padding-top: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .notes h2 { font-family: var(--serif); font-weight: 400; font-size: 1.25rem; margin: 0; }
-  .notes p { margin: 0; max-width: 62ch; color: var(--ink-2); font-size: .9rem; }
-
-  .findings { display: grid; gap: .9rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
-
-  .finding {
-    background: var(--raised);
-    border: 1px solid var(--rule-soft);
-    border-radius: 8px;
-    padding: .85rem 1rem;
-  }
-
-  .finding h3 { font-family: var(--sans); font-size: .84rem; margin: 0 0 .3rem; color: var(--ink); }
-  .finding p { font-size: .82rem; color: var(--muted); }
-
-  details {
-    border: 1px solid var(--rule);
-    border-radius: 8px;
-    background: var(--surface);
-    padding: .6rem .9rem;
-  }
-
-  summary {
-    cursor: pointer;
-    font-family: var(--mono);
-    font-size: .74rem;
-    letter-spacing: .06em;
-    text-transform: uppercase;
+    text-align: center;
     color: var(--muted);
   }
 
-  .tablewrap { overflow-x: auto; margin-top: .75rem; }
-
-  table { border-collapse: collapse; width: 100%; font-family: var(--mono); font-size: .74rem; font-variant-numeric: tabular-nums; }
-  th, td { text-align: right; padding: .35rem .55rem; border-bottom: 1px solid var(--rule-soft); white-space: nowrap; }
-  th:first-child, td:first-child { text-align: left; }
-  th { color: var(--muted); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; font-size: .64rem; }
-
-  code {
-    font-family: var(--mono);
-    font-size: .84em;
-    background: var(--raised);
-    border: 1px solid var(--rule-soft);
-    border-radius: 4px;
-    padding: .08em .35em;
-  }
-
-  .foot { font-family: var(--mono); font-size: .7rem; color: var(--muted); overflow-wrap: anywhere; }
+  .foot { font-family: var(--mono); font-size: .7rem; color: var(--muted); }
 
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; animation: none !important; }
@@ -628,38 +297,20 @@
 <div class="wrap">
   <header class="masthead">
     <div>
-      <p class="eyebrow">Observing plan &middot; astro-imaging-planner</p>
-      <h1>What to image, <em id="nightWord">and how to filter it</em></h1>
+      <p class="eyebrow">Reference catalog &middot; astro-imaging-planner</p>
+      <h1>Every Messier object, <em>and its best month</em></h1>
     </div>
     <div>
-      <div class="rig" id="rig"></div>
-      <p class="navlink"><a href="messier.html">Messier catalog &rarr;</a></p>
+      <div class="rig-line" id="rig"></div>
+      <p class="navlink"><a href="tonight.html">&larr; tonight&rsquo;s plan</a></p>
     </div>
   </header>
 
-  <section class="controls" aria-label="Site, night and rig">
+  <section class="controls" aria-label="Site and rig">
     <div class="field">
       <label for="placeInput">Observing site</label>
-      <input id="placeInput" type="text" autocomplete="off" role="combobox"
-             aria-expanded="false" aria-controls="placeResults" aria-autocomplete="list"
-             placeholder="Name, or paste coordinates / a maps link">
-      <ul class="results" id="placeResults" role="listbox" aria-label="Matching places"></ul>
-      <div class="siterow">
-        <button type="button" class="locate" id="locateBtn">Use my location</button>
-        <span class="hint" id="placeHint"></span>
-      </div>
-    </div>
-
-    <div class="field">
-      <label for="dateInput">Night of (evening)</label>
-      <input id="dateInput" type="date">
-      <span class="hint" id="dateHint">Darkness window is shown in UTC</span>
-    </div>
-
-    <div class="field">
-      <label for="tzInput">Times shown in</label>
-      <select id="tzInput"></select>
-      <span class="hint" id="tzHint"></span>
+      <select id="placeInput"></select>
+      <span class="hint" id="placeHint"></span>
     </div>
 
     <div class="field">
@@ -668,7 +319,6 @@
         <option value="imperial" selected>Imperial (ft, inches)</option>
         <option value="metric">Metric (m, mm)</option>
       </select>
-      <span class="hint">Focal length and pixel scale stay in mm and arcsec</span>
     </div>
 
     <div class="field">
@@ -678,123 +328,31 @@
     </div>
 
     <div class="field">
-      <label for="sqmInput">Measured SQM</label>
-      <input id="sqmInput" type="number" step="0.01" min="16" max="22.5"
-             placeholder="optional — overrides class">
-      <span class="hint">mag/arcsec² from an atlas or a meter</span>
-    </div>
-
-    <div class="field">
       <label for="scopeInput">Telescope</label>
       <select id="scopeInput"></select>
-      <span class="hint" id="scopeHint"></span>
     </div>
 
     <div class="field" id="correctorField">
       <label for="correctorInput">Reducer / corrector</label>
       <select id="correctorInput"></select>
-      <span class="hint" id="correctorHint"></span>
     </div>
 
     <div class="field">
       <label for="cameraInput">Camera</label>
       <select id="cameraInput"></select>
-      <span class="hint" id="cameraHint"></span>
     </div>
   </section>
 
-  <section class="night" aria-labelledby="nightHead">
-    <div class="night-head">
-      <div class="facts">
-        <div class="fact">
-          <span class="v" id="darkWindow"></span>
-          <span class="k" id="darkKind">Astronomical dark (UTC)</span>
-        </div>
-        <div class="fact">
-          <span class="v" id="darkHours"></span>
-          <span class="k">Usable hours</span>
-        </div>
-        <div class="moonbadge">
-          <svg id="moonDisc" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"></svg>
-          <div class="fact">
-            <span class="v" id="moonIllum"></span>
-            <span class="k" id="moonUp"></span>
-          </div>
-        </div>
-      </div>
-      <div class="switch" role="group" aria-label="Jump to a moon phase">
-        <button type="button" data-jump="new" aria-pressed="false">Next new moon</button>
-        <button type="button" data-jump="full" aria-pressed="false">Next full moon</button>
-      </div>
-    </div>
+  <p class="hint">
+    Best month is pure geometry &mdash; altitude above 30&deg; during darkness through the year at
+    this site &mdash; independent of moon phase or weather. Imaging mode and integration time assume
+    a moonless night that month.
+  </p>
 
-    <div>
-      <h2 id="nightHead" class="eyebrow">Moon altitude across the dark window</h2>
-      <div class="chart" id="moonChart"><div class="tip"></div></div>
-      <div class="axis"><span id="axStart"></span><span id="axEnd"></span></div>
-    </div>
-  </section>
-
-  <ol class="targets" id="targets"></ol>
+  <div class="catalog" id="catalog"></div>
   <div class="empty" id="empty" hidden></div>
 
-  <details>
-    <summary>Table view &mdash; all ranked targets</summary>
-    <div class="tablewrap">
-      <table id="dataTable">
-        <thead>
-          <tr>
-            <th>Target</th><th>Type</th><th>Score</th><th>Hours</th><th>Max alt</th>
-            <th>Moon sep</th><th>Moon cost</th><th>Window</th><th>Mode</th><th>SkyQual</th><th>Sub</th>
-            <th>Sky e&minus;/px/s</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </details>
-
-  <section class="notes">
-    <h2>Reading the numbers</h2>
-    <p>
-      Each target is scored in all three modes you can put in front of the sensor.
-      <b>Full spectrum</b> is the camera with no UV/IR cut at all; <b>visible</b> is a UV/IR-cut
-      filter, the colour-correct baseline; <b>duo-band</b> passes only H&alpha; and O&thinsp;III
-      (a 7&thinsp;nm narrowband on a mono camera, where shooting one line at a time costs nothing).
-      <b>SkyQual</b> is the signal-to-noise each mode achieves, where <code>1.00</code> is a visible
-      frame under this site&rsquo;s moonless sky &mdash; so the tick on every bar is the same
-      reference. <b>Sub</b> is the exposure at which sky shot noise swamps read noise, Robin
-      Glover&rsquo;s criterion at a 5% stack-noise penalty.
-    </p>
-    <div class="findings">
-      <div class="finding">
-        <h3>Full spectrum is a wash, not a shortcut</h3>
-        <p>
-          Dropping the UV/IR cut opens ~1.6&times; more sky but only ~1.3&times; more target: the
-          near-IR is where the OH airglow bands live. The +2% SNR does not pay for the colour cast
-          and the bloated stars, which is why the standard advice holds.
-        </p>
-      </div>
-      <div class="finding">
-        <h3>On emission targets the filter beats the drive</h3>
-        <p>
-          A duo-band passes the nebula&rsquo;s line flux while cutting continuum sky ~20&times;. That
-          margin is the same at Bortle 8 as at Bortle 3 &mdash; owning the filter can be worth more
-          than the drive to a dark site.
-        </p>
-      </div>
-      <div class="finding">
-        <h3>An unmodified camera is the real bottleneck</h3>
-        <p>
-          A stock DSLR&rsquo;s built-in IR cut passes only about 20% of H&alpha;, so a duo-band
-          bolted to one is mostly an O&thinsp;III filter. Pick the stock DSLR above and watch every
-          emission nebula&rsquo;s numbers collapse.
-        </p>
-      </div>
-    </div>
-    <p class="foot" id="prov"></p>
-    <p class="foot" id="provenance"></p>
-  </section>
+  <p class="foot" id="foot"></p>
 </div>
 
 <script type="module">
@@ -1402,19 +960,12 @@ function mean(xs) {
 
 
 const DATA = {"filters":{"full":{"key":"full","name":"Full spectrum (no UV/IR cut)","sky_bandwidth_factor":5.5,"moon_susceptibility":1.0,"line_filter":false,"line_transmission":0.9,"continuum_transmission":1.3,"needs_ir_cut_removed":true,"colour_true":false,"note":"all the photons silicon can see; bloated stars, no true colour"},"none":{"key":"none","name":"Visible (UV/IR cut)","sky_bandwidth_factor":3.4,"moon_susceptibility":1.0,"line_filter":false,"line_transmission":0.9,"continuum_transmission":1.0,"needs_ir_cut_removed":false,"colour_true":true,"note":"the colour-correct broadband baseline"},"astro":{"key":"astro","name":"Astro (UV + visible + IR)","sky_bandwidth_factor":5.5,"moon_susceptibility":1.0,"line_filter":false,"line_transmission":0.9,"continuum_transmission":1.3,"needs_ir_cut_removed":true,"colour_true":false,"note":"the open position on a DWARF; passes UV and IR, so it is full spectrum"},"cls":{"key":"cls","name":"CLS / broadband light-pollution","sky_bandwidth_factor":1.7,"moon_susceptibility":0.65,"line_filter":false,"line_transmission":0.9,"continuum_transmission":0.85,"needs_ir_cut_removed":false,"colour_true":true,"note":"notches the worst municipal lines; skews colour balance"},"duoband":{"key":"duoband","name":"Duo-band (Ha + OIII, ~2x7 nm)","sky_bandwidth_factor":0.16,"moon_susceptibility":0.25,"line_filter":true,"line_transmission":0.9,"continuum_transmission":1.0,"needs_ir_cut_removed":false,"colour_true":true,"note":"the one-shot-colour nebula filter"},"duoband-wide":{"key":"duoband-wide","name":"Wide duo-band (Ha + OIII, ~2x20 nm)","sky_bandwidth_factor":0.45,"moon_susceptibility":0.45,"line_filter":true,"line_transmission":0.92,"continuum_transmission":1.0,"needs_ir_cut_removed":false,"colour_true":true,"note":"typical of the dual-band built into a smart telescope; check yours"},"nb7":{"key":"nb7","name":"Narrowband 7 nm (Ha or OIII)","sky_bandwidth_factor":0.08,"moon_susceptibility":0.15,"line_filter":true,"line_transmission":0.9,"continuum_transmission":1.0,"needs_ir_cut_removed":false,"colour_true":true,"note":"mono, one line at a time"},"nb3":{"key":"nb3","name":"Narrowband 3 nm (Ha or OIII)","sky_bandwidth_factor":0.034,"moon_susceptibility":0.08,"line_filter":true,"line_transmission":0.85,"continuum_transmission":1.0,"needs_ir_cut_removed":false,"colour_true":true,"note":"mono, deepest moonlight rejection"}},"cameras":[{"key":"asi533mc","name":"ZWO ASI533MC Pro (IMX533)","pixel_um":3.76,"width_px":3008,"height_px":3008,"read_noise_e":1.0,"gain_setting":"gain 100 (HCG)","qe":0.8,"gain_e_per_adu":0.25,"color":true,"ha_transmission":1.0,"builtin_ir_cut":false},{"key":"asi533mm","name":"ZWO ASI533MM Pro (IMX533M)","pixel_um":3.76,"width_px":3008,"height_px":3008,"read_noise_e":1.0,"gain_setting":"gain 100 (HCG)","qe":0.85,"gain_e_per_adu":0.25,"color":false,"ha_transmission":1.0,"builtin_ir_cut":false},{"key":"asi2600mc","name":"ZWO ASI2600MC Pro (IMX571)","pixel_um":3.76,"width_px":6248,"height_px":4176,"read_noise_e":1.0,"gain_setting":"gain 100 (HCG)","qe":0.8,"gain_e_per_adu":0.25,"color":true,"ha_transmission":1.0,"builtin_ir_cut":false},{"key":"asi2600mm","name":"ZWO ASI2600MM Pro (IMX571M)","pixel_um":3.76,"width_px":6248,"height_px":4176,"read_noise_e":1.0,"gain_setting":"gain 100 (HCG)","qe":0.85,"gain_e_per_adu":0.25,"color":false,"ha_transmission":1.0,"builtin_ir_cut":false},{"key":"asi6200mm","name":"ZWO ASI6200MM Pro (IMX455)","pixel_um":3.76,"width_px":9576,"height_px":6388,"read_noise_e":1.2,"gain_setting":"gain 100 (HCG)","qe":0.8,"gain_e_per_adu":0.25,"color":false,"ha_transmission":1.0,"builtin_ir_cut":false},{"key":"asi294mc","name":"ZWO ASI294MC Pro (IMX294)","pixel_um":4.63,"width_px":4144,"height_px":2822,"read_noise_e":1.2,"gain_setting":"gain 120 (HCG)","qe":0.75,"gain_e_per_adu":0.23,"color":true,"ha_transmission":1.0,"builtin_ir_cut":false},{"key":"asi585mc","name":"ZWO ASI585MC (IMX585)","pixel_um":2.9,"width_px":3840,"height_px":2160,"read_noise_e":0.9,"gain_setting":"gain 252 (HCG)","qe":0.91,"gain_e_per_adu":0.13,"color":true,"ha_transmission":1.0,"builtin_ir_cut":false},{"key":"asi1600mm","name":"ZWO ASI1600MM Pro (MN34230)","pixel_um":3.8,"width_px":4656,"height_px":3520,"read_noise_e":1.7,"gain_setting":"gain 139 (unity)","qe":0.6,"gain_e_per_adu":1.0,"color":false,"ha_transmission":1.0,"builtin_ir_cut":false},{"key":"asi183mc","name":"ZWO ASI183MC Pro (IMX183)","pixel_um":2.4,"width_px":5496,"height_px":3672,"read_noise_e":1.6,"gain_setting":"gain 111 (unity)","qe":0.84,"gain_e_per_adu":1.0,"color":true,"ha_transmission":1.0,"builtin_ir_cut":false},{"key":"imx462","name":"Seestar S50 sensor (IMX462)","pixel_um":2.9,"width_px":1920,"height_px":1080,"read_noise_e":0.9,"gain_setting":"built-in gain","qe":0.8,"gain_e_per_adu":0.5,"color":true,"ha_transmission":1.0,"builtin_ir_cut":false},{"key":"imx415","name":"DWARF II tele sensor (IMX415)","pixel_um":1.45,"width_px":3840,"height_px":2160,"read_noise_e":1.6,"gain_setting":"built-in gain","qe":0.78,"gain_e_per_adu":0.5,"color":true,"ha_transmission":1.0,"builtin_ir_cut":false},{"key":"imx678","name":"DWARF 3 tele sensor (IMX678)","pixel_um":2.0,"width_px":3840,"height_px":2160,"read_noise_e":1.0,"gain_setting":"built-in gain","qe":0.85,"gain_e_per_adu":0.5,"color":true,"ha_transmission":1.0,"builtin_ir_cut":false},{"key":"imx678-wide","name":"DWARF 3 wide sensor (IMX678, 1080p)","pixel_um":2.92,"width_px":1920,"height_px":1080,"read_noise_e":1.0,"gain_setting":"built-in gain","qe":0.85,"gain_e_per_adu":0.5,"color":true,"ha_transmission":1.0,"builtin_ir_cut":false},{"key":"imx347","name":"Unistellar eQuinox 2 sensor (IMX347)","pixel_um":2.4,"width_px":2454,"height_px":1854,"read_noise_e":2.0,"gain_setting":"built-in gain","qe":0.75,"gain_e_per_adu":0.5,"color":true,"ha_transmission":1.0,"builtin_ir_cut":false},{"key":"imx662","name":"DWARF mini sensor (IMX662)","pixel_um":2.9,"width_px":1920,"height_px":1080,"read_noise_e":1.0,"gain_setting":"built-in gain","qe":0.85,"gain_e_per_adu":0.5,"color":true,"ha_transmission":1.0,"builtin_ir_cut":false},{"key":"os02k10","name":"DWARF mini wide sensor (OS02K10)","pixel_um":2.9,"width_px":1920,"height_px":1080,"read_noise_e":2.5,"gain_setting":"built-in gain","qe":0.65,"gain_e_per_adu":0.5,"color":true,"ha_transmission":1.0,"builtin_ir_cut":false},{"key":"dslr","name":"Stock DSLR/mirrorless (APS-C)","pixel_um":3.9,"width_px":6000,"height_px":4000,"read_noise_e":2.5,"gain_setting":"ISO 800-1600","qe":0.55,"gain_e_per_adu":0.5,"color":true,"ha_transmission":0.2,"builtin_ir_cut":true},{"key":"dslr-mod","name":"Astro-modified DSLR/mirrorless (APS-C)","pixel_um":3.9,"width_px":6000,"height_px":4000,"read_noise_e":2.5,"gain_setting":"ISO 800-1600","qe":0.55,"gain_e_per_adu":0.5,"color":true,"ha_transmission":0.97,"builtin_ir_cut":false}],"telescopes":[{"key":"seestar50","name":"ZWO Seestar S50","aperture_mm":50,"focal_length_mm":250,"kind":"smart","correctors":[["native",1.0]],"fixed_camera":"imx462","builtin_filters":["none","duoband-wide"],"max_sub_s":null,"assumed":[],"spec_note":"built-in UV/IR cut plus a dual-band","f_ratio":5.0},{"key":"dwarf2","name":"DwarfLab DWARF II (telephoto)","aperture_mm":24,"focal_length_mm":100,"kind":"smart","correctors":[["native",1.0]],"fixed_camera":"imx415","builtin_filters":["none","duoband-wide"],"max_sub_s":15,"assumed":[],"spec_note":"visible built in, plus the owner's dual-band. Its other built-in position is an IR-pass, which is not a deep-sky broadband option: it starts above Ha","f_ratio":4.166666666666667},{"key":"dwarf3","name":"DwarfLab DWARF 3 (telephoto)","aperture_mm":35,"focal_length_mm":150,"kind":"smart","correctors":[["native",1.0]],"fixed_camera":"imx678","builtin_filters":["astro","none","duoband-wide"],"max_sub_s":60,"assumed":[],"spec_note":"astro (open), visible (UV/IR cut) and dual-band; 60 s in EQ mode","f_ratio":4.285714285714286},{"key":"dwarf-mini","name":"DwarfLab DWARF mini (telephoto)","aperture_mm":30,"focal_length_mm":150,"kind":"smart","correctors":[["native",1.0]],"fixed_camera":"imx662","builtin_filters":["astro","duoband-wide"],"max_sub_s":90,"assumed":["sensor pairing"],"spec_note":"astro or dual-band. Astro passes UV and IR, and there is no UV/IR-cut position, so broadband here is full spectrum","f_ratio":5.0},{"key":"dwarf3-wide","name":"DwarfLab DWARF 3 (wide-angle)","aperture_mm":3.4,"focal_length_mm":6.7,"kind":"smart","correctors":[["native",1.0]],"fixed_camera":"imx678-wide","builtin_filters":["astro"],"max_sub_s":60,"assumed":[],"spec_note":"the astro filter reaches this lens; the dual-band does not","f_ratio":1.9705882352941178},{"key":"dwarf-mini-wide","name":"DwarfLab DWARF mini (wide-angle)","aperture_mm":3.4,"focal_length_mm":6.7,"kind":"smart","correctors":[["native",1.0]],"fixed_camera":"os02k10","builtin_filters":["astro"],"max_sub_s":90,"assumed":["sensor pairing"],"spec_note":"both sensors are 2.9 um, so only read noise and QE turn on which lens carries which","f_ratio":1.9705882352941178},{"key":"equinox2","name":"Unistellar eQuinox 2","aperture_mm":114,"focal_length_mm":450,"kind":"smart","correctors":[["native",1.0]],"fixed_camera":"imx347","builtin_filters":["none"],"max_sub_s":null,"assumed":[],"spec_note":"no filter slot: narrowband is not available on this instrument","f_ratio":3.9473684210526314},{"key":"redcat51","name":"William Optics RedCat 51","aperture_mm":51,"focal_length_mm":250,"kind":"refractor","correctors":[["native",1.0]],"fixed_camera":null,"builtin_filters":null,"max_sub_s":null,"assumed":[],"spec_note":"","f_ratio":4.901960784313726},{"key":"raptor61","name":"Radian Raptor 61","aperture_mm":61,"focal_length_mm":275,"kind":"refractor","correctors":[["native",1.0]],"fixed_camera":null,"builtin_filters":null,"max_sub_s":null,"assumed":[],"spec_note":"","f_ratio":4.508196721311475},{"key":"z61","name":"William Optics Zenithstar 61","aperture_mm":61,"focal_length_mm":360,"kind":"refractor","correctors":[["native",1.0],["0.8x flattener",0.8]],"fixed_camera":null,"builtin_filters":null,"max_sub_s":null,"assumed":[],"spec_note":"","f_ratio":5.901639344262295},{"key":"evostar72","name":"Sky-Watcher Evostar 72ED","aperture_mm":72,"focal_length_mm":420,"kind":"refractor","correctors":[["native",1.0],["0.85x reducer",0.85]],"fixed_camera":null,"builtin_filters":null,"max_sub_s":null,"assumed":[],"spec_note":"","f_ratio":5.833333333333333},{"key":"gt71","name":"William Optics GT71","aperture_mm":71,"focal_length_mm":420,"kind":"refractor","correctors":[["native",1.0],["0.8x reducer",0.8]],"fixed_camera":null,"builtin_filters":null,"max_sub_s":null,"assumed":[],"spec_note":"","f_ratio":5.915492957746479},{"key":"fra400","name":"Askar FRA400","aperture_mm":72,"focal_length_mm":400,"kind":"refractor","correctors":[["native",1.0],["0.7x reducer",0.7]],"fixed_camera":null,"builtin_filters":null,"max_sub_s":null,"assumed":[],"spec_note":"","f_ratio":5.555555555555555},{"key":"fra600","name":"Askar FRA600","aperture_mm":108,"focal_length_mm":600,"kind":"refractor","correctors":[["native",1.0],["0.7x reducer",0.7]],"fixed_camera":null,"builtin_filters":null,"max_sub_s":null,"assumed":[],"spec_note":"","f_ratio":5.555555555555555},{"key":"esprit100","name":"Sky-Watcher Esprit 100ED","aperture_mm":100,"focal_length_mm":550,"kind":"refractor","correctors":[["native",1.0],["0.77x reducer",0.77]],"fixed_camera":null,"builtin_filters":null,"max_sub_s":null,"assumed":[],"spec_note":"","f_ratio":5.5},{"key":"fsq106","name":"Takahashi FSQ-106EDX4","aperture_mm":106,"focal_length_mm":530,"kind":"refractor","correctors":[["native",1.0],["0.73x reducer",0.73]],"fixed_camera":null,"builtin_filters":null,"max_sub_s":null,"assumed":[],"spec_note":"","f_ratio":5.0},{"key":"samyang135","name":"Samyang/Rokinon 135 mm f/2 lens","aperture_mm":67.5,"focal_length_mm":135,"kind":"lens","correctors":[["native",1.0]],"fixed_camera":null,"builtin_filters":null,"max_sub_s":null,"assumed":[],"spec_note":"","f_ratio":2.0},{"key":"nt130pds","name":"Sky-Watcher 130PDS Newtonian","aperture_mm":130,"focal_length_mm":650,"kind":"newtonian","correctors":[["native",1.0],["coma corrector 0.95x",0.95]],"fixed_camera":null,"builtin_filters":null,"max_sub_s":null,"assumed":[],"spec_note":"","f_ratio":5.0},{"key":"nt150","name":"6\" f/5 Newtonian","aperture_mm":150,"focal_length_mm":750,"kind":"newtonian","correctors":[["native",1.0],["coma corrector 0.95x",0.95]],"fixed_camera":null,"builtin_filters":null,"max_sub_s":null,"assumed":[],"spec_note":"","f_ratio":5.0},{"key":"quattro8","name":"Sky-Watcher Quattro 8\" f/4","aperture_mm":200,"focal_length_mm":800,"kind":"newtonian","correctors":[["native",1.0],["coma corrector 0.95x",0.95]],"fixed_camera":null,"builtin_filters":null,"max_sub_s":null,"assumed":[],"spec_note":"","f_ratio":4.0},{"key":"nt200","name":"8\" f/5 Newtonian","aperture_mm":200,"focal_length_mm":1000,"kind":"newtonian","correctors":[["native",1.0],["coma corrector 0.95x",0.95]],"fixed_camera":null,"builtin_filters":null,"max_sub_s":null,"assumed":[],"spec_note":"","f_ratio":5.0},{"key":"rasa8","name":"Celestron RASA 8\"","aperture_mm":203,"focal_length_mm":400,"kind":"rasa","correctors":[["native",1.0]],"fixed_camera":null,"builtin_filters":null,"max_sub_s":null,"assumed":[],"spec_note":"","f_ratio":1.9704433497536946},{"key":"edgehd8","name":"Celestron EdgeHD 8\"","aperture_mm":203,"focal_length_mm":2032,"kind":"sct","correctors":[["native",1.0],["0.7x reducer",0.7]],"fixed_camera":null,"builtin_filters":null,"max_sub_s":null,"assumed":[],"spec_note":"","f_ratio":10.009852216748769},{"key":"c8","name":"Celestron C8 (SCT)","aperture_mm":203,"focal_length_mm":2032,"kind":"sct","correctors":[["native",1.0],["0.63x reducer",0.63]],"fixed_camera":null,"builtin_filters":null,"max_sub_s":null,"assumed":[],"spec_note":"","f_ratio":10.009852216748769},{"key":"nexstar6","name":"Celestron NexStar 6SE (SCT)","aperture_mm":150,"focal_length_mm":1500,"kind":"sct","correctors":[["native",1.0],["0.63x reducer",0.63]],"fixed_camera":null,"builtin_filters":null,"max_sub_s":null,"assumed":[],"spec_note":"","f_ratio":10.0},{"key":"rc8","name":"GSO/TS 8\" Ritchey-Chretien","aperture_mm":203,"focal_length_mm":1624,"kind":"rc","correctors":[["native",1.0],["0.75x reducer",0.75]],"fixed_camera":null,"builtin_filters":null,"max_sub_s":null,"assumed":[],"spec_note":"","f_ratio":8.0}],"targets":[{"id":"M31","name":"Andromeda Galaxy","ra_deg":10.68,"dec_deg":41.27,"size_arcmin":178.0,"type":"galaxy","mag":3.4,"line_emitter":false},{"id":"M33","name":"Triangulum Galaxy","ra_deg":23.46,"dec_deg":30.66,"size_arcmin":62.0,"type":"galaxy","mag":5.7,"line_emitter":false},{"id":"M42","name":"Orion Nebula","ra_deg":83.82,"dec_deg":-5.39,"size_arcmin":85.0,"type":"emission","mag":4.0,"line_emitter":true},{"id":"M45","name":"Pleiades","ra_deg":56.87,"dec_deg":24.11,"size_arcmin":110.0,"type":"reflection","mag":1.6,"line_emitter":false},{"id":"M8","name":"Lagoon Nebula","ra_deg":270.9,"dec_deg":-24.38,"size_arcmin":90.0,"type":"emission","mag":6.0,"line_emitter":true},{"id":"M16","name":"Eagle Nebula","ra_deg":274.7,"dec_deg":-13.85,"size_arcmin":35.0,"type":"emission","mag":6.0,"line_emitter":true},{"id":"M17","name":"Swan Nebula","ra_deg":275.2,"dec_deg":-16.18,"size_arcmin":11.0,"type":"emission","mag":6.0,"line_emitter":true},{"id":"M20","name":"Trifid Nebula","ra_deg":270.6,"dec_deg":-23.03,"size_arcmin":28.0,"type":"emission","mag":6.3,"line_emitter":true},{"id":"M27","name":"Dumbbell Nebula","ra_deg":299.9,"dec_deg":22.72,"size_arcmin":8.0,"type":"planetary","mag":7.4,"line_emitter":true},{"id":"M57","name":"Ring Nebula","ra_deg":283.4,"dec_deg":33.03,"size_arcmin":1.4,"type":"planetary","mag":8.8,"line_emitter":true},{"id":"M51","name":"Whirlpool Galaxy","ra_deg":202.47,"dec_deg":47.2,"size_arcmin":11.0,"type":"galaxy","mag":8.4,"line_emitter":false},{"id":"M63","name":"Sunflower Galaxy","ra_deg":198.96,"dec_deg":42.03,"size_arcmin":12.6,"type":"galaxy","mag":8.6,"line_emitter":false},{"id":"M81","name":"Bode's Galaxy","ra_deg":148.89,"dec_deg":69.07,"size_arcmin":26.9,"type":"galaxy","mag":6.9,"line_emitter":false},{"id":"M82","name":"Cigar Galaxy","ra_deg":148.97,"dec_deg":69.68,"size_arcmin":11.2,"type":"galaxy","mag":8.4,"line_emitter":false},{"id":"M101","name":"Pinwheel Galaxy","ra_deg":210.8,"dec_deg":54.35,"size_arcmin":28.8,"type":"galaxy","mag":7.9,"line_emitter":false},{"id":"M104","name":"Sombrero Galaxy","ra_deg":190.0,"dec_deg":-11.62,"size_arcmin":8.7,"type":"galaxy","mag":8.0,"line_emitter":false},{"id":"M106","name":"Messier 106","ra_deg":184.74,"dec_deg":47.3,"size_arcmin":18.6,"type":"galaxy","mag":8.4,"line_emitter":false},{"id":"M13","name":"Hercules Globular","ra_deg":250.42,"dec_deg":36.46,"size_arcmin":20.0,"type":"cluster","mag":5.8,"line_emitter":false},{"id":"M3","name":"Messier 3","ra_deg":205.55,"dec_deg":28.38,"size_arcmin":18.0,"type":"cluster","mag":6.2,"line_emitter":false},{"id":"M5","name":"Messier 5","ra_deg":229.64,"dec_deg":2.08,"size_arcmin":23.0,"type":"cluster","mag":5.6,"line_emitter":false},{"id":"M92","name":"Messier 92","ra_deg":259.28,"dec_deg":43.14,"size_arcmin":14.0,"type":"cluster","mag":6.3,"line_emitter":false},{"id":"M22","name":"Messier 22","ra_deg":279.1,"dec_deg":-23.9,"size_arcmin":24.0,"type":"cluster","mag":5.1,"line_emitter":false},{"id":"NGC7000","name":"North America Nebula","ra_deg":314.75,"dec_deg":44.37,"size_arcmin":120.0,"type":"emission","mag":4.0,"line_emitter":true},{"id":"IC5070","name":"Pelican Nebula","ra_deg":312.7,"dec_deg":44.35,"size_arcmin":60.0,"type":"emission","mag":8.0,"line_emitter":true},{"id":"IC1396","name":"Elephant's Trunk Nebula","ra_deg":324.75,"dec_deg":57.5,"size_arcmin":170.0,"type":"emission","mag":3.5,"line_emitter":true},{"id":"NGC6960","name":"Western Veil Nebula","ra_deg":311.95,"dec_deg":30.71,"size_arcmin":70.0,"type":"snr","mag":7.0,"line_emitter":true},{"id":"NGC6992","name":"Eastern Veil Nebula","ra_deg":313.0,"dec_deg":31.72,"size_arcmin":75.0,"type":"snr","mag":7.0,"line_emitter":true},{"id":"IC1805","name":"Heart Nebula","ra_deg":38.2,"dec_deg":61.45,"size_arcmin":150.0,"type":"emission","mag":6.5,"line_emitter":true},{"id":"IC1848","name":"Soul Nebula","ra_deg":44.55,"dec_deg":60.43,"size_arcmin":100.0,"type":"emission","mag":6.5,"line_emitter":true},{"id":"NGC281","name":"Pacman Nebula","ra_deg":13.85,"dec_deg":56.62,"size_arcmin":35.0,"type":"emission","mag":7.4,"line_emitter":true},{"id":"NGC7635","name":"Bubble Nebula","ra_deg":350.2,"dec_deg":61.2,"size_arcmin":15.0,"type":"emission","mag":10.0,"line_emitter":true},{"id":"IC1318","name":"Sadr Region (Butterfly)","ra_deg":305.3,"dec_deg":40.25,"size_arcmin":180.0,"type":"emission","mag":7.0,"line_emitter":true},{"id":"Sh2-155","name":"Cave Nebula","ra_deg":344.2,"dec_deg":62.5,"size_arcmin":50.0,"type":"emission","mag":7.7,"line_emitter":true},{"id":"NGC2244","name":"Rosette Nebula","ra_deg":98.0,"dec_deg":4.95,"size_arcmin":80.0,"type":"emission","mag":9.0,"line_emitter":true},{"id":"IC434","name":"Horsehead Nebula","ra_deg":85.25,"dec_deg":-2.46,"size_arcmin":60.0,"type":"emission","mag":7.3,"line_emitter":true},{"id":"NGC2024","name":"Flame Nebula","ra_deg":85.43,"dec_deg":-1.85,"size_arcmin":30.0,"type":"emission","mag":10.0,"line_emitter":true},{"id":"M78","name":"Messier 78","ra_deg":86.69,"dec_deg":0.08,"size_arcmin":8.0,"type":"reflection","mag":8.3,"line_emitter":false},{"id":"NGC1499","name":"California Nebula","ra_deg":60.0,"dec_deg":36.62,"size_arcmin":145.0,"type":"emission","mag":6.0,"line_emitter":true},{"id":"IC405","name":"Flaming Star Nebula","ra_deg":79.0,"dec_deg":34.27,"size_arcmin":37.0,"type":"emission","mag":6.0,"line_emitter":true},{"id":"M97","name":"Owl Nebula","ra_deg":168.7,"dec_deg":55.02,"size_arcmin":3.4,"type":"planetary","mag":9.9,"line_emitter":true},{"id":"NGC6888","name":"Crescent Nebula","ra_deg":303.06,"dec_deg":38.35,"size_arcmin":20.0,"type":"emission","mag":7.4,"line_emitter":true},{"id":"M1","name":"Crab Nebula","ra_deg":83.63,"dec_deg":22.01,"size_arcmin":6.0,"type":"snr","mag":8.4,"line_emitter":true},{"id":"NGC891","name":"Silver Sliver Galaxy","ra_deg":35.64,"dec_deg":42.35,"size_arcmin":13.5,"type":"galaxy","mag":9.9,"line_emitter":false},{"id":"NGC4565","name":"Needle Galaxy","ra_deg":189.09,"dec_deg":25.99,"size_arcmin":15.9,"type":"galaxy","mag":9.6,"line_emitter":false},{"id":"M64","name":"Black Eye Galaxy","ra_deg":194.18,"dec_deg":21.68,"size_arcmin":10.0,"type":"galaxy","mag":8.5,"line_emitter":false},{"id":"M94","name":"Croc's Eye Galaxy","ra_deg":192.72,"dec_deg":41.12,"size_arcmin":11.2,"type":"galaxy","mag":8.2,"line_emitter":false},{"id":"NGC7331","name":"Deer Lick Group","ra_deg":339.27,"dec_deg":34.42,"size_arcmin":10.5,"type":"galaxy","mag":9.5,"line_emitter":false},{"id":"NGC253","name":"Sculptor Galaxy","ra_deg":11.89,"dec_deg":-25.29,"size_arcmin":27.5,"type":"galaxy","mag":7.1,"line_emitter":false},{"id":"NGC2903","name":"NGC 2903","ra_deg":143.04,"dec_deg":21.5,"size_arcmin":12.6,"type":"galaxy","mag":8.9,"line_emitter":false},{"id":"M66","name":"Leo Triplet (M66)","ra_deg":170.06,"dec_deg":12.99,"size_arcmin":9.0,"type":"galaxy","mag":8.9,"line_emitter":false},{"id":"M83","name":"Southern Pinwheel","ra_deg":204.25,"dec_deg":-29.87,"size_arcmin":12.9,"type":"galaxy","mag":7.5,"line_emitter":false},{"id":"NGC7293","name":"Helix Nebula","ra_deg":337.41,"dec_deg":-20.84,"size_arcmin":25.0,"type":"planetary","mag":7.3,"line_emitter":true},{"id":"NGC7023","name":"Iris Nebula","ra_deg":315.4,"dec_deg":68.16,"size_arcmin":18.0,"type":"reflection","mag":6.8,"line_emitter":false},{"id":"IC5146","name":"Cocoon Nebula","ra_deg":328.35,"dec_deg":47.27,"size_arcmin":12.0,"type":"emission","mag":7.2,"line_emitter":true},{"id":"NGC6946","name":"Fireworks Galaxy","ra_deg":308.72,"dec_deg":60.15,"size_arcmin":11.5,"type":"galaxy","mag":8.8,"line_emitter":false},{"id":"NGC7380","name":"Wizard Nebula","ra_deg":341.8,"dec_deg":58.08,"size_arcmin":25.0,"type":"emission","mag":7.2,"line_emitter":true},{"id":"NGC7822","name":"NGC 7822","ra_deg":0.75,"dec_deg":68.62,"size_arcmin":60.0,"type":"emission","mag":8.0,"line_emitter":true},{"id":"NGC4631","name":"Whale Galaxy","ra_deg":190.53,"dec_deg":32.54,"size_arcmin":15.5,"type":"galaxy","mag":9.2,"line_emitter":false}],"places":[{"name":"New York","admin":"New York","country":"United States","lat":40.71,"lon":-74.01,"elevation_m":10.0,"population":8300000,"bortle":9,"kind":"city","source":"bundled","label":"New York, New York, United States","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Los Angeles","admin":"California","country":"United States","lat":34.05,"lon":-118.24,"elevation_m":89.0,"population":3900000,"bortle":9,"kind":"city","source":"bundled","label":"Los Angeles, California, United States","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Chicago","admin":"Illinois","country":"United States","lat":41.88,"lon":-87.63,"elevation_m":181.0,"population":2700000,"bortle":9,"kind":"city","source":"bundled","label":"Chicago, Illinois, United States","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Houston","admin":"Texas","country":"United States","lat":29.76,"lon":-95.37,"elevation_m":13.0,"population":2300000,"bortle":9,"kind":"city","source":"bundled","label":"Houston, Texas, United States","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Phoenix","admin":"Arizona","country":"United States","lat":33.45,"lon":-112.07,"elevation_m":331.0,"population":1600000,"bortle":8,"kind":"city","source":"bundled","label":"Phoenix, Arizona, United States","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Philadelphia","admin":"Pennsylvania","country":"United States","lat":39.95,"lon":-75.17,"elevation_m":12.0,"population":1600000,"bortle":9,"kind":"city","source":"bundled","label":"Philadelphia, Pennsylvania, United States","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"San Antonio","admin":"Texas","country":"United States","lat":29.42,"lon":-98.49,"elevation_m":198.0,"population":1500000,"bortle":8,"kind":"city","source":"bundled","label":"San Antonio, Texas, United States","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"San Diego","admin":"California","country":"United States","lat":32.72,"lon":-117.16,"elevation_m":19.0,"population":1400000,"bortle":8,"kind":"city","source":"bundled","label":"San Diego, California, United States","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Dallas","admin":"Texas","country":"United States","lat":32.78,"lon":-96.8,"elevation_m":131.0,"population":1300000,"bortle":9,"kind":"city","source":"bundled","label":"Dallas, Texas, United States","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"San Jose","admin":"California","country":"United States","lat":37.34,"lon":-121.89,"elevation_m":25.0,"population":1000000,"bortle":8,"kind":"city","source":"bundled","label":"San Jose, California, United States","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Austin","admin":"Texas","country":"United States","lat":30.27,"lon":-97.74,"elevation_m":149.0,"population":960000,"bortle":8,"kind":"city","source":"bundled","label":"Austin, Texas, United States","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Jacksonville","admin":"Florida","country":"United States","lat":30.33,"lon":-81.66,"elevation_m":5.0,"population":950000,"bortle":8,"kind":"city","source":"bundled","label":"Jacksonville, Florida, United States","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Columbus","admin":"Ohio","country":"United States","lat":39.96,"lon":-83.0,"elevation_m":275.0,"population":910000,"bortle":8,"kind":"city","source":"bundled","label":"Columbus, Ohio, United States","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Indianapolis","admin":"Indiana","country":"United States","lat":39.77,"lon":-86.16,"elevation_m":218.0,"population":880000,"bortle":8,"kind":"city","source":"bundled","label":"Indianapolis, Indiana, United States","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"San Francisco","admin":"California","country":"United States","lat":37.77,"lon":-122.42,"elevation_m":16.0,"population":810000,"bortle":8,"kind":"city","source":"bundled","label":"San Francisco, California, United States","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Seattle","admin":"Washington","country":"United States","lat":47.61,"lon":-122.33,"elevation_m":53.0,"population":750000,"bortle":8,"kind":"city","source":"bundled","label":"Seattle, Washington, United States","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Nashville","admin":"Tennessee","country":"United States","lat":36.16,"lon":-86.78,"elevation_m":169.0,"population":690000,"bortle":8,"kind":"city","source":"bundled","label":"Nashville, Tennessee, United States","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Denver","admin":"Colorado","country":"United States","lat":39.74,"lon":-104.99,"elevation_m":1609.0,"population":710000,"bortle":8,"kind":"city","source":"bundled","label":"Denver, Colorado, United States","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Boston","admin":"Massachusetts","country":"United States","lat":42.36,"lon":-71.06,"elevation_m":43.0,"population":650000,"bortle":9,"kind":"city","source":"bundled","label":"Boston, Massachusetts, United States","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Portland","admin":"Oregon","country":"United States","lat":45.52,"lon":-122.68,"elevation_m":15.0,"population":650000,"bortle":8,"kind":"city","source":"bundled","label":"Portland, Oregon, United States","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Las Vegas","admin":"Nevada","country":"United States","lat":36.17,"lon":-115.14,"elevation_m":610.0,"population":650000,"bortle":8,"kind":"city","source":"bundled","label":"Las Vegas, Nevada, United States","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Detroit","admin":"Michigan","country":"United States","lat":42.33,"lon":-83.05,"elevation_m":183.0,"population":630000,"bortle":8,"kind":"city","source":"bundled","label":"Detroit, Michigan, United States","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Memphis","admin":"Tennessee","country":"United States","lat":35.15,"lon":-90.05,"elevation_m":79.0,"population":620000,"bortle":8,"kind":"city","source":"bundled","label":"Memphis, Tennessee, United States","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Baltimore","admin":"Maryland","country":"United States","lat":39.29,"lon":-76.61,"elevation_m":10.0,"population":580000,"bortle":9,"kind":"city","source":"bundled","label":"Baltimore, Maryland, United States","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Milwaukee","admin":"Wisconsin","country":"United States","lat":43.04,"lon":-87.91,"elevation_m":188.0,"population":570000,"bortle":8,"kind":"city","source":"bundled","label":"Milwaukee, Wisconsin, United States","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Albuquerque","admin":"New Mexico","country":"United States","lat":35.08,"lon":-106.65,"elevation_m":1619.0,"population":560000,"bortle":7,"kind":"city","source":"bundled","label":"Albuquerque, New Mexico, United States","bortle_estimate":7,"bortle_basis":"typical","bortle_measured":false},{"name":"Tucson","admin":"Arizona","country":"United States","lat":32.22,"lon":-110.97,"elevation_m":728.0,"population":550000,"bortle":6,"kind":"city","source":"bundled","label":"Tucson, Arizona, United States","bortle_estimate":6,"bortle_basis":"typical","bortle_measured":false},{"name":"Kansas City","admin":"Missouri","country":"United States","lat":39.1,"lon":-94.58,"elevation_m":277.0,"population":510000,"bortle":8,"kind":"city","source":"bundled","label":"Kansas City, Missouri, United States","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Atlanta","admin":"Georgia","country":"United States","lat":33.75,"lon":-84.39,"elevation_m":320.0,"population":500000,"bortle":8,"kind":"city","source":"bundled","label":"Atlanta, Georgia, United States","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Miami","admin":"Florida","country":"United States","lat":25.76,"lon":-80.19,"elevation_m":2.0,"population":440000,"bortle":9,"kind":"city","source":"bundled","label":"Miami, Florida, United States","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Minneapolis","admin":"Minnesota","country":"United States","lat":44.98,"lon":-93.27,"elevation_m":264.0,"population":430000,"bortle":8,"kind":"city","source":"bundled","label":"Minneapolis, Minnesota, United States","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Cincinnati","admin":"Ohio","country":"United States","lat":39.1,"lon":-84.51,"elevation_m":147.0,"population":310000,"bortle":8,"kind":"city","source":"bundled","label":"Cincinnati, Ohio, United States","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Orlando","admin":"Florida","country":"United States","lat":28.54,"lon":-81.38,"elevation_m":25.0,"population":310000,"bortle":8,"kind":"city","source":"bundled","label":"Orlando, Florida, United States","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Pittsburgh","admin":"Pennsylvania","country":"United States","lat":40.44,"lon":-80.0,"elevation_m":239.0,"population":300000,"bortle":8,"kind":"city","source":"bundled","label":"Pittsburgh, Pennsylvania, United States","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Saint Louis","admin":"Missouri","country":"United States","lat":38.63,"lon":-90.2,"elevation_m":142.0,"population":300000,"bortle":8,"kind":"city","source":"bundled","label":"Saint Louis, Missouri, United States","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Salt Lake City","admin":"Utah","country":"United States","lat":40.76,"lon":-111.89,"elevation_m":1288.0,"population":200000,"bortle":7,"kind":"city","source":"bundled","label":"Salt Lake City, Utah, United States","bortle_estimate":7,"bortle_basis":"typical","bortle_measured":false},{"name":"Boise","admin":"Idaho","country":"United States","lat":43.62,"lon":-116.2,"elevation_m":824.0,"population":240000,"bortle":7,"kind":"city","source":"bundled","label":"Boise, Idaho, United States","bortle_estimate":7,"bortle_basis":"typical","bortle_measured":false},{"name":"Springfield","admin":"Missouri","country":"United States","lat":37.21,"lon":-93.29,"elevation_m":401.0,"population":170000,"bortle":6,"kind":"city","source":"bundled","label":"Springfield, Missouri, United States","bortle_estimate":6,"bortle_basis":"typical","bortle_measured":false},{"name":"Columbia","admin":"Missouri","country":"United States","lat":38.95,"lon":-92.33,"elevation_m":231.0,"population":130000,"bortle":6,"kind":"city","source":"bundled","label":"Columbia, Missouri, United States","bortle_estimate":6,"bortle_basis":"typical","bortle_measured":false},{"name":"Flagstaff","admin":"Arizona","country":"United States","lat":35.2,"lon":-111.65,"elevation_m":2106.0,"population":76000,"bortle":5,"kind":"city","source":"bundled","label":"Flagstaff, Arizona, United States","bortle_estimate":5,"bortle_basis":"typical","bortle_measured":false},{"name":"Rolla","admin":"Missouri","country":"United States","lat":37.95,"lon":-91.77,"elevation_m":344.0,"population":20000,"bortle":5,"kind":"city","source":"bundled","label":"Rolla, Missouri, United States","bortle_estimate":5,"bortle_basis":"typical","bortle_measured":false},{"name":"Toronto","admin":"Ontario","country":"Canada","lat":43.65,"lon":-79.38,"elevation_m":76.0,"population":2800000,"bortle":9,"kind":"city","source":"bundled","label":"Toronto, Ontario, Canada","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Vancouver","admin":"British Columbia","country":"Canada","lat":49.28,"lon":-123.12,"elevation_m":2.0,"population":660000,"bortle":8,"kind":"city","source":"bundled","label":"Vancouver, British Columbia, Canada","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Montreal","admin":"Quebec","country":"Canada","lat":45.5,"lon":-73.57,"elevation_m":36.0,"population":1800000,"bortle":9,"kind":"city","source":"bundled","label":"Montreal, Quebec, Canada","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Mexico City","admin":"","country":"Mexico","lat":19.43,"lon":-99.13,"elevation_m":2240.0,"population":9000000,"bortle":9,"kind":"city","source":"bundled","label":"Mexico City, Mexico","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"London","admin":"England","country":"United Kingdom","lat":51.51,"lon":-0.13,"elevation_m":11.0,"population":8900000,"bortle":9,"kind":"city","source":"bundled","label":"London, England, United Kingdom","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Edinburgh","admin":"Scotland","country":"United Kingdom","lat":55.95,"lon":-3.19,"elevation_m":47.0,"population":510000,"bortle":8,"kind":"city","source":"bundled","label":"Edinburgh, Scotland, United Kingdom","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Dublin","admin":"","country":"Ireland","lat":53.35,"lon":-6.26,"elevation_m":20.0,"population":550000,"bortle":8,"kind":"city","source":"bundled","label":"Dublin, Ireland","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Paris","admin":"","country":"France","lat":48.86,"lon":2.35,"elevation_m":35.0,"population":2100000,"bortle":9,"kind":"city","source":"bundled","label":"Paris, France","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Berlin","admin":"","country":"Germany","lat":52.52,"lon":13.41,"elevation_m":34.0,"population":3700000,"bortle":9,"kind":"city","source":"bundled","label":"Berlin, Germany","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Amsterdam","admin":"","country":"Netherlands","lat":52.37,"lon":4.9,"elevation_m":-2.0,"population":870000,"bortle":9,"kind":"city","source":"bundled","label":"Amsterdam, Netherlands","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Zurich","admin":"","country":"Switzerland","lat":47.37,"lon":8.54,"elevation_m":408.0,"population":430000,"bortle":8,"kind":"city","source":"bundled","label":"Zurich, Switzerland","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Vienna","admin":"","country":"Austria","lat":48.21,"lon":16.37,"elevation_m":171.0,"population":1900000,"bortle":8,"kind":"city","source":"bundled","label":"Vienna, Austria","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Madrid","admin":"","country":"Spain","lat":40.42,"lon":-3.7,"elevation_m":657.0,"population":3200000,"bortle":9,"kind":"city","source":"bundled","label":"Madrid, Spain","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Lisbon","admin":"","country":"Portugal","lat":38.72,"lon":-9.14,"elevation_m":100.0,"population":540000,"bortle":8,"kind":"city","source":"bundled","label":"Lisbon, Portugal","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Rome","admin":"","country":"Italy","lat":41.9,"lon":12.5,"elevation_m":21.0,"population":2800000,"bortle":9,"kind":"city","source":"bundled","label":"Rome, Italy","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Athens","admin":"","country":"Greece","lat":37.98,"lon":23.73,"elevation_m":20.0,"population":660000,"bortle":8,"kind":"city","source":"bundled","label":"Athens, Greece","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Warsaw","admin":"","country":"Poland","lat":52.23,"lon":21.01,"elevation_m":113.0,"population":1800000,"bortle":8,"kind":"city","source":"bundled","label":"Warsaw, Poland","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Stockholm","admin":"","country":"Sweden","lat":59.33,"lon":18.07,"elevation_m":28.0,"population":980000,"bortle":8,"kind":"city","source":"bundled","label":"Stockholm, Sweden","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Oslo","admin":"","country":"Norway","lat":59.91,"lon":10.75,"elevation_m":23.0,"population":700000,"bortle":8,"kind":"city","source":"bundled","label":"Oslo, Norway","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Helsinki","admin":"","country":"Finland","lat":60.17,"lon":24.94,"elevation_m":26.0,"population":660000,"bortle":8,"kind":"city","source":"bundled","label":"Helsinki, Finland","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Reykjavik","admin":"","country":"Iceland","lat":64.15,"lon":-21.94,"elevation_m":61.0,"population":140000,"bortle":6,"kind":"city","source":"bundled","label":"Reykjavik, Iceland","bortle_estimate":6,"bortle_basis":"typical","bortle_measured":false},{"name":"Moscow","admin":"","country":"Russia","lat":55.76,"lon":37.62,"elevation_m":156.0,"population":12500000,"bortle":9,"kind":"city","source":"bundled","label":"Moscow, Russia","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Istanbul","admin":"","country":"Turkey","lat":41.01,"lon":28.98,"elevation_m":39.0,"population":15500000,"bortle":9,"kind":"city","source":"bundled","label":"Istanbul, Turkey","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Cairo","admin":"","country":"Egypt","lat":30.04,"lon":31.24,"elevation_m":23.0,"population":10000000,"bortle":9,"kind":"city","source":"bundled","label":"Cairo, Egypt","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Dubai","admin":"","country":"United Arab Emirates","lat":25.2,"lon":55.27,"elevation_m":5.0,"population":3600000,"bortle":9,"kind":"city","source":"bundled","label":"Dubai, United Arab Emirates","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Delhi","admin":"","country":"India","lat":28.61,"lon":77.21,"elevation_m":216.0,"population":32000000,"bortle":9,"kind":"city","source":"bundled","label":"Delhi, India","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Singapore","admin":"","country":"Singapore","lat":1.35,"lon":103.82,"elevation_m":15.0,"population":5900000,"bortle":9,"kind":"city","source":"bundled","label":"Singapore, Singapore","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Beijing","admin":"","country":"China","lat":39.9,"lon":116.41,"elevation_m":44.0,"population":21500000,"bortle":9,"kind":"city","source":"bundled","label":"Beijing, China","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Seoul","admin":"","country":"South Korea","lat":37.57,"lon":126.98,"elevation_m":38.0,"population":9700000,"bortle":9,"kind":"city","source":"bundled","label":"Seoul, South Korea","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Tokyo","admin":"","country":"Japan","lat":35.68,"lon":139.69,"elevation_m":40.0,"population":13900000,"bortle":9,"kind":"city","source":"bundled","label":"Tokyo, Japan","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Sydney","admin":"New South Wales","country":"Australia","lat":-33.87,"lon":151.21,"elevation_m":58.0,"population":5300000,"bortle":9,"kind":"city","source":"bundled","label":"Sydney, New South Wales, Australia","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Melbourne","admin":"Victoria","country":"Australia","lat":-37.81,"lon":144.96,"elevation_m":31.0,"population":5100000,"bortle":9,"kind":"city","source":"bundled","label":"Melbourne, Victoria, Australia","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Perth","admin":"Western Australia","country":"Australia","lat":-31.95,"lon":115.86,"elevation_m":15.0,"population":2100000,"bortle":8,"kind":"city","source":"bundled","label":"Perth, Western Australia, Australia","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Auckland","admin":"","country":"New Zealand","lat":-36.85,"lon":174.76,"elevation_m":26.0,"population":1600000,"bortle":8,"kind":"city","source":"bundled","label":"Auckland, New Zealand","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Johannesburg","admin":"","country":"South Africa","lat":-26.2,"lon":28.05,"elevation_m":1753.0,"population":5600000,"bortle":9,"kind":"city","source":"bundled","label":"Johannesburg, South Africa","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Cape Town","admin":"","country":"South Africa","lat":-33.92,"lon":18.42,"elevation_m":25.0,"population":4600000,"bortle":8,"kind":"city","source":"bundled","label":"Cape Town, South Africa","bortle_estimate":8,"bortle_basis":"typical","bortle_measured":false},{"name":"Sao Paulo","admin":"","country":"Brazil","lat":-23.55,"lon":-46.63,"elevation_m":760.0,"population":12300000,"bortle":9,"kind":"city","source":"bundled","label":"Sao Paulo, Brazil","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Buenos Aires","admin":"","country":"Argentina","lat":-34.6,"lon":-58.38,"elevation_m":25.0,"population":3100000,"bortle":9,"kind":"city","source":"bundled","label":"Buenos Aires, Argentina","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Santiago","admin":"","country":"Chile","lat":-33.45,"lon":-70.67,"elevation_m":570.0,"population":6200000,"bortle":9,"kind":"city","source":"bundled","label":"Santiago, Chile","bortle_estimate":9,"bortle_basis":"typical","bortle_measured":false},{"name":"Broemmelsiek Park","admin":"Missouri","country":"United States","lat":38.72,"lon":-90.83,"elevation_m":180.0,"population":0,"bortle":5,"kind":"site","source":"bundled","label":"Broemmelsiek Park, Missouri, United States","bortle_estimate":5,"bortle_basis":"measured","bortle_measured":true},{"name":"Danville Conservation Area","admin":"Missouri","country":"United States","lat":38.88,"lon":-91.5,"elevation_m":240.0,"population":0,"bortle":4,"kind":"site","source":"bundled","label":"Danville Conservation Area, Missouri, United States","bortle_estimate":4,"bortle_basis":"measured","bortle_measured":true},{"name":"Mark Twain National Forest","admin":"Missouri","country":"United States","lat":37.6,"lon":-91.3,"elevation_m":400.0,"population":0,"bortle":3,"kind":"site","source":"bundled","label":"Mark Twain National Forest, Missouri, United States","bortle_estimate":3,"bortle_basis":"measured","bortle_measured":true},{"name":"Cherry Springs State Park","admin":"Pennsylvania","country":"United States","lat":41.66,"lon":-77.82,"elevation_m":700.0,"population":0,"bortle":2,"kind":"site","source":"bundled","label":"Cherry Springs State Park, Pennsylvania, United States","bortle_estimate":2,"bortle_basis":"measured","bortle_measured":true},{"name":"Big Bend National Park","admin":"Texas","country":"United States","lat":29.25,"lon":-103.25,"elevation_m":1140.0,"population":0,"bortle":1,"kind":"site","source":"bundled","label":"Big Bend National Park, Texas, United States","bortle_estimate":1,"bortle_basis":"measured","bortle_measured":true},{"name":"Death Valley National Park","admin":"California","country":"United States","lat":36.51,"lon":-117.08,"elevation_m":-50.0,"population":0,"bortle":2,"kind":"site","source":"bundled","label":"Death Valley National Park, California, United States","bortle_estimate":2,"bortle_basis":"measured","bortle_measured":true},{"name":"Natural Bridges National Monument","admin":"Utah","country":"United States","lat":37.6,"lon":-110.01,"elevation_m":1980.0,"population":0,"bortle":2,"kind":"site","source":"bundled","label":"Natural Bridges National Monument, Utah, United States","bortle_estimate":2,"bortle_basis":"measured","bortle_measured":true},{"name":"Great Basin National Park","admin":"Nevada","country":"United States","lat":38.98,"lon":-114.3,"elevation_m":2080.0,"population":0,"bortle":2,"kind":"site","source":"bundled","label":"Great Basin National Park, Nevada, United States","bortle_estimate":2,"bortle_basis":"measured","bortle_measured":true},{"name":"Kitt Peak National Observatory","admin":"Arizona","country":"United States","lat":31.96,"lon":-111.6,"elevation_m":2096.0,"population":0,"bortle":2,"kind":"site","source":"bundled","label":"Kitt Peak National Observatory, Arizona, United States","bortle_estimate":2,"bortle_basis":"measured","bortle_measured":true},{"name":"Mauna Kea","admin":"Hawaii","country":"United States","lat":19.82,"lon":-155.47,"elevation_m":4205.0,"population":0,"bortle":1,"kind":"site","source":"bundled","label":"Mauna Kea, Hawaii, United States","bortle_estimate":1,"bortle_basis":"measured","bortle_measured":true},{"name":"Mont-Megantic Dark Sky Reserve","admin":"Quebec","country":"Canada","lat":45.46,"lon":-71.15,"elevation_m":1100.0,"population":0,"bortle":2,"kind":"site","source":"bundled","label":"Mont-Megantic Dark Sky Reserve, Quebec, Canada","bortle_estimate":2,"bortle_basis":"measured","bortle_measured":true},{"name":"Galloway Forest Park","admin":"Scotland","country":"United Kingdom","lat":55.15,"lon":-4.45,"elevation_m":300.0,"population":0,"bortle":2,"kind":"site","source":"bundled","label":"Galloway Forest Park, Scotland, United Kingdom","bortle_estimate":2,"bortle_basis":"measured","bortle_measured":true},{"name":"Brecon Beacons","admin":"Wales","country":"United Kingdom","lat":51.88,"lon":-3.43,"elevation_m":400.0,"population":0,"bortle":3,"kind":"site","source":"bundled","label":"Brecon Beacons, Wales, United Kingdom","bortle_estimate":3,"bortle_basis":"measured","bortle_measured":true},{"name":"Pic du Midi","admin":"","country":"France","lat":42.94,"lon":0.14,"elevation_m":2877.0,"population":0,"bortle":2,"kind":"site","source":"bundled","label":"Pic du Midi, France","bortle_estimate":2,"bortle_basis":"measured","bortle_measured":true},{"name":"La Palma Roque de los Muchachos","admin":"Canary Islands","country":"Spain","lat":28.76,"lon":-17.89,"elevation_m":2396.0,"population":0,"bortle":1,"kind":"site","source":"bundled","label":"La Palma Roque de los Muchachos, Canary Islands, Spain","bortle_estimate":1,"bortle_basis":"measured","bortle_measured":true},{"name":"Cerro Paranal","admin":"","country":"Chile","lat":-24.63,"lon":-70.4,"elevation_m":2635.0,"population":0,"bortle":1,"kind":"site","source":"bundled","label":"Cerro Paranal, Chile","bortle_estimate":1,"bortle_basis":"measured","bortle_measured":true},{"name":"NamibRand Nature Reserve","admin":"","country":"Namibia","lat":-25.0,"lon":16.0,"elevation_m":1000.0,"population":0,"bortle":1,"kind":"site","source":"bundled","label":"NamibRand Nature Reserve, Namibia","bortle_estimate":1,"bortle_basis":"measured","bortle_measured":true},{"name":"Aoraki Mackenzie Dark Sky Reserve","admin":"","country":"New Zealand","lat":-43.73,"lon":170.1,"elevation_m":760.0,"population":0,"bortle":2,"kind":"site","source":"bundled","label":"Aoraki Mackenzie Dark Sky Reserve, New Zealand","bortle_estimate":2,"bortle_basis":"measured","bortle_measured":true},{"name":"Warrumbungle National Park","admin":"New South Wales","country":"Australia","lat":-31.28,"lon":149.0,"elevation_m":500.0,"population":0,"bortle":2,"kind":"site","source":"bundled","label":"Warrumbungle National Park, New South Wales, Australia","bortle_estimate":2,"bortle_basis":"measured","bortle_measured":true}]};
-const DEFAULTS = {"place":"Nashville","date":null,"bortle":6,"fallbackCamera":"asi533mc","scope":"dwarf-mini","corrector":"native","camera":"imx662","tz":"America/Chicago","units":"imperial"};
+const DEFAULTS = {"place":"Nashville","bortle":6,"fallbackCamera":"asi533mc","scope":"dwarf-mini","corrector":"native","camera":"imx662","units":"imperial"};
 
 const cameras = Object.fromEntries(DATA.cameras.map((c) => [c.key, c]));
 const scopes = Object.fromEntries(DATA.telescopes.map((t) => [t.key, t]));
-// Sensors that are bonded into an instrument rather than chosen.
 const fixedSensors = new Set(DATA.telescopes.map((t) => t.fixed_camera).filter(Boolean));
-const TOP_N = 6;
-// Universal for any target/gear/site once the sub length is fixed — see
-// elbowHours()'s own docstring in webcore.js for why it takes no arguments.
-const INTEGRATION_ELBOW_H = elbowHours().toFixed(0);
 
-// The catalog's type codes, spelled the way an observer would say them —
-// "snr" on a card next to a signal-to-noise number reads as the wrong thing.
 const TYPE_NAMES = {
   emission: "emission nebula", reflection: "reflection nebula",
   planetary: "planetary nebula", snr: "supernova remnant",
@@ -1427,75 +978,24 @@ const BORTLE_TEXT = {
   7: "7 — suburban/urban", 8: "8 — city", 9: "9 — inner city",
 };
 
-// Zones an observer here plausibly plans in. The browser owns the tzdata, so
-// DST and abbreviations (CDT vs CST) come out right without shipping a table.
-const ZONES = [
-  ["America/Chicago", "Central"],
-  ["America/New_York", "Eastern"],
-  ["America/Denver", "Mountain"],
-  ["America/Phoenix", "Arizona (no DST)"],
-  ["America/Los_Angeles", "Pacific"],
-  ["America/Anchorage", "Alaska"],
-  ["Pacific/Honolulu", "Hawaii"],
-  ["UTC", "UTC"],
-  ["Europe/London", "London"],
-  ["Europe/Berlin", "Central Europe"],
-  ["Australia/Sydney", "Sydney"],
-  ["Pacific/Auckland", "Auckland"],
-];
-
-// DEFAULTS.date is null for a static build baked ahead of time — "today" has
-// to be resolved here, in the visitor's own browser, not at build time.
-function todayInZone(tz) {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(new Date());
-}
+const MONTH_ABBR = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
+const MONTH_NAME = ["January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"];
 
 const state = {
   place: DATA.places.find((p) => p.name === DEFAULTS.place) ?? DATA.places[0],
-  date: DEFAULTS.date ?? todayInZone(DEFAULTS.tz),
   bortle: DEFAULTS.bortle,
-  bortleTouched: false,
   scope: DEFAULTS.scope,
   corrector: DEFAULTS.corrector,
   camera: DEFAULTS.camera,
-  tz: DEFAULTS.tz,
   units: DEFAULTS.units,
-  sqm: null,          // a measured value beats the nine-step class
 };
 
-/* ---------- presentation ---------- */
-const MM_PER_INCH = 25.4, FEET_PER_METRE = 3.280839895;
-
-const clockFmt = (tz) => new Intl.DateTimeFormat("en-GB",
-  { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: tz });
-
-function zoneAbbrev(ms, tz) {
-  const parts = new Intl.DateTimeFormat("en-US",
-    { timeZone: tz, timeZoneName: "short" }).formatToParts(new Date(ms));
-  return parts.find((p) => p.type === "timeZoneName")?.value ?? tz;
-}
-
-const fmtElevation = (m) => state.units === "imperial"
-  ? `${Math.round(m * FEET_PER_METRE).toLocaleString()} ft`
-  : `${Math.round(m).toLocaleString()} m`;
-
-// Telescopes are sold as 8-inch and as 80 mm in the same shop, so imperial
-// shows both rather than pretending one of them is unfamiliar.
-// ...but below an inch nobody does: a camera lens's entrance pupil is a
-// millimetre figure everywhere it is printed.
-const fmtMm = (mm) => (mm < 10 ? mm.toFixed(1) : Math.round(mm).toString());
-
-const fmtAperture = (mm) => state.units === "imperial" && mm >= 25.4
-  ? `${(mm / MM_PER_INCH).toFixed(1)}&Prime; (${Math.round(mm)} mm)`
-  : `${fmtMm(mm)} mm`;
-
-// Arcminutes for a telescope, degrees once the field is constellation-sized.
-const fmtFov = ([w, h]) => Math.max(w, h) >= 120
-  ? `${(w / 60).toFixed(1)}° × ${(h / 60).toFixed(1)}°`
-  : `${Math.round(w)}′ × ${Math.round(h)}′`;
-
-/* ---------- controls ---------- */
 const $ = (id) => document.getElementById(id);
+
+const MESSIER = DATA.targets
+  .filter((t) => /^M\d+$/.test(t.id))
+  .sort((a, b) => Number(a.id.slice(1)) - Number(b.id.slice(1)));
 
 function fillSelect(el, items, selected) {
   el.innerHTML = items
@@ -1503,11 +1003,13 @@ function fillSelect(el, items, selected) {
     .join("");
 }
 
-function buildControls() {
-  $("dateInput").value = state.date;
+function fmtMm(mm) { return mm < 10 ? mm.toFixed(1) : mm.toFixed(0); }
 
-  fillSelect($("tzInput"), ZONES.map(([value, label]) => ({ value, label })), state.tz);
-  $("unitsInput").value = state.units;
+function buildControls() {
+  fillSelect($("placeInput"),
+    [...DATA.places].sort((a, b) => a.label.localeCompare(b.label))
+      .map((p) => ({ value: p.name, label: p.label })),
+    state.place.name);
 
   fillSelect($("bortleInput"),
     Object.keys(BORTLE_TEXT).map((b) => ({ value: b, label: BORTLE_TEXT[b] })), String(state.bortle));
@@ -1517,14 +1019,10 @@ function buildControls() {
   const kindNames = { refractor: "Refractors", newtonian: "Newtonians", sct: "Schmidt-Cassegrains",
                       rc: "Ritchey-Chretiens", rasa: "Astrographs", lens: "Camera lenses",
                       smart: "Smart telescopes" };
-  // Smart telescopes first because that is what gets used; the rest
-  // alphabetical, since you are looking for the one you own rather than
-  // shopping by focal length.
   const byLabel = (a, b) => a.localeCompare(b);
   const groupRank = (kind) => (kind === "smart" ? 0 : 1);
   $("scopeInput").innerHTML = Object.keys(byKind)
-    .sort((a, b) => groupRank(a) - groupRank(b) ||
-                    byLabel(kindNames[a] ?? a, kindNames[b] ?? b))
+    .sort((a, b) => groupRank(a) - groupRank(b) || byLabel(kindNames[a] ?? a, kindNames[b] ?? b))
     .map((kind) =>
       `<optgroup label="${kindNames[kind] ?? kind}">` +
       byKind[kind].sort((a, b) => byLabel(a.name, b.name)).map((t) =>
@@ -1543,17 +1041,15 @@ function buildControls() {
       `<option value="${c.key}"${c.key === state.camera ? " selected" : ""}>${c.name}</option>`
     ).join("") + `</optgroup>`;
 
+  $("unitsInput").value = state.units;
   syncCorrectors();
   syncCamera();
-  syncPlaceInput();
 }
 
 function syncCamera() {
   const scope = scopes[state.scope];
   const select = $("cameraInput");
   if (scope.fixed_camera) {
-    // You cannot put another camera on a Seestar. Showing the choice would be
-    // offering a rig that does not exist.
     state.camera = scope.fixed_camera;
     select.value = state.camera;
     select.disabled = true;
@@ -1575,538 +1071,111 @@ function syncCorrectors() {
   }
 }
 
-function syncPlaceInput() {
-  $("placeInput").value = state.place.label;
-  $("placeHint").innerHTML =
-    `<b>${state.place.lat.toFixed(2)}°</b>, <b>${state.place.lon.toFixed(2)}°</b>` +
-    (state.place.elevation_m ? ` · ${fmtElevation(state.place.elevation_m)}` : "");
-}
-
-/* ---------- place search ---------- */
-const ABBREV = { st: "saint", ste: "sainte", mt: "mount", ft: "fort", pt: "point" };
-const normalize = (s) =>
-  s.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(Boolean)
-   .map((w) => ABBREV[w] ?? w).join(" ");
-
-// Mirrors astroplanner/geocode.py::parse_coordinates. The realistic way to
-// "pick a point on a map" without shipping map tiles a strict CSP would block:
-// drop a pin in whatever map app you already use, copy, paste.
-const DECIMAL_RE = /^(-?\d{1,3}(?:\.\d+)?)\s*°?\s*([NnSs])?[\s,]+(-?\d{1,3}(?:\.\d+)?)\s*°?\s*([EeWw])?$/;
-const DMS_RE = /(\d{1,3})\s*[°:\s]\s*(\d{1,2})\s*['′:\s]\s*([\d.]+)?\s*["″]?\s*([NnSs])[\s,]+(\d{1,3})\s*[°:\s]\s*(\d{1,2})\s*['′:\s]\s*([\d.]+)?\s*["″]?\s*([EeWw])/;
-const URL_RE = /[@=/](-?\d{1,3}\.\d+),\s*(-?\d{1,3}\.\d+)/;
-
-function parseCoordinates(text) {
-  const raw = (text ?? "").trim();
-  if (!raw) return null;
-  const ok = (lat, lon) =>
-    lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180 ? { lat, lon } : null;
-
-  if (raw.includes("://") || raw.toLowerCase().includes("maps")) {
-    const m = URL_RE.exec(raw);
-    if (m) return ok(Number(m[1]), Number(m[2]));
-  }
-  let m = DMS_RE.exec(raw);
-  if (m) {
-    let lat = Number(m[1]) + Number(m[2]) / 60 + Number(m[3] ?? 0) / 3600;
-    let lon = Number(m[5]) + Number(m[6]) / 60 + Number(m[7] ?? 0) / 3600;
-    if (m[4].toUpperCase() === "S") lat = -lat;
-    if (m[8].toUpperCase() === "W") lon = -lon;
-    return ok(lat, lon);
-  }
-  m = DECIMAL_RE.exec(raw);
-  if (m) {
-    let lat = Number(m[1]), lon = Number(m[3]);
-    if (m[2] && m[2].toUpperCase() === "S") lat = -Math.abs(lat);
-    if (m[4] && m[4].toUpperCase() === "W") lon = -Math.abs(lon);
-    return ok(lat, lon);
-  }
-  return null;
-}
-
-function pinPlace(lat, lon, label) {
-  return {
-    name: label ?? `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
-    label: label ?? `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
-    lat, lon, elevation_m: 0, population: 0, bortle: null, kind: "pin",
-    bortle_estimate: 4, bortle_basis: "unknown", bortle_measured: false,
-  };
-}
-
-function searchPlaces(query) {
-  const pin = parseCoordinates(query);
-  if (pin) return [pinPlace(pin.lat, pin.lon)];
-  const q = normalize(query);
-  if (!q) return [];
-  const scored = [];
-  for (const p of DATA.places) {
-    const name = normalize(p.name), label = normalize(p.label);
-    let base = 0;
-    if (name === q) base = 100;
-    else if (name.startsWith(q)) base = 80;
-    else if (name.includes(q)) base = 60;
-    else if (label.includes(q)) base = 40;
-    else if (q.split(" ").every((tok) => label.includes(tok))) base = 20;
-    else continue;
-    scored.push([base + (p.kind === "site" ? 8 : 0) + Math.log10(Math.max(p.population, 1)), p]);
-  }
-  scored.sort((a, b) => b[0] - a[0]);
-  return scored.slice(0, 8).map(([, p]) => p);
-}
-
-function showResults(list) {
-  const box = $("placeResults");
-  if (!list.length) { box.classList.remove("on"); $("placeInput").setAttribute("aria-expanded", "false"); return; }
-  box.innerHTML = list.map((p, i) =>
-    `<li role="option" aria-selected="false"><button type="button" class="result" data-i="${i}">
-       <span class="${p.kind === "site" ? "site" : ""}">${p.label}</span>
-       <span class="rb">B${p.bortle_estimate}${p.bortle_measured ? "" : "?"} · ${p.lat.toFixed(1)}, ${p.lon.toFixed(1)}</span>
-     </button></li>`).join("");
-  box.classList.add("on");
-  $("placeInput").setAttribute("aria-expanded", "true");
-  box.querySelectorAll(".result").forEach((btn) =>
-    btn.addEventListener("click", () => pickPlace(list[Number(btn.dataset.i)])));
-}
-
-function pickPlace(p) {
-  state.place = p;
-  // A bare position says nothing about the sky there, so leave the sky class
-  // where the observer set it rather than inventing one from nothing.
-  if (!state.bortleTouched && p.kind !== "pin") {
-    state.bortle = p.bortle_estimate;
-    $("bortleInput").value = String(state.bortle);
-  }
-  $("placeResults").classList.remove("on");
-  $("placeInput").setAttribute("aria-expanded", "false");
-  syncPlaceInput();
-  render();
-}
-
-/* ---------- where am I ---------- */
-function useMyLocation() {
-  const btn = $("locateBtn"), hint = $("placeHint");
-  if (!navigator.geolocation) {
-    hint.textContent = "This browser has no location service";
-    return;
-  }
-  btn.disabled = true;
-  btn.textContent = "Locating…";
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      const { latitude, longitude, accuracy } = pos.coords;
-      pickPlace(pinPlace(latitude, longitude, "My location"));
-      // The browser knows its own zone, and if you are standing at the site
-      // that is the zone you want the plan in.
-      const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      if (ZONES.some(([value]) => value === zone)) {
-        state.tz = zone;
-        $("tzInput").value = zone;
-      }
-      btn.disabled = false;
-      btn.textContent = "Use my location";
-      hint.innerHTML =
-        `<b>${latitude.toFixed(4)}°</b>, <b>${longitude.toFixed(4)}°</b> ` +
-        `· ±${Math.round(accuracy)} m · set the sky class yourself`;
-      render();
-    },
-    (err) => {
-      btn.disabled = false;
-      btn.textContent = "Use my location";
-      // Each of these is a different fix, so say which one happened.
-      const why = {
-        1: "Location permission denied — allow it in the browser's site settings, or paste coordinates instead",
-        2: "Your device could not get a fix — paste coordinates instead",
-        3: "Location request timed out — try again, or paste coordinates",
-      }[err.code] ?? "Location unavailable — paste coordinates instead";
-      hint.textContent = window.isSecureContext
-        ? why
-        : "Location needs a secure page (https). Paste coordinates instead — a maps link works too.";
-    },
-    { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 }
-  );
-}
-
-/* ---------- moon phase disc ---------- */
-function drawMoon(illum) {
-  const svg = $("moonDisc"), r = 11, c = 13;
-  // Terminator is an ellipse of half-width |1-2k|r. For a gibbous moon it
-  // bulges past centre to the far side, so the return arc sweeps the other
-  // way — matching sweeps would retrace one semicircle and cancel the fill.
-  const k = illum, rx = Math.abs(1 - 2 * k) * r, sweep = k > .5 ? 1 : 0;
-  svg.innerHTML =
-    `<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="var(--moon)" stroke-width="1.2" opacity=".6"/>` +
-    (k <= .002 ? "" :
-      `<path d="M ${c} ${c - r} A ${r} ${r} 0 0 1 ${c} ${c + r} A ${rx} ${r} 0 0 ${sweep} ${c} ${c - r} Z"
-             fill="var(--moon)"/>`);
-}
-
-/* ---------- generic line/area chart ---------- */
-function drawChart(host, opts) {
-  const w = Math.max(host.clientWidth, 200), h = opts.height;
-  const { values, labels, yMin, yMax, color, fill, refLine, refLabel, unit } = opts;
-  const padL = 5, padR = 5, padT = 6, padB = 6;
-  const iw = w - padL - padR, ih = h - padT - padB;
-  const x = (i) => padL + (values.length === 1 ? iw / 2 : (iw * i) / (values.length - 1));
-  const y = (v) => padT + ih * (1 - (v - yMin) / (yMax - yMin));
-
-  const pts = values.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`);
-  const line = "M" + pts.join(" L");
-  const base = y(Math.max(yMin, Math.min(0, yMax)));
-  const area = `${line} L${x(values.length - 1).toFixed(1)},${base.toFixed(1)} L${x(0).toFixed(1)},${base.toFixed(1)} Z`;
-
-  let refs = "";
-  if (refLine !== undefined && refLine > yMin && refLine < yMax) {
-    refs += `<line x1="${padL}" x2="${w - padR}" y1="${y(refLine).toFixed(1)}" y2="${y(refLine).toFixed(1)}"
-                   stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3" opacity=".55"/>`;
-    if (refLabel) {
-      refs += `<text x="${padL + 2}" y="${(y(refLine) + 11).toFixed(1)}" text-anchor="start"
-                     font-family="var(--mono)" font-size="9" fill="var(--muted)">${refLabel}</text>`;
-    }
-  }
-
-  const tip = host.querySelector(".tip");
-  host.innerHTML =
-    `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="${opts.aria}">
-       <path d="${area}" fill="${fill}"/>
-       ${refs}
-       <path d="${line}" fill="none" stroke="${color}" stroke-width="2"
-             stroke-linejoin="round" stroke-linecap="round"/>
-       <circle cx="${x(values.length - 1).toFixed(1)}" cy="${y(values[values.length - 1]).toFixed(1)}"
-               r="3.5" fill="${color}" stroke="var(--surface)" stroke-width="2"/>
-       <line class="cross" x1="0" x2="0" y1="${padT}" y2="${h - padB}"
-             stroke="${color}" stroke-width="1" opacity="0"/>
-     </svg>`;
-  host.appendChild(tip);
-
-  const svg = host.querySelector("svg"), cross = host.querySelector(".cross");
-  const move = (ev) => {
-    const rect = svg.getBoundingClientRect();
-    const px = (ev.clientX - rect.left) * (w / rect.width);
-    const i = Math.max(0, Math.min(values.length - 1, Math.round((px - padL) / (iw / (values.length - 1)))));
-    cross.setAttribute("x1", x(i)); cross.setAttribute("x2", x(i)); cross.setAttribute("opacity", ".5");
-    tip.textContent = `${labels[i]}  ${values[i].toFixed(1)}${unit}`;
-    tip.classList.add("on");
-    const tw = tip.offsetWidth, left = (x(i) / w) * rect.width;
-    tip.style.left = Math.max(0, Math.min(rect.width - tw, left - tw / 2)) + "px";
-    tip.style.top = "-2px";
-  };
-  svg.addEventListener("mousemove", move);
-  svg.addEventListener("mouseleave", () => { cross.setAttribute("opacity", "0"); tip.classList.remove("on"); });
-}
-
-/* ---------- render ---------- */
-function currentRig() {
-  const scope = scopes[state.scope];
-  const entry = scope.correctors.find(([label]) => label === state.corrector) ?? scope.correctors[0];
-  return {
-    scope,
-    camera: cameras[state.camera],
-    focalLengthMm: scope.focal_length_mm * entry[1],
-    apertureMm: scope.aperture_mm,
-    correctorLabel: entry[0],
-  };
-}
-
 function render() {
-  const rig = currentRig();
-  const { camera } = rig;
-  const night = buildNight(state.date, state.place.lat, state.place.lon);
-  const scale = pixelScale(camera.pixel_um, rig.focalLengthMm);
-  const fov = fovArcmin(camera, rig.focalLengthMm);
+  const scope = scopes[state.scope];
+  const camera = cameras[state.camera];
+  const focalLengthMm = scope.focal_length_mm *
+    (scope.correctors.find(([label]) => label === state.corrector)?.[1] ?? 1);
+  const apertureMm = scope.aperture_mm;
+  const scale = pixelScale(camera.pixel_um, focalLengthMm);
+  const darkSqm = BORTLE_SQM[state.bortle];
+  const allowedFilterKeys = scope.builtin_filters ? new Set(scope.builtin_filters) : null;
+  const maxSubS = scope.max_sub_s ?? 1200;
+  const filterList = Object.values(DATA.filters).filter(
+    (f) => !allowedFilterKeys || allowedFilterKeys.has(f.key)
+  );
+  const rateFor = (f) => skyElectronRate(darkSqm, apertureMm, scale, camera.qe, f);
+  const reference = snrQuality(DATA.filters.none, false, rateFor(DATA.filters.none), camera);
+  const refYear = new Date().getFullYear();
+  const thisMonth = new Date().getMonth() + 1;
 
   $("rig").innerHTML =
-    `<b>${camera.name}</b><br>${rig.scope.name}` +
-    `${rig.correctorLabel === "native" ? "" : " + " + rig.correctorLabel}<br>` +
-    `${fmtAperture(rig.apertureMm)} at ${fmtMm(rig.focalLengthMm)}&thinsp;mm ` +
-    `f/${(rig.focalLengthMm / rig.apertureMm).toFixed(1)}<br>` +
-    `${scale.toFixed(2)}&Prime;/px &middot; ${fmtFov(fov)} FoV<br>` +
-    `Bortle ${state.bortle} &middot; ${state.place.label}`;
+    `<b>${camera.name}</b><br>${scope.name}${state.corrector !== "native" ? " + " + state.corrector : ""}` +
+    ` &middot; ${fmtMm(focalLengthMm)} mm f/${(focalLengthMm / apertureMm).toFixed(1)}`;
 
-  $("correctorHint").textContent = `${fmtMm(rig.focalLengthMm)} mm effective`;
-  $("cameraHint").innerHTML = rig.scope.fixed_camera
-    ? `<span class="locked">Bonded to the ${rig.scope.name}</span> &middot; ` +
-      `${camera.read_noise_e.toFixed(1)} e&minus; read noise`
-    : `${camera.read_noise_e.toFixed(1)} e&minus; read noise &middot; ` +
-      (camera.builtin_ir_cut ? `H&alpha; ${Math.round(camera.ha_transmission * 100)}%`
-                             : "no built-in IR cut");
-  $("scopeHint").innerHTML = rig.scope.builtin_filters
-    ? `${fmtAperture(rig.scope.aperture_mm)} &middot; fitted: ` +
-      rig.scope.builtin_filters.map((k) => DATA.filters[k].name.split(" (")[0]).join(", ") +
-      (rig.scope.max_sub_s ? ` &middot; max ${rig.scope.max_sub_s}s subs` : "") +
-      (rig.scope.assumed?.length
-        ? ` &middot; <span class="locked">${rig.scope.assumed.join(" and ")} inferred</span>`
-        : "")
-    : `${fmtAperture(rig.scope.aperture_mm)} aperture &middot; ${scale.toFixed(2)}&Prime;/px`;
-  const basis = { measured: "measured at this site",
-                  typical: "typical for a city this size — check it",
-                  estimated: "estimated from town size — check it" };
-  $("bortleHint").textContent = state.sqm
-    ? `overridden by the measured ${state.sqm.toFixed(2)}`
-    : state.bortleTouched
-      ? `SQM ${BORTLE_SQM[state.bortle].toFixed(1)} mag/arcsec²`
-      : basis[state.place.bortle_basis];
-  $("bortleInput").disabled = state.sqm !== null;
-
-  const clock = clockFmt(state.tz);
-  const tzName = zoneAbbrev(night.darkStart ?? night.times[0], state.tz);
-  const at = (ms) => clock.format(new Date(ms));
-  const kindLabel = { astronomical: `Astronomical dark (${tzName})`,
-                      nautical: `Nautical dark (${tzName})`,
-                      civil: `Civil twilight (${tzName})`, none: "No usable darkness" };
-  $("darkKind").textContent = kindLabel[night.darknessKind];
-  $("darkWindow").textContent = night.darkStart ? `${at(night.darkStart)} – ${at(night.darkEnd)}` : "—";
-  $("tzHint").textContent = `${tzName} · ${state.tz}`;
-  $("dateHint").textContent = `The evening this night begins, local to the site`;
-  $("darkHours").textContent = `${night.darkHours.toFixed(1)} h`;
-  $("moonIllum").textContent = `${Math.round(night.illumination * 100)}% lit`;
-  $("moonUp").textContent = night.moonUpHours > 0
-    ? `up ${night.moonUpHours.toFixed(1)} h of dark` : "below horizon all night";
-  drawMoon(night.illumination);
-
-  // Charts show the dark window only — the grid runs noon to noon, and 17
-  // hours of daylight either side would squash the part that matters.
-  const darkIdx = night.dark.map((v, i) => (v ? i : -1)).filter((i) => i >= 0);
-  const lo = darkIdx.length ? darkIdx[0] : 0;
-  const hi = darkIdx.length ? darkIdx[darkIdx.length - 1] : night.times.length - 1;
-  const crop = (arr) => arr.slice(lo, hi + 1);
-  const labels = crop(night.times).map(at);
-
-  $("axStart").textContent = labels[0];
-  $("axEnd").textContent = labels[labels.length - 1];
-  // Keep the moon's track off the floor of the frame on nights it never rises.
-  const moonTrack = crop(night.moonAlt);
-  const moonFloor = Math.min(-40, Math.floor(Math.min(...moonTrack) / 10) * 10);
-  drawChart($("moonChart"), {
-    values: moonTrack, labels, yMin: moonFloor, yMax: 90, height: 84,
-    color: "var(--moon)", fill: "var(--moon-fill)", refLine: 0, refLabel: "horizon", unit: "°",
-    aria: `Moon altitude through the night of ${state.date}`,
-  });
-
-  const cli =
-    `astroplanner plan --date ${state.date} --place "${state.place.name}" --bortle ${state.bortle} ` +
-    `--camera ${camera.key} --scope ${rig.scope.key}` +
-    (rig.correctorLabel === "native" ? "" : ` --corrector "${rig.correctorLabel}"`) +
-    (state.sqm ? ` --sqm ${state.sqm}` : "") +
-    ` --tz ${state.tz} --units ${state.units}`;
-  $("prov").textContent = cli;
-  $("provenance").textContent =
-    "Same model as the command line: ephemeris, Krisciunas & Schaefer moonlight, Glover sub-exposure. " +
-    "The browser build is checked target-by-target against the Python engine (web/validate.mjs).";
-
-  const list = $("targets"), empty = $("empty");
-  list.innerHTML = "";
-
-  if (night.darknessKind === "none") {
-    empty.hidden = false;
-    empty.innerHTML =
-      `<h2>The sun never sets far enough here on this date</h2>
-       <p>At ${state.place.label} on ${state.date} the sun stays above &minus;6°, so there is no
-       usable darkness at all. Try a date closer to the equinoxes, or a site further from the pole.</p>`;
-    document.querySelector("#dataTable tbody").innerHTML = "";
-    return;
-  }
-
-  const ranked = rankTargets(night, {
-    camera, focalLengthMm: rig.focalLengthMm, apertureMm: rig.apertureMm,
-    bortle: state.bortle, darkSqm: state.sqm, targets: DATA.targets, filters: DATA.filters,
-    allowedFilterKeys: rig.scope.builtin_filters
-      ? new Set(rig.scope.builtin_filters) : null,
-    maxSubS: rig.scope.max_sub_s ?? 1200,
-  });
-
-  if (!ranked.length) {
-    empty.hidden = false;
-    empty.innerHTML =
-      `<h2>Nothing in the catalog clears 30° tonight</h2>
-       <p>Every target in the bundled catalog stays below the altitude floor during darkness at
-       this site on this date.</p>`;
-    document.querySelector("#dataTable tbody").innerHTML = "";
-    return;
-  }
+  const catalog = $("catalog"), empty = $("empty");
+  catalog.innerHTML = "";
   empty.hidden = true;
 
-  const shown = ranked.slice(0, TOP_N);
-  // One bar scale for the whole page, so modes are comparable across targets.
-  const qMax = Math.max(1.2, ...shown.flatMap((r) =>
-    MODE_KEYS.map((k) => (r.modeAdvice.scores[k].available ? r.modeAdvice.scores[k].skyQuality : 0))));
+  let shown = 0;
+  for (const t of MESSIER) {
+    const months = monthlyVisibility(t.ra_deg, t.dec_deg, state.place.lat, state.place.lon, refYear, 30);
+    const peakHours = Math.max(...months.map((m) => m.usableHours));
+    const best = months.reduce((a, b) =>
+      (b.usableHours > a.usableHours || (b.usableHours === a.usableHours && b.maxAltDeg > a.maxAltDeg)) ? b : a
+    );
+    const bestSet = new Set(months.filter((m) => m.usableHours === peakHours).map((m) => m.month));
 
-  shown.forEach((r, i) => {
-    const t = r.target, advice = r.modeAdvice;
-    const li = document.createElement("li");
-    li.className = "target";
-    li.style.setProperty("--edge", t.line_emitter ? "var(--emitter)" : "var(--broad)");
+    const card = document.createElement("div");
+    card.className = "mcard" + (peakHours <= 0 ? " never" : "");
+    card.style.setProperty("--edge", t.line_emitter ? "var(--emitter)" : "var(--broad)");
     const chip = t.line_emitter ? "chip-emit" : "chip-broad";
 
-    const modeRows = MODE_KEYS.map((key) => {
-      const m = advice.scores[key];
-      const picked = key === advice.recommended;
-      const name = `<span class="mname">${picked ? "▸ " : ""}${m.label}</span>`;
-      if (!m.available) {
-        const why = m.note.includes("IR-cut") ? "built-in IR cut" : m.note;
-        return `<div class="mode off">${name}<span class="na">${why}</span></div>`;
-      }
-      return `<div class="mode${picked ? " pick" : ""}">
-                ${name}
-                <div class="bar"><i style="width:${Math.min(m.skyQuality / qMax, 1) * 100}%"></i>
-                  <u style="left:${Math.min(1 / qMax, 1) * 100}%"></u></div>
-                <span class="mq">${m.skyQuality.toFixed(2)}</span>
-                <span class="msub">${m.recommendedSubS}s</span>
+    const monthsRow = months.map((m) => {
+      const pct = peakHours > 0 ? Math.max((m.usableHours / peakHours) * 100, m.usableHours > 0 ? 6 : 2) : 2;
+      const cls = ["mbar", bestSet.has(m.month) ? "best" : "", m.month === thisMonth ? "now" : ""]
+        .filter(Boolean).join(" ");
+      return `<div class="${cls}" title="${MONTH_NAME[m.month - 1]}: ${m.usableHours.toFixed(1)}h">
+                <div class="bar" style="height:${pct}%"></div>
+                <span class="mlabel">${MONTH_ABBR[m.month - 1]}</span>
               </div>`;
     }).join("");
 
-    const returnsRow = r.returnsTable
-      .filter((pt) => [1, 2, 4, 8].includes(pt.hours))
-      .map((pt) => `<span><b>${pt.hours}h</b> SNR ~${pt.snr < 10 ? pt.snr.toFixed(1) : pt.snr.toFixed(0)}</span>`)
-      .join("");
-
-    // The catalog names a Messier object by its M-number outright ("M31"),
-    // so this is exactly the objects Messier catalogued — nothing inferred.
-    const messierNum = /^M(\d+)$/.exec(t.id)?.[1];
-    const sbMag = surfaceBrightnessMag(t.mag, t.size_arcmin);
-
-    li.innerHTML =
-      `<div class="rank">${i + 1}</div>
-       <div class="col-id">
-         <h3 class="tname">${t.name}</h3>
-         <span class="tid">${t.id} &middot; ${t.size_arcmin}&prime; &middot; SB ${sbMag.toFixed(1)}</span>
+    let bodyHtml;
+    if (peakHours <= 0) {
+      bodyHtml = `<p class="best-line">Never clears 30&deg; during darkness from ${state.place.label}.</p>`;
+    } else {
+      const sbMag = surfaceBrightnessMag(t.mag, t.size_arcmin);
+      const advice = recommendMode(t.line_emitter, camera, rateFor, reference, DATA.filters, allowedFilterKeys, maxSubS);
+      const mode = advice.scores[advice.recommended];
+      const targetEPerS = targetElectronRate(sbMag, apertureMm, scale, camera.qe,
+        DATA.filters[mode.filterKey], t.line_emitter, camera);
+      const returns = diminishingReturnsTable(targetEPerS, mode.skyEPerS, camera.read_noise_e,
+        mode.recommendedSubS, [2, 8]);
+      const bestNames = [...bestSet].sort((a, b) => a - b).map((m) => MONTH_NAME[m - 1]).join(" & ");
+      bodyHtml =
+        `<p class="best-line">Best: <b>${bestNames}</b> &middot; ${best.usableHours.toFixed(1)}h above 30&deg;
+           &middot; peak alt <b>${Math.round(best.maxAltDeg)}&deg;</b></p>
          <div class="chips">
            <span class="chip ${chip}">${TYPE_NAMES[t.type] ?? t.type}</span>
-           ${messierNum ? `<span class="chip chip-messier">Messier ${messierNum}</span>` : ""}
-           <span class="chip chip-pick">${advice.scores[advice.recommended].label}</span>
+           <span class="chip chip-pick">${mode.label} &middot; ${mode.recommendedSubS}s</span>
          </div>
-         <div class="stats">
-           <span><b>${r.usableHours.toFixed(1)}</b> h</span>
-           <span>peak <b>${Math.round(r.maxAltDeg)}°</b></span>
-           <span>moon <b>${Math.round(r.meanMoonSepDeg)}°</b></span>
-           <span>cost <b>${r.moonBrighteningMag >= 0.005 ? "−" + r.moonBrighteningMag.toFixed(2) + " mag" : "none"}</b></span>
-           <span><b>${at(r.windowMs[0])}–${at(r.windowMs[1])}</b></span>
-         </div>
+         <p class="returns">SB ${sbMag.toFixed(1)} &middot;
+           2h SNR ~${returns[0].snr.toFixed(1)} &middot; 8h SNR ~${returns[1].snr.toFixed(1)}</p>`;
+    }
+
+    card.innerHTML =
+      `<div>
+         <h3 class="mname">${t.name}</h3>
+         <span class="mtid">${t.id} &middot; ${t.size_arcmin}&prime; &middot; mag ${t.mag}</span>
+         ${bodyHtml}
        </div>
-       <div class="col-chart">
-         <div class="chart" data-alt="${i}"><div class="tip"></div></div>
-       </div>
-       <div class="col-modes">
-         <div class="modehead"><span>Imaging mode</span><span>SkyQual &middot; sub</span></div>
-         ${modeRows}
-         <p class="why">${advice.reason.charAt(0).toUpperCase() + advice.reason.slice(1)}.
-            ${advice.scores[advice.recommended].subCapped
-              ? `<b>Capped:</b> its optimum is longer than this instrument's ` +
-                `${rig.scope.max_sub_s}s ceiling, so you are read-noise limited — ` +
-                `shoot more subs, not longer ones.` : ""}
-            ${advice.caution ? "<b>Note:</b> " + advice.caution + "." : ""}</p>
-         <div class="returns">
-           <span class="rlabel">Integration time, from catalog brightness</span>
-           ${returnsRow}
-           <span class="elbow">past ${INTEGRATION_ELBOW_H}h, another hour buys &lt;5% more SNR — true for any target here</span>
-         </div>
-         ${r.brightnessCaution ? `<p class="why">${r.brightnessCaution}.</p>` : ""}
-       </div>`;
-    list.appendChild(li);
-  });
+       <div class="months">${monthsRow}</div>`;
+    catalog.appendChild(card);
+    shown++;
+  }
 
-  shown.forEach((r, i) => {
-    drawChart(list.querySelector(`[data-alt="${i}"]`), {
-      values: crop(r.altTrack), labels, yMin: 0, yMax: 90, height: 62,
-      color: r.target.line_emitter ? "var(--emitter)" : "var(--broad)", fill: "var(--sky-fill)",
-      refLine: 30, refLabel: "30° floor", unit: "°",
-      aria: `${r.target.name} altitude, peaking at ${Math.round(r.maxAltDeg)} degrees`,
-    });
-  });
+  if (!shown) {
+    empty.hidden = false;
+    empty.textContent = "No Messier objects in the bundled catalog.";
+  }
 
-  document.querySelector("#dataTable tbody").innerHTML = ranked.map((r) => {
-    const m = r.modeAdvice.scores[r.modeAdvice.recommended];
-    return `<tr><td>${r.target.name}</td><td>${TYPE_NAMES[r.target.type] ?? r.target.type}</td><td>${r.score.toFixed(2)}</td>
-      <td>${r.usableHours.toFixed(1)}</td><td>${Math.round(r.maxAltDeg)}°</td>
-      <td>${Math.round(r.meanMoonSepDeg)}°</td>
-      <td>${r.moonBrighteningMag >= 0.005 ? "−" + r.moonBrighteningMag.toFixed(2) : "—"}</td>
-      <td>${at(r.windowMs[0])}–${at(r.windowMs[1])}</td>
-      <td>${m.label}</td><td>${m.skyQuality.toFixed(2)}</td><td>${m.recommendedSubS}s</td>
-      <td>${m.skyEPerS.toFixed(2)}</td></tr>`;
-  }).join("");
-
-  const phaseTargets = jumpDates(state.date);
-  document.querySelectorAll(".switch button").forEach((b) => {
-    const iso = phaseTargets[b.dataset.jump];
-    b.setAttribute("aria-pressed", String(iso === state.date));
-    b.textContent = (b.dataset.jump === "new" ? "New moon · " : "Full moon · ") + shortDate(iso);
-    b.dataset.iso = iso;
-  });
+  $("foot").innerHTML =
+    `${MESSIER.length} Messier objects &middot; Bortle ${state.bortle} (SQM ${darkSqm.toFixed(1)}) &middot; ` +
+    `${state.place.label} &middot; ${refYear} cycle`;
 }
 
-/* Nearest new/full moon on or after the current date, found by sampling the
- * same illumination model the plan uses rather than a synodic-period formula. */
-function jumpDates(fromISO) {
-  const [y, m, d] = fromISO.split("-").map(Number);
-  const start = Date.UTC(y, m - 1, d);
-  let best = { new: null, full: null }, bestVal = { new: 1, full: 0 };
-  for (let i = 0; i <= 30; i++) {
-    const ms = start + i * 86400000;
-    const jd = julianDay(ms + 6 * 3600000);
-    const s = sunPosition(jd), mo = moonPosition(jd);
-    const elong = angularSeparation(s.ra, s.dec, mo.ra, mo.dec);
-    const phase = Math.atan2(s.distKm * Math.sin(elong * Math.PI / 180),
-      mo.distKm - s.distKm * Math.cos(elong * Math.PI / 180)) * 180 / Math.PI;
-    const illum = (1 + Math.cos(phase * Math.PI / 180)) / 2;
-    if (illum < bestVal.new) { bestVal.new = illum; best.new = ms; }
-    if (illum > bestVal.full) { bestVal.full = illum; best.full = ms; }
-  }
-  const iso = (ms) => new Date(ms).toISOString().slice(0, 10);
-  return { new: iso(best.new), full: iso(best.full) };
-}
-
-const shortDate = (iso) => {
-  const [y, m, d] = iso.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("en-US",
-    { month: "short", day: "numeric", timeZone: "UTC" });
-};
-
-/* ---------- wiring ---------- */
-$("placeInput").addEventListener("input", (e) => showResults(searchPlaces(e.target.value)));
-$("placeInput").addEventListener("focus", (e) => { if (e.target.value) showResults(searchPlaces(e.target.value)); });
-$("placeInput").addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    const hits = searchPlaces(e.target.value);
-    if (hits.length) { e.preventDefault(); pickPlace(hits[0]); }
-  } else if (e.key === "Escape") {
-    $("placeResults").classList.remove("on");
-    syncPlaceInput();
-  }
+$("placeInput").addEventListener("change", (e) => {
+  state.place = DATA.places.find((p) => p.name === e.target.value) ?? state.place;
+  render();
 });
-document.addEventListener("click", (e) => {
-  if (!e.target.closest("#placeResults") && e.target !== $("placeInput")) {
-    $("placeResults").classList.remove("on");
-    $("placeInput").setAttribute("aria-expanded", "false");
-  }
-});
-
-$("dateInput").addEventListener("change", (e) => { if (e.target.value) { state.date = e.target.value; render(); } });
-$("bortleInput").addEventListener("change", (e) => {
-  state.bortle = Number(e.target.value); state.bortleTouched = true; render();
-});
+$("unitsInput").addEventListener("change", (e) => { state.units = e.target.value; render(); });
+$("bortleInput").addEventListener("change", (e) => { state.bortle = Number(e.target.value); render(); });
 $("scopeInput").addEventListener("change", (e) => {
   state.scope = e.target.value; syncCorrectors(); syncCamera(); render();
 });
 $("correctorInput").addEventListener("change", (e) => { state.corrector = e.target.value; render(); });
 $("cameraInput").addEventListener("change", (e) => { state.camera = e.target.value; render(); });
-$("sqmInput").addEventListener("input", (e) => {
-  const v = Number(e.target.value);
-  state.sqm = e.target.value !== "" && Number.isFinite(v) && v > 0 ? v : null;
-  render();
-});
-$("locateBtn").addEventListener("click", useMyLocation);
-$("tzInput").addEventListener("change", (e) => { state.tz = e.target.value; render(); });
-$("unitsInput").addEventListener("change", (e) => {
-  state.units = e.target.value; syncPlaceInput(); render();
-});
-
-document.querySelectorAll(".switch button").forEach((b) =>
-  b.addEventListener("click", () => {
-    state.date = b.dataset.iso;
-    $("dateInput").value = state.date;
-    render();
-  }));
-
-let raf;
-addEventListener("resize", () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(render); });
 
 buildControls();
 render();

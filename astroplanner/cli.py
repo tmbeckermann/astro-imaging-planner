@@ -12,6 +12,8 @@
 """
 
 import argparse
+import calendar
+import datetime
 import sys
 
 from . import __version__
@@ -23,7 +25,8 @@ from .filters import FILTERS, get_filter
 from .geocode import resolve as resolve_place
 from .geocode import search as search_places
 from .integration_time import elbow_hours
-from .scoring import rank_targets
+from .messier import best_month, messier_targets, monthly_visibility
+from .scoring import rank_targets, recommend_mode, snr_quality
 from .sensors import CAMERAS, get_camera
 from .sessionlog import DEFAULT_DB, SessionLog
 from .sky import sky_electron_rate, sqm_from_bortle
@@ -384,6 +387,51 @@ def cmd_targets(_args) -> int:
     return 0
 
 
+def cmd_messier(args) -> int:
+    scope = get_telescope(args.scope) if args.scope else None
+    cam = _resolve_camera(args, scope)
+    fl, aperture, scope_label = _resolve_optics(args)
+    lat, lon, elevation, site_label = _resolve_site(args)
+    args.lat, args.lon, args.fl, args.aperture = lat, lon, fl, aperture
+    ref_year = args.year or datetime.date.today().year
+    sqm = args.sqm if args.sqm else sqm_from_bortle(args.bortle)
+    scale = cam.pixel_scale(fl)
+    allowed = _resolve_filters(args, scope)
+    max_sub_s = scope.max_sub_s if scope and scope.max_sub_s else 1200.0
+
+    where = f"{site_label}  ({lat:+.2f}, {lon:+.2f})" if site_label else f"lat {lat:+.2f} lon {lon:+.2f}"
+    rig = (f"{cam.name}, {scope_label + ', ' if scope_label else ''}"
+           f"{format_aperture(aperture, args.units)} at {format_focal_length(fl)} f/{fl/aperture:.1f}")
+    sky = (f"SQM {args.sqm:.2f} mag/arcsec² [measured]" if args.sqm
+           else f"Bortle {args.bortle} (SQM {sqm:.1f})")
+    print(f"Messier catalog  |  {where}  |  {sky}  |  {ref_year}")
+    print(f"Rig: {rig}")
+    print()
+    hdr = f"{'ID':<6} {'Name':<26} {'Best month':<11} {'Hrs':>4} {'PeakAlt':>7}  {'Mode':<18} {'Sub':>5}"
+    print(hdr)
+    print("-" * len(hdr))
+
+    def rate_for(f):
+        return sky_electron_rate(sqm, aperture, scale, cam.qe, f)
+    reference = snr_quality(FILTERS["none"], False, rate_for(FILTERS["none"]))
+
+    for t in messier_targets():
+        months = monthly_visibility(t, lat, lon, ref_year, min_alt_deg=args.min_alt)
+        best = best_month(months)
+        if best.usable_hours <= 0:
+            print(f"{t.id:<6} {t.name:<26} never clears {args.min_alt:.0f}° during darkness at this site")
+            continue
+        advice = recommend_mode(t.line_emitter, cam, rate_for, reference, allowed, max_sub_s)
+        mode = advice.best
+        month_name = calendar.month_abbr[best.month]
+        print(f"{t.id:<6} {t.name:<26} {month_name:<11} {best.usable_hours:>4.1f} {best.max_alt_deg:>6.0f}°  "
+              f"{mode.label:<18} {mode.recommended_sub_s:>4}s")
+    print()
+    print(f"Best month: month (of {ref_year}) with the most hours above {args.min_alt:.0f}° during darkness — "
+          f"pure geometry, no moon or weather. Mode/sub assume a moonless night that month.")
+    return 0
+
+
 def cmd_log_add(args) -> int:
     log = SessionLog(args.db)
     rid = log.add(args.date, args.target, args.filter, args.sub, args.subs, args.notes)
@@ -443,6 +491,22 @@ def main(argv: list[str] | None = None) -> int:
     _presentation_args(se)
     _rig_args(se)
     se.set_defaults(func=cmd_exposure)
+
+    sm = sub.add_parser("messier", help="best month of the year to view/image each Messier object")
+    sm.add_argument("--place", help="site by name, e.g. --place \"cherry springs\"")
+    sm.add_argument("--lat", type=float)
+    sm.add_argument("--lon", type=float, help="east positive")
+    sm.add_argument("--elevation", type=float, help="site elevation, m")
+    sm.add_argument("--offline", action="store_true", help="never call the online geocoder")
+    sm.add_argument("--bortle", type=int, choices=range(1, 10),
+                     help="sky class 1-9; --place suggests one if omitted")
+    sm.add_argument("--sqm", type=float, help="measured zenith sky brightness, mag/arcsec^2 — overrides --bortle")
+    sm.add_argument("--year", type=int, help="reference year for the month cycle (default: current year)")
+    sm.add_argument("--min-alt", type=float, default=30.0)
+    _rig_args(sm)
+    sm.add_argument("--filters", help="comma list of filters you own (default: all)")
+    _presentation_args(sm)
+    sm.set_defaults(func=cmd_messier)
 
     sa = sub.add_parser("analyze", help="measure FITS/XISF sub-frames")
     sa.add_argument("files", nargs="+")

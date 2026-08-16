@@ -140,6 +140,10 @@
 
   .rig b { color: var(--ink-2); font-weight: 600; }
 
+  .navlink { font-family: var(--mono); font-size: .76rem; color: var(--muted); text-align: right; margin: .3rem 0 0; }
+  .navlink a { color: var(--accent); text-decoration: none; }
+  .navlink a:hover { text-decoration: underline; }
+
   /* ---- controls ---- */
   .controls {
     background: var(--surface);
@@ -627,7 +631,10 @@
       <p class="eyebrow">Observing plan &middot; astro-imaging-planner</p>
       <h1>What to image, <em id="nightWord">and how to filter it</em></h1>
     </div>
-    <div class="rig" id="rig"></div>
+    <div>
+      <div class="rig" id="rig"></div>
+      <p class="navlink"><a href="messier.html">Messier catalog &rarr;</a></p>
+    </div>
   </header>
 
   <section class="controls" aria-label="Site, night and rig">

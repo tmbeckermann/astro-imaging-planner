@@ -191,6 +191,33 @@ export function buildNight(dateISO, lat, lon) {
   };
 }
 
+export function monthlyVisibility(raDeg, decDeg, lat, lon, refYear, minAltDeg = 30) {
+  const months = [];
+  for (let m = 1; m <= 12; m++) {
+    const dateISO = `${refYear}-${String(m).padStart(2, "0")}-15`;
+    const night = buildNight(dateISO, lat, lon);
+    if (night.darknessKind === "none") {
+      months.push({ month: m, usableHours: 0, maxAltDeg: -90, darkHours: night.darkHours });
+      continue;
+    }
+    const midJd = night.jds[Math.floor(night.jds.length / 2)];
+    const p = precessFromJ2000(raDeg, decDeg, midJd);
+    let usableSteps = 0, maxAlt = -90;
+    for (let i = 0; i < night.jds.length; i++) {
+      const alt = altitude(p.ra, p.dec, lat, lon, night.jds[i]);
+      if (alt > maxAlt) maxAlt = alt;
+      if (night.dark[i] && alt >= minAltDeg) usableSteps++;
+    }
+    months.push({
+      month: m,
+      usableHours: usableSteps * night.stepHours,
+      maxAltDeg: maxAlt,
+      darkHours: night.darkHours,
+    });
+  }
+  return months;
+}
+
 export function hhmmUTC(ms) {
   const d = new Date(ms);
   return String(d.getUTCHours()).padStart(2, "0") + ":" +

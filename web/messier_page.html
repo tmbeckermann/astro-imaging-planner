@@ -1,0 +1,581 @@
+<meta charset="utf-8">
+<title>Messier Catalog — Best Time to Image</title>
+<style>
+  :root {
+    --ground: #EEF1F6;
+    --surface: #FFFFFF;
+    --raised: #F7F9FC;
+    --ink: #171B26;
+    --ink-2: #3D4658;
+    --muted: #5A6480;
+    --rule: #D3DAE6;
+    --rule-soft: #E6EBF2;
+    --accent: #9A6F1E;
+    --accent-bg: #F6EBD4;
+    --emitter: #C13B31;
+    --emitter-bg: #FAE6E3;
+    --broad: #2E6FB8;
+    --broad-bg: #E2ECF8;
+    --qual-track: #DDE4EC;
+    --field: #FFFFFF;
+    --shadow: 0 1px 2px rgba(20, 26, 40, .05), 0 10px 26px -14px rgba(20, 26, 40, .22);
+    --serif: Georgia, "Iowan Old Style", "Palatino Linotype", Palatino, "Times New Roman", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", "Cascadia Code", Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0B1020;
+      --surface: #151B2E;
+      --raised: #1D2540;
+      --ink: #E6E9F5;
+      --ink-2: #C2C9DE;
+      --muted: #8E9AB8;
+      --rule: #2A3350;
+      --rule-soft: #1E2640;
+      --accent: #E8B04B;
+      --accent-bg: #33280F;
+      --emitter: #E0574C;
+      --emitter-bg: #381916;
+      --broad: #5A9EE4;
+      --broad-bg: #14273D;
+      --qual-track: #232C46;
+      --field: #0F1526;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 12px 32px -16px rgba(0, 0, 0, .7);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #0B1020;
+    --surface: #151B2E;
+    --raised: #1D2540;
+    --ink: #E6E9F5;
+    --ink-2: #C2C9DE;
+    --muted: #8E9AB8;
+    --rule: #2A3350;
+    --rule-soft: #1E2640;
+    --accent: #E8B04B;
+    --accent-bg: #33280F;
+    --emitter: #E0574C;
+    --emitter-bg: #381916;
+    --broad: #5A9EE4;
+    --broad-bg: #14273D;
+    --qual-track: #232C46;
+    --field: #0F1526;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .45), 0 12px 32px -16px rgba(0, 0, 0, .7);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 68rem;
+    margin: 0 auto;
+    padding: clamp(1.5rem, 4vw, 3.5rem) clamp(1rem, 3vw, 2rem) 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: .7rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .masthead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 2px solid var(--rule);
+  }
+
+  .masthead h1 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(1.9rem, 4.5vw, 2.9rem);
+    line-height: 1.1;
+    margin: .3rem 0 0;
+    text-wrap: balance;
+  }
+
+  .masthead h1 em { font-style: italic; color: var(--accent); }
+
+  .navlink {
+    font-family: var(--mono);
+    font-size: .76rem;
+    color: var(--muted);
+  }
+
+  .navlink a { color: var(--accent); text-decoration: none; }
+  .navlink a:hover { text-decoration: underline; }
+
+  .controls {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: 1.1rem clamp(1rem, 2.5vw, 1.5rem);
+    display: grid;
+    gap: .9rem 1.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    align-items: start;
+  }
+
+  .field { display: flex; flex-direction: column; gap: .3rem; min-width: 0; }
+
+  .field > label {
+    font-family: var(--mono);
+    font-size: .64rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .field select {
+    appearance: none;
+    width: 100%;
+    font-family: var(--sans);
+    font-size: .86rem;
+    color: var(--ink);
+    background: var(--field);
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    padding: .45rem .6rem;
+    line-height: 1.35;
+    background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+                      linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+    background-position: right 1.05rem center, right .8rem center;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    padding-right: 1.9rem;
+  }
+
+  .field select[disabled] { opacity: .7; cursor: not-allowed; background-image: none; }
+
+  .field select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .hint { font-family: var(--mono); font-size: .64rem; color: var(--muted); }
+
+  .rig-line {
+    font-family: var(--mono);
+    font-size: .78rem;
+    color: var(--muted);
+  }
+
+  .rig-line b { color: var(--ink-2); font-weight: 600; }
+
+  .catalog { display: flex; flex-direction: column; gap: .7rem; }
+
+  .mcard {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--edge, var(--rule));
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: .85rem 1.1rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: .5rem 1.2rem;
+    align-items: center;
+  }
+
+  .mcard.never { opacity: .6; }
+
+  .mname { font-family: var(--serif); font-size: 1.05rem; margin: 0; }
+
+  .mtid {
+    font-family: var(--mono);
+    font-size: .72rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .chips { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .3rem; }
+
+  .chip {
+    font-family: var(--mono);
+    font-size: .62rem;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    padding: .12rem .5rem;
+    border-radius: 99px;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+
+  .chip-emit { background: var(--emitter-bg); color: var(--emitter); border-color: var(--emitter); }
+  .chip-broad { background: var(--broad-bg); color: var(--broad); border-color: var(--broad); }
+  .chip-pick { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+
+  .best-line {
+    font-family: var(--sans);
+    font-size: .78rem;
+    color: var(--muted);
+    margin-top: .4rem;
+  }
+
+  .best-line b { color: var(--ink-2); font-weight: 600; }
+
+  .returns {
+    font-family: var(--mono);
+    font-size: .68rem;
+    color: var(--muted);
+    margin-top: .25rem;
+  }
+
+  .returns b { color: var(--ink-2); font-weight: 600; }
+
+  .months {
+    display: flex;
+    align-items: flex-end;
+    gap: .2rem;
+    height: 3rem;
+    min-width: 11rem;
+  }
+
+  .mbar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+  }
+
+  .mbar .bar {
+    width: 100%;
+    max-width: 1rem;
+    min-height: 2px;
+    background: var(--qual-track);
+    border-radius: 2px 2px 0 0;
+  }
+
+  .mbar.best .bar { background: var(--accent); }
+
+  .mbar .mlabel {
+    font-family: var(--mono);
+    font-size: .56rem;
+    color: var(--muted);
+    margin-top: .15rem;
+  }
+
+  .mbar.now .mlabel { color: var(--ink); font-weight: 700; }
+
+  .empty {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--muted);
+  }
+
+  .foot { font-family: var(--mono); font-size: .7rem; color: var(--muted); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <div>
+      <p class="eyebrow">Reference catalog &middot; astro-imaging-planner</p>
+      <h1>Every Messier object, <em>and its best month</em></h1>
+    </div>
+    <div>
+      <div class="rig-line" id="rig"></div>
+      <p class="navlink"><a href="tonight.html">&larr; tonight&rsquo;s plan</a></p>
+    </div>
+  </header>
+
+  <section class="controls" aria-label="Site and rig">
+    <div class="field">
+      <label for="placeInput">Observing site</label>
+      <select id="placeInput"></select>
+      <span class="hint" id="placeHint"></span>
+    </div>
+
+    <div class="field">
+      <label for="unitsInput">Units</label>
+      <select id="unitsInput">
+        <option value="imperial" selected>Imperial (ft, inches)</option>
+        <option value="metric">Metric (m, mm)</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="bortleInput">Sky class</label>
+      <select id="bortleInput"></select>
+      <span class="hint" id="bortleHint"></span>
+    </div>
+
+    <div class="field">
+      <label for="scopeInput">Telescope</label>
+      <select id="scopeInput"></select>
+    </div>
+
+    <div class="field" id="correctorField">
+      <label for="correctorInput">Reducer / corrector</label>
+      <select id="correctorInput"></select>
+    </div>
+
+    <div class="field">
+      <label for="cameraInput">Camera</label>
+      <select id="cameraInput"></select>
+    </div>
+  </section>
+
+  <p class="hint">
+    Best month is pure geometry &mdash; altitude above 30&deg; during darkness through the year at
+    this site &mdash; independent of moon phase or weather. Imaging mode and integration time assume
+    a moonless night that month.
+  </p>
+
+  <div class="catalog" id="catalog"></div>
+  <div class="empty" id="empty" hidden></div>
+
+  <p class="foot" id="foot"></p>
+</div>
+
+<script type="module">
+__CORE_JS__
+
+const DATA = __DATA_JSON__;
+const DEFAULTS = __DEFAULTS__;
+
+const cameras = Object.fromEntries(DATA.cameras.map((c) => [c.key, c]));
+const scopes = Object.fromEntries(DATA.telescopes.map((t) => [t.key, t]));
+const fixedSensors = new Set(DATA.telescopes.map((t) => t.fixed_camera).filter(Boolean));
+
+const TYPE_NAMES = {
+  emission: "emission nebula", reflection: "reflection nebula",
+  planetary: "planetary nebula", snr: "supernova remnant",
+  galaxy: "galaxy", cluster: "globular cluster",
+};
+
+const BORTLE_TEXT = {
+  1: "1 — pristine dark site", 2: "2 — typical dark site", 3: "3 — rural",
+  4: "4 — rural/suburban edge", 5: "5 — suburban", 6: "6 — bright suburban",
+  7: "7 — suburban/urban", 8: "8 — city", 9: "9 — inner city",
+};
+
+const MONTH_ABBR = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
+const MONTH_NAME = ["January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"];
+
+const state = {
+  place: DATA.places.find((p) => p.name === DEFAULTS.place) ?? DATA.places[0],
+  bortle: DEFAULTS.bortle,
+  scope: DEFAULTS.scope,
+  corrector: DEFAULTS.corrector,
+  camera: DEFAULTS.camera,
+  units: DEFAULTS.units,
+};
+
+const $ = (id) => document.getElementById(id);
+
+const MESSIER = DATA.targets
+  .filter((t) => /^M\d+$/.test(t.id))
+  .sort((a, b) => Number(a.id.slice(1)) - Number(b.id.slice(1)));
+
+function fillSelect(el, items, selected) {
+  el.innerHTML = items
+    .map((it) => `<option value="${it.value}"${it.value === selected ? " selected" : ""}>${it.label}</option>`)
+    .join("");
+}
+
+function fmtMm(mm) { return mm < 10 ? mm.toFixed(1) : mm.toFixed(0); }
+
+function buildControls() {
+  fillSelect($("placeInput"),
+    [...DATA.places].sort((a, b) => a.label.localeCompare(b.label))
+      .map((p) => ({ value: p.name, label: p.label })),
+    state.place.name);
+
+  fillSelect($("bortleInput"),
+    Object.keys(BORTLE_TEXT).map((b) => ({ value: b, label: BORTLE_TEXT[b] })), String(state.bortle));
+
+  const byKind = {};
+  for (const t of DATA.telescopes) (byKind[t.kind] ??= []).push(t);
+  const kindNames = { refractor: "Refractors", newtonian: "Newtonians", sct: "Schmidt-Cassegrains",
+                      rc: "Ritchey-Chretiens", rasa: "Astrographs", lens: "Camera lenses",
+                      smart: "Smart telescopes" };
+  const byLabel = (a, b) => a.localeCompare(b);
+  const groupRank = (kind) => (kind === "smart" ? 0 : 1);
+  $("scopeInput").innerHTML = Object.keys(byKind)
+    .sort((a, b) => groupRank(a) - groupRank(b) || byLabel(kindNames[a] ?? a, kindNames[b] ?? b))
+    .map((kind) =>
+      `<optgroup label="${kindNames[kind] ?? kind}">` +
+      byKind[kind].sort((a, b) => byLabel(a.name, b.name)).map((t) =>
+        `<option value="${t.key}"${t.key === state.scope ? " selected" : ""}>` +
+        `${t.name} — ${fmtMm(t.focal_length_mm)} mm f/${t.f_ratio.toFixed(1)}</option>`).join("") +
+      `</optgroup>`).join("");
+
+  const interchangeable = DATA.cameras.filter((c) => !fixedSensors.has(c.key));
+  const bonded = DATA.cameras.filter((c) => fixedSensors.has(c.key));
+  $("cameraInput").innerHTML =
+    interchangeable.map((c) =>
+      `<option value="${c.key}"${c.key === state.camera ? " selected" : ""}>` +
+      `${c.name}${c.color ? "" : " · mono"}</option>`).join("") +
+    `<optgroup label="Built into a smart telescope">` +
+    bonded.map((c) =>
+      `<option value="${c.key}"${c.key === state.camera ? " selected" : ""}>${c.name}</option>`
+    ).join("") + `</optgroup>`;
+
+  $("unitsInput").value = state.units;
+  syncCorrectors();
+  syncCamera();
+}
+
+function syncCamera() {
+  const scope = scopes[state.scope];
+  const select = $("cameraInput");
+  if (scope.fixed_camera) {
+    state.camera = scope.fixed_camera;
+    select.value = state.camera;
+    select.disabled = true;
+  } else {
+    if (fixedSensors.has(state.camera)) state.camera = DEFAULTS.fallbackCamera ?? "asi533mc";
+    select.value = state.camera;
+    select.disabled = false;
+  }
+}
+
+function syncCorrectors() {
+  const scope = scopes[state.scope];
+  const opts = scope.correctors;
+  $("correctorField").hidden = opts.length < 2;
+  fillSelect($("correctorInput"), opts.map(([label]) => ({ value: label, label })), state.corrector);
+  if (!opts.some(([label]) => label === state.corrector)) {
+    state.corrector = opts[0][0];
+    $("correctorInput").value = state.corrector;
+  }
+}
+
+function render() {
+  const scope = scopes[state.scope];
+  const camera = cameras[state.camera];
+  const focalLengthMm = scope.focal_length_mm *
+    (scope.correctors.find(([label]) => label === state.corrector)?.[1] ?? 1);
+  const apertureMm = scope.aperture_mm;
+  const scale = pixelScale(camera.pixel_um, focalLengthMm);
+  const darkSqm = BORTLE_SQM[state.bortle];
+  const allowedFilterKeys = scope.builtin_filters ? new Set(scope.builtin_filters) : null;
+  const maxSubS = scope.max_sub_s ?? 1200;
+  const filterList = Object.values(DATA.filters).filter(
+    (f) => !allowedFilterKeys || allowedFilterKeys.has(f.key)
+  );
+  const rateFor = (f) => skyElectronRate(darkSqm, apertureMm, scale, camera.qe, f);
+  const reference = snrQuality(DATA.filters.none, false, rateFor(DATA.filters.none), camera);
+  const refYear = new Date().getFullYear();
+  const thisMonth = new Date().getMonth() + 1;
+
+  $("rig").innerHTML =
+    `<b>${camera.name}</b><br>${scope.name}${state.corrector !== "native" ? " + " + state.corrector : ""}` +
+    ` &middot; ${fmtMm(focalLengthMm)} mm f/${(focalLengthMm / apertureMm).toFixed(1)}`;
+
+  const catalog = $("catalog"), empty = $("empty");
+  catalog.innerHTML = "";
+  empty.hidden = true;
+
+  let shown = 0;
+  for (const t of MESSIER) {
+    const months = monthlyVisibility(t.ra_deg, t.dec_deg, state.place.lat, state.place.lon, refYear, 30);
+    const peakHours = Math.max(...months.map((m) => m.usableHours));
+    const best = months.reduce((a, b) =>
+      (b.usableHours > a.usableHours || (b.usableHours === a.usableHours && b.maxAltDeg > a.maxAltDeg)) ? b : a
+    );
+    const bestSet = new Set(months.filter((m) => m.usableHours === peakHours).map((m) => m.month));
+
+    const card = document.createElement("div");
+    card.className = "mcard" + (peakHours <= 0 ? " never" : "");
+    card.style.setProperty("--edge", t.line_emitter ? "var(--emitter)" : "var(--broad)");
+    const chip = t.line_emitter ? "chip-emit" : "chip-broad";
+
+    const monthsRow = months.map((m) => {
+      const pct = peakHours > 0 ? Math.max((m.usableHours / peakHours) * 100, m.usableHours > 0 ? 6 : 2) : 2;
+      const cls = ["mbar", bestSet.has(m.month) ? "best" : "", m.month === thisMonth ? "now" : ""]
+        .filter(Boolean).join(" ");
+      return `<div class="${cls}" title="${MONTH_NAME[m.month - 1]}: ${m.usableHours.toFixed(1)}h">
+                <div class="bar" style="height:${pct}%"></div>
+                <span class="mlabel">${MONTH_ABBR[m.month - 1]}</span>
+              </div>`;
+    }).join("");
+
+    let bodyHtml;
+    if (peakHours <= 0) {
+      bodyHtml = `<p class="best-line">Never clears 30&deg; during darkness from ${state.place.label}.</p>`;
+    } else {
+      const sbMag = surfaceBrightnessMag(t.mag, t.size_arcmin);
+      const advice = recommendMode(t.line_emitter, camera, rateFor, reference, DATA.filters, allowedFilterKeys, maxSubS);
+      const mode = advice.scores[advice.recommended];
+      const targetEPerS = targetElectronRate(sbMag, apertureMm, scale, camera.qe,
+        DATA.filters[mode.filterKey], t.line_emitter, camera);
+      const returns = diminishingReturnsTable(targetEPerS, mode.skyEPerS, camera.read_noise_e,
+        mode.recommendedSubS, [2, 8]);
+      const bestNames = [...bestSet].sort((a, b) => a - b).map((m) => MONTH_NAME[m - 1]).join(" & ");
+      bodyHtml =
+        `<p class="best-line">Best: <b>${bestNames}</b> &middot; ${best.usableHours.toFixed(1)}h above 30&deg;
+           &middot; peak alt <b>${Math.round(best.maxAltDeg)}&deg;</b></p>
+         <div class="chips">
+           <span class="chip ${chip}">${TYPE_NAMES[t.type] ?? t.type}</span>
+           <span class="chip chip-pick">${mode.label} &middot; ${mode.recommendedSubS}s</span>
+         </div>
+         <p class="returns">SB ${sbMag.toFixed(1)} &middot;
+           2h SNR ~${returns[0].snr.toFixed(1)} &middot; 8h SNR ~${returns[1].snr.toFixed(1)}</p>`;
+    }
+
+    card.innerHTML =
+      `<div>
+         <h3 class="mname">${t.name}</h3>
+         <span class="mtid">${t.id} &middot; ${t.size_arcmin}&prime; &middot; mag ${t.mag}</span>
+         ${bodyHtml}
+       </div>
+       <div class="months">${monthsRow}</div>`;
+    catalog.appendChild(card);
+    shown++;
+  }
+
+  if (!shown) {
+    empty.hidden = false;
+    empty.textContent = "No Messier objects in the bundled catalog.";
+  }
+
+  $("foot").innerHTML =
+    `${MESSIER.length} Messier objects &middot; Bortle ${state.bortle} (SQM ${darkSqm.toFixed(1)}) &middot; ` +
+    `${state.place.label} &middot; ${refYear} cycle`;
+}
+
+$("placeInput").addEventListener("change", (e) => {
+  state.place = DATA.places.find((p) => p.name === e.target.value) ?? state.place;
+  render();
+});
+$("unitsInput").addEventListener("change", (e) => { state.units = e.target.value; render(); });
+$("bortleInput").addEventListener("change", (e) => { state.bortle = Number(e.target.value); render(); });
+$("scopeInput").addEventListener("change", (e) => {
+  state.scope = e.target.value; syncCorrectors(); syncCamera(); render();
+});
+$("correctorInput").addEventListener("change", (e) => { state.corrector = e.target.value; render(); });
+$("cameraInput").addEventListener("change", (e) => { state.camera = e.target.value; render(); });
+
+buildControls();
+render();
+</script>
