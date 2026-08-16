@@ -12,9 +12,14 @@ import pathlib
 from astroplanner.catalog import load_targets
 from astroplanner.ephemeris import build_night
 from astroplanner.exposure import optimal_sub_exposure
+from astroplanner.messier import messier_targets, monthly_visibility
 from astroplanner.scoring import rank_targets
 from astroplanner.sensors import get_camera
 from astroplanner.telescopes import get_telescope
+
+# A handful of Messier objects spanning the sky, to check monthly_visibility
+# against webcore.js's monthlyVisibility without dumping all 29 every case.
+MESSIER_SAMPLE = ["M1", "M8", "M13", "M31", "M42", "M81"]
 
 HERE = pathlib.Path(__file__).parent
 
@@ -84,8 +89,24 @@ def run(case) -> dict:
                 "mode_quality": {k: v.sky_quality for k, v in r.mode_advice.scores.items()},
                 "mode_available": {k: v.available for k, v in r.mode_advice.scores.items()},
                 "suggested_filter": r.suggested_filter.key,
+                "target_e_per_s": r.target_e_per_s,
+                "returns_table": [
+                    {"hours": p.hours, "snr": p.snr, "next_hour_gain_pct": p.next_hour_gain_pct}
+                    for p in r.returns_table
+                ],
             }
             for r in ranked
+        ],
+        "messier": [
+            {
+                "id": t.id,
+                "months": [
+                    {"month": mv.month, "usable_hours": mv.usable_hours, "max_alt_deg": mv.max_alt_deg}
+                    for mv in monthly_visibility(t, lat, lon, ref_year=2026)
+                ],
+            }
+            for t in messier_targets(load_targets())
+            if t.id in MESSIER_SAMPLE
         ],
     }
 

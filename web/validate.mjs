@@ -10,7 +10,7 @@
  */
 
 import { readFileSync } from "node:fs";
-import { buildNight, optimalSub, rankTargets } from "./webcore.js";
+import { buildNight, monthlyVisibility, optimalSub, rankTargets } from "./webcore.js";
 
 const data = JSON.parse(readFileSync(new URL("./data.json", import.meta.url)));
 const reference = JSON.parse(readFileSync(new URL("./reference.json", import.meta.url)));
@@ -18,6 +18,7 @@ const reference = JSON.parse(readFileSync(new URL("./reference.json", import.met
 const cameras = Object.fromEntries(data.cameras.map((c) => [c.key, c]));
 const filters = data.filters;
 const targets = data.targets;
+const targetsById = Object.fromEntries(targets.map((t) => [t.id, t]));
 
 const TOL = {
   moonAltDeg: 0.25,     // low-precision lunar theory vs astropy
@@ -27,12 +28,19 @@ const TOL = {
   skyQualityRel: 0.02,
   scoreRel: 0.02,
   subExactRel: 0.02,
+  targetRateRel: 0.02,
+  snrRel: 0.02,
+  monthHours: 0.11,     // one 6-minute grid step
+  monthAltDeg: 0.1,
 };
 
 const GRID_STEP_HOURS = 0.1;   // the 6-minute sampling grid
 const boundaryCases = [];
 let failures = 0;
-const worst = { moonAlt: 0, maxAlt: 0, moonSep: 0, skyQuality: 0, score: 0, illum: 0, subExact: 0 };
+const worst = {
+  moonAlt: 0, maxAlt: 0, moonSep: 0, skyQuality: 0, score: 0, illum: 0, subExact: 0,
+  targetRate: 0, snr: 0, monthHours: 0, monthAlt: 0,
+};
 
 function fail(msg) {
   failures++;
@@ -153,6 +161,70 @@ for (const ref of reference) {
     if (got.suggestedFilter.key !== rt.suggested_filter) {
       fail(`${ref.label}/${rt.id}: optimal filter ${got.suggestedFilter.key} != ${rt.suggested_filter}`);
     }
+
+    // Integration-time estimate, from the target's own catalog brightness.
+    const rateRel = (got.targetEPerS - rt.target_e_per_s) / Math.max(rt.target_e_per_s, 1e-12);
+    track("targetRate", rateRel);
+    if (Math.abs(rateRel) > TOL.targetRateRel) {
+      fail(`${ref.label}/${rt.id}: target e-/px/s ${got.targetEPerS.toExponential(3)} != ` +
+           `${rt.target_e_per_s.toExponential(3)}`);
+    }
+    if (got.returnsTable.length !== rt.returns_table.length) {
+      fail(`${ref.label}/${rt.id}: returns table has ${got.returnsTable.length} rows, ` +
+           `Python got ${rt.returns_table.length}`);
+    } else {
+      for (let i = 0; i < rt.returns_table.length; i++) {
+        const g = got.returnsTable[i], p = rt.returns_table[i];
+        if (g.hours !== p.hours) fail(`${ref.label}/${rt.id}: returns row ${i} hours ${g.hours} != ${p.hours}`);
+        const snrRel = (g.snr - p.snr) / Math.max(p.snr, 1e-12);
+        track("snr", snrRel);
+        if (Math.abs(snrRel) > TOL.snrRel) {
+          fail(`${ref.label}/${rt.id}: SNR@${p.hours}h ${g.snr.toFixed(3)} != ${p.snr.toFixed(3)}`);
+        }
+        // next_hour_gain_pct is the universal sqrt(T) constant (see
+        // integration_time.py's docstring) — same value at every row
+        // regardless of target, so one relative check per row is enough.
+        const gainRel = (g.nextHourGainPct - p.next_hour_gain_pct) / Math.max(p.next_hour_gain_pct, 1e-12);
+        if (Math.abs(gainRel) > TOL.snrRel) {
+          fail(`${ref.label}/${rt.id}: next-hour gain@${p.hours}h ${g.nextHourGainPct.toFixed(3)}% != ` +
+               `${p.next_hour_gain_pct.toFixed(3)}%`);
+        }
+      }
+    }
+  }
+
+  // Messier monthly visibility, sampled for a handful of targets per case.
+  for (const m of ref.messier ?? []) {
+    const t = targetsById[m.id];
+    if (!t) { fail(`${ref.label}/messier/${m.id}: not found in JS targets`); continue; }
+    const months = monthlyVisibility(t.ra_deg, t.dec_deg, ref.lat, ref.lon, 2026, 30);
+    if (months.length !== m.months.length) {
+      fail(`${ref.label}/messier/${m.id}: ${months.length} months, Python got ${m.months.length}`);
+      continue;
+    }
+    for (let i = 0; i < m.months.length; i++) {
+      const g = months[i], p = m.months[i];
+      if (g.month !== p.month) { fail(`${ref.label}/messier/${m.id}: month index mismatch`); continue; }
+      const hoursDiff = Math.abs(g.usableHours - p.usable_hours);
+      track("monthHours", hoursDiff);
+      if (hoursDiff > TOL.monthHours) {
+        fail(`${ref.label}/messier/${m.id}/month${p.month}: usable hours ${g.usableHours.toFixed(2)} != ` +
+             `${p.usable_hours.toFixed(2)}`);
+      }
+      // A target that never clears the floor reports max_alt_deg from
+      // whatever the grid's peak sample happened to be, which the Python
+      // side pins to -90 for a fully dark-of-darkness case; skip the
+      // altitude check on hours-zero months since it isn't the interesting
+      // number there anyway.
+      if (p.usable_hours > 0 || g.usableHours > 0) {
+        const altDiff = Math.abs(g.maxAltDeg - p.max_alt_deg);
+        track("monthAlt", altDiff);
+        if (altDiff > TOL.monthAltDeg) {
+          fail(`${ref.label}/messier/${m.id}/month${p.month}: max alt ${g.maxAltDeg.toFixed(2)} != ` +
+               `${p.max_alt_deg.toFixed(2)}`);
+        }
+      }
+    }
   }
 
   // The ranking order itself, not just the per-target numbers.
@@ -175,6 +247,10 @@ console.log(`  illumination    ${(worst.illum * 100).toFixed(2)} %`);
 console.log(`  sky quality     ${(worst.skyQuality * 100).toFixed(3)} %`);
 console.log(`  score           ${(worst.score * 100).toFixed(3)} %`);
 console.log(`  sub optimum     ${(worst.subExact * 100).toFixed(3)} %`);
+console.log(`  target e-/px/s  ${(worst.targetRate * 100).toFixed(3)} %`);
+console.log(`  integration SNR ${(worst.snr * 100).toFixed(3)} %`);
+console.log(`  month hours     ${worst.monthHours.toFixed(3)} h`);
+console.log(`  month max alt   ${worst.monthAlt.toFixed(3)} deg`);
 if (boundaryCases.length) {
   console.log(`\n${boundaryCases.length} target(s) landed on a quantisation boundary (the ` +
               `6-minute grid or a sub-length rung) and differ by one step: ${boundaryCases.join(", ")}`);
