@@ -517,6 +517,33 @@
 
   .why b { color: var(--ink-2); font-weight: 600; }
 
+  /* ---- integration time: SNR at a few milestones, from catalog brightness ---- */
+  .returns {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: .15rem .9rem;
+    font-family: var(--mono);
+    font-size: .7rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    margin-top: .3rem;
+    padding-top: .3rem;
+    border-top: 1px solid var(--rule-soft);
+  }
+
+  .returns .rlabel {
+    font-family: var(--sans);
+    font-size: .62rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    flex-basis: 100%;
+  }
+
+  .returns b { color: var(--ink-2); font-weight: 600; }
+  .returns .elbow { color: var(--muted); font-style: italic; }
+
   /* ---- messages ---- */
   .empty {
     background: var(--surface);
@@ -773,6 +800,9 @@ const scopes = Object.fromEntries(DATA.telescopes.map((t) => [t.key, t]));
 // Sensors that are bonded into an instrument rather than chosen.
 const fixedSensors = new Set(DATA.telescopes.map((t) => t.fixed_camera).filter(Boolean));
 const TOP_N = 6;
+// Universal for any target/gear/site once the sub length is fixed — see
+// elbowHours()'s own docstring in webcore.js for why it takes no arguments.
+const INTEGRATION_ELBOW_H = elbowHours().toFixed(0);
 
 // The catalog's type codes, spelled the way an observer would say them —
 // "snr" on a card next to a signal-to-noise number reads as the wrong thing.
@@ -1314,6 +1344,11 @@ function render() {
               </div>`;
     }).join("");
 
+    const returnsRow = r.returnsTable
+      .filter((pt) => [1, 2, 4, 8].includes(pt.hours))
+      .map((pt) => `<span><b>${pt.hours}h</b> SNR ~${pt.snr < 10 ? pt.snr.toFixed(1) : pt.snr.toFixed(0)}</span>`)
+      .join("");
+
     li.innerHTML =
       `<div class="rank">${i + 1}</div>
        <div class="col-id">
@@ -1343,6 +1378,12 @@ function render() {
                 `${rig.scope.max_sub_s}s ceiling, so you are read-noise limited — ` +
                 `shoot more subs, not longer ones.` : ""}
             ${advice.caution ? "<b>Note:</b> " + advice.caution + "." : ""}</p>
+         <div class="returns">
+           <span class="rlabel">Integration time, from catalog brightness</span>
+           ${returnsRow}
+           <span class="elbow">past ${INTEGRATION_ELBOW_H}h, another hour buys &lt;5% more SNR — true for any target here</span>
+         </div>
+         ${r.brightnessCaution ? `<p class="why">${r.brightnessCaution}.</p>` : ""}
        </div>`;
     list.appendChild(li);
   });

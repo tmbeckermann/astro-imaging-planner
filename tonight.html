@@ -517,6 +517,33 @@
 
   .why b { color: var(--ink-2); font-weight: 600; }
 
+  /* ---- integration time: SNR at a few milestones, from catalog brightness ---- */
+  .returns {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: .15rem .9rem;
+    font-family: var(--mono);
+    font-size: .7rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    margin-top: .3rem;
+    padding-top: .3rem;
+    border-top: 1px solid var(--rule-soft);
+  }
+
+  .returns .rlabel {
+    font-family: var(--sans);
+    font-size: .62rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    flex-basis: 100%;
+  }
+
+  .returns b { color: var(--ink-2); font-weight: 600; }
+  .returns .elbow { color: var(--muted); font-style: italic; }
+
   /* ---- messages ---- */
   .empty {
     background: var(--surface);
@@ -1014,12 +1041,65 @@ function skyElectronRate(sqm, apertureMm, scaleArcsec, qe, filter) {
          filter.sky_bandwidth_factor;
 }
 
+function surfaceBrightnessMag(mag, sizeArcmin) {
+  const areaArcsec2 = (Math.PI / 4) * Math.pow(sizeArcmin * 60, 2);
+  return mag + 2.5 * Math.log10(areaArcsec2);
+}
+
+function targetElectronRate(surfaceBrightnessMagVal, apertureMm, scaleArcsec, qe, filter, lineEmitter, camera) {
+  const areaCm2 = Math.PI * Math.pow(apertureMm / 20, 2);
+  const flux = MAG0_PHOTON_FLUX_V * Math.pow(10, -0.4 * surfaceBrightnessMagVal);
+  return flux * areaCm2 * scaleArcsec * scaleArcsec * qe * DEFAULT_TRANSMISSION *
+         signalFactor(filter, lineEmitter, camera);
+}
+
 function optimalSub(readNoiseE, skyEPerS, noiseIncreasePct = 5, maxSubS = 1200) {
   const k = Math.pow(1 + noiseIncreasePct / 100, 2) - 1;
   const t = (readNoiseE * readNoiseE) / (k * skyEPerS);
   const capped = Math.min(t, maxSubS);
   const recommended = STANDARD_SUBS.find((s) => s >= capped) ?? STANDARD_SUBS[STANDARD_SUBS.length - 1];
   return { optimal: t, recommended };
+}
+
+/* ---------------------------------------------------------- integration time
+ * How much total time is enough, and when more stops helping.
+ *
+ * For a fixed sub length, signal grows exactly linearly with total time and
+ * noise grows as exactly sqrt(total time) — whatever the mix of target shot
+ * noise, sky shot noise and read noise. So the *shape* of the diminishing-
+ * returns curve (% SNR gained by one more hour) is a universal sqrt(T)
+ * constant: the same on a 3rd-magnitude nebula or a 14th-magnitude galaxy,
+ * at Bortle 2 or Bortle 9, on any rig — as long as the sub length is fixed
+ * through the session. marginalGainPct/elbowHours reflect that: no target,
+ * sky or read-noise argument, because none of them change the answer. What
+ * *does* depend on the target is the absolute SNR at any given hour, which is
+ * what snrAtTime/diminishingReturnsTable need targetEPerS for.
+ */
+
+function snrAtTime(targetEPerS, skyEPerS, readNoiseE, totalS, subS) {
+  if (totalS <= 0 || subS <= 0) return 0;
+  const nSubs = totalS / subS;
+  const signal = targetEPerS * totalS;
+  const noiseVar = (targetEPerS + skyEPerS) * totalS + nSubs * readNoiseE * readNoiseE;
+  return noiseVar > 0 ? signal / Math.sqrt(noiseVar) : 0;
+}
+
+function marginalGainPct(totalS, stepS = 3600) {
+  if (totalS <= 0) return Infinity;
+  return (Math.sqrt((totalS + stepS) / totalS) - 1) * 100;
+}
+
+function elbowHours(thresholdPct = 5, stepS = 3600, maxHours = 48) {
+  const k = Math.pow(1 + thresholdPct / 100, 2) - 1;
+  return Math.min(stepS / k / 3600, maxHours);
+}
+
+function diminishingReturnsTable(targetEPerS, skyEPerS, readNoiseE, subS, hours = [1, 2, 4, 8, 16, 24]) {
+  return hours.map((h) => ({
+    hours: h,
+    snr: snrAtTime(targetEPerS, skyEPerS, readNoiseE, h * 3600, subS),
+    nextHourGainPct: marginalGainPct(h * 3600),
+  }));
 }
 
 /* ------------------------------------------------------------------- modes */
@@ -1238,6 +1318,20 @@ function rankTargets(night, opts) {
     const moonUp = usableIdx.filter((i) => night.moonAlt[i] > 0);
     const sepRef = moonUp.length ? moonUp : usableIdx;
 
+    // How much total time this specific target is worth, from its own
+    // published brightness rather than the sky-only approximation.
+    const targetEPerS = targetElectronRate(
+      surfaceBrightnessMag(t.mag, t.size_arcmin), apertureMm, scale, camera.qe,
+      filters[mode.filterKey], t.line_emitter, camera
+    );
+    const returnsTable = diminishingReturnsTable(
+      targetEPerS, mode.skyEPerS, camera.read_noise_e, mode.recommendedSubS
+    );
+    const brightnessCaution = t.line_emitter
+      ? "estimated from catalog visual magnitude, not a measured Ha/OIII flux — " +
+        "treat as an order-of-magnitude guide for an emission target"
+      : "";
+
     out.push({
       target: t,
       score,
@@ -1256,6 +1350,9 @@ function rankTargets(night, opts) {
       exposure: optimalSub(camera.read_noise_e, moonlitRate(moonlitBest.f), 5, maxSubS),
       darkSkyRate: darkRate(moonlitBest.f),
       modeAdvice: advice,
+      targetEPerS,
+      returnsTable,
+      brightnessCaution,
       altTrack: alt,
       usableIdx,
     });
@@ -1277,6 +1374,9 @@ const scopes = Object.fromEntries(DATA.telescopes.map((t) => [t.key, t]));
 // Sensors that are bonded into an instrument rather than chosen.
 const fixedSensors = new Set(DATA.telescopes.map((t) => t.fixed_camera).filter(Boolean));
 const TOP_N = 6;
+// Universal for any target/gear/site once the sub length is fixed — see
+// elbowHours()'s own docstring in webcore.js for why it takes no arguments.
+const INTEGRATION_ELBOW_H = elbowHours().toFixed(0);
 
 // The catalog's type codes, spelled the way an observer would say them —
 // "snr" on a card next to a signal-to-noise number reads as the wrong thing.
@@ -1818,6 +1918,11 @@ function render() {
               </div>`;
     }).join("");
 
+    const returnsRow = r.returnsTable
+      .filter((pt) => [1, 2, 4, 8].includes(pt.hours))
+      .map((pt) => `<span><b>${pt.hours}h</b> SNR ~${pt.snr < 10 ? pt.snr.toFixed(1) : pt.snr.toFixed(0)}</span>`)
+      .join("");
+
     li.innerHTML =
       `<div class="rank">${i + 1}</div>
        <div class="col-id">
@@ -1847,6 +1952,12 @@ function render() {
                 `${rig.scope.max_sub_s}s ceiling, so you are read-noise limited — ` +
                 `shoot more subs, not longer ones.` : ""}
             ${advice.caution ? "<b>Note:</b> " + advice.caution + "." : ""}</p>
+         <div class="returns">
+           <span class="rlabel">Integration time, from catalog brightness</span>
+           ${returnsRow}
+           <span class="elbow">past ${INTEGRATION_ELBOW_H}h, another hour buys &lt;5% more SNR — true for any target here</span>
+         </div>
+         ${r.brightnessCaution ? `<p class="why">${r.brightnessCaution}.</p>` : ""}
        </div>`;
     list.appendChild(li);
   });

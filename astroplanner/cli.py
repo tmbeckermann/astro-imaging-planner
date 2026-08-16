@@ -22,6 +22,7 @@ from .exposure import optimal_sub_exposure, stack_noise_penalty
 from .filters import FILTERS, get_filter
 from .geocode import resolve as resolve_place
 from .geocode import search as search_places
+from .integration_time import elbow_hours
 from .scoring import rank_targets
 from .sensors import CAMERAS, get_camera
 from .sessionlog import DEFAULT_DB, SessionLog
@@ -241,6 +242,11 @@ def cmd_plan(args) -> int:
         detail = f"{m.sky_quality:>6.2f}  {m.recommended_sub_s:>4}s subs" if m.available \
                  else f"{'  n/a':>6}  {m.note}"
         print(f"   {mark} {m.label:<20} {detail}")
+    print(f"  Integration time (from catalog brightness{'; ' + top.brightness_caution if top.brightness_caution else ''}):")
+    for pt in top.returns_table:
+        print(f"     {pt.hours:>4.0f}h  SNR ~{pt.snr:>5.1f}   next hour: +{pt.next_hour_gain_pct:.0f}%")
+    print(f"  Past {elbow_hours():.0f}h total, another hour buys less than 5% more SNR — "
+          f"true for any target, gear or site once the sub length is fixed.")
     if top.moon_brightening_mag >= 0.05:
         print(f"Moonlight brightens its sky by {top.moon_brightening_mag:.2f} mag/arcsec² "
               f"({top.moon_penalty*100:.0f}% SNR cost vs. a moonless night; "

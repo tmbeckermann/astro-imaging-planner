@@ -66,3 +66,35 @@ def sky_electron_rate(
         * transmission
         * filt.sky_bandwidth_factor
     )
+
+
+def target_electron_rate(
+    surface_brightness_mag: float,
+    aperture_mm: float,
+    pixel_scale_arcsec: float,
+    qe: float,
+    filt: Filter,
+    line_emitter: bool,
+    camera=None,
+    transmission: float = DEFAULT_TRANSMISSION,
+) -> float:
+    """Target signal rate in electrons per pixel per second.
+
+    Same optical chain as `sky_electron_rate` — same photon-to-electron
+    conversion, same aperture and pixel-scale terms — but for the target's own
+    surface brightness rather than the sky's, and weighted by how much of the
+    *target's* flux the filter passes (`Filter.signal_factor`) rather than how
+    much sky continuum it passes (`Filter.sky_bandwidth_factor`). Those are
+    deliberately different filter properties: a duo-band cuts continuum sky
+    ~6x harder than it cuts an emission line.
+    """
+    area_cm2 = math.pi * (aperture_mm / 20.0) ** 2
+    flux = sky_photon_flux(surface_brightness_mag)
+    return (
+        flux
+        * area_cm2
+        * pixel_scale_arcsec**2
+        * qe
+        * transmission
+        * filt.signal_factor(line_emitter, camera)
+    )

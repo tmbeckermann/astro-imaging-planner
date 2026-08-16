@@ -249,12 +249,65 @@ export function skyElectronRate(sqm, apertureMm, scaleArcsec, qe, filter) {
          filter.sky_bandwidth_factor;
 }
 
+export function surfaceBrightnessMag(mag, sizeArcmin) {
+  const areaArcsec2 = (Math.PI / 4) * Math.pow(sizeArcmin * 60, 2);
+  return mag + 2.5 * Math.log10(areaArcsec2);
+}
+
+export function targetElectronRate(surfaceBrightnessMagVal, apertureMm, scaleArcsec, qe, filter, lineEmitter, camera) {
+  const areaCm2 = Math.PI * Math.pow(apertureMm / 20, 2);
+  const flux = MAG0_PHOTON_FLUX_V * Math.pow(10, -0.4 * surfaceBrightnessMagVal);
+  return flux * areaCm2 * scaleArcsec * scaleArcsec * qe * DEFAULT_TRANSMISSION *
+         signalFactor(filter, lineEmitter, camera);
+}
+
 export function optimalSub(readNoiseE, skyEPerS, noiseIncreasePct = 5, maxSubS = 1200) {
   const k = Math.pow(1 + noiseIncreasePct / 100, 2) - 1;
   const t = (readNoiseE * readNoiseE) / (k * skyEPerS);
   const capped = Math.min(t, maxSubS);
   const recommended = STANDARD_SUBS.find((s) => s >= capped) ?? STANDARD_SUBS[STANDARD_SUBS.length - 1];
   return { optimal: t, recommended };
+}
+
+/* ---------------------------------------------------------- integration time
+ * How much total time is enough, and when more stops helping.
+ *
+ * For a fixed sub length, signal grows exactly linearly with total time and
+ * noise grows as exactly sqrt(total time) — whatever the mix of target shot
+ * noise, sky shot noise and read noise. So the *shape* of the diminishing-
+ * returns curve (% SNR gained by one more hour) is a universal sqrt(T)
+ * constant: the same on a 3rd-magnitude nebula or a 14th-magnitude galaxy,
+ * at Bortle 2 or Bortle 9, on any rig — as long as the sub length is fixed
+ * through the session. marginalGainPct/elbowHours reflect that: no target,
+ * sky or read-noise argument, because none of them change the answer. What
+ * *does* depend on the target is the absolute SNR at any given hour, which is
+ * what snrAtTime/diminishingReturnsTable need targetEPerS for.
+ */
+
+export function snrAtTime(targetEPerS, skyEPerS, readNoiseE, totalS, subS) {
+  if (totalS <= 0 || subS <= 0) return 0;
+  const nSubs = totalS / subS;
+  const signal = targetEPerS * totalS;
+  const noiseVar = (targetEPerS + skyEPerS) * totalS + nSubs * readNoiseE * readNoiseE;
+  return noiseVar > 0 ? signal / Math.sqrt(noiseVar) : 0;
+}
+
+export function marginalGainPct(totalS, stepS = 3600) {
+  if (totalS <= 0) return Infinity;
+  return (Math.sqrt((totalS + stepS) / totalS) - 1) * 100;
+}
+
+export function elbowHours(thresholdPct = 5, stepS = 3600, maxHours = 48) {
+  const k = Math.pow(1 + thresholdPct / 100, 2) - 1;
+  return Math.min(stepS / k / 3600, maxHours);
+}
+
+export function diminishingReturnsTable(targetEPerS, skyEPerS, readNoiseE, subS, hours = [1, 2, 4, 8, 16, 24]) {
+  return hours.map((h) => ({
+    hours: h,
+    snr: snrAtTime(targetEPerS, skyEPerS, readNoiseE, h * 3600, subS),
+    nextHourGainPct: marginalGainPct(h * 3600),
+  }));
 }
 
 /* ------------------------------------------------------------------- modes */
@@ -473,6 +526,20 @@ export function rankTargets(night, opts) {
     const moonUp = usableIdx.filter((i) => night.moonAlt[i] > 0);
     const sepRef = moonUp.length ? moonUp : usableIdx;
 
+    // How much total time this specific target is worth, from its own
+    // published brightness rather than the sky-only approximation.
+    const targetEPerS = targetElectronRate(
+      surfaceBrightnessMag(t.mag, t.size_arcmin), apertureMm, scale, camera.qe,
+      filters[mode.filterKey], t.line_emitter, camera
+    );
+    const returnsTable = diminishingReturnsTable(
+      targetEPerS, mode.skyEPerS, camera.read_noise_e, mode.recommendedSubS
+    );
+    const brightnessCaution = t.line_emitter
+      ? "estimated from catalog visual magnitude, not a measured Ha/OIII flux — " +
+        "treat as an order-of-magnitude guide for an emission target"
+      : "";
+
     out.push({
       target: t,
       score,
@@ -491,6 +558,9 @@ export function rankTargets(night, opts) {
       exposure: optimalSub(camera.read_noise_e, moonlitRate(moonlitBest.f), 5, maxSubS),
       darkSkyRate: darkRate(moonlitBest.f),
       modeAdvice: advice,
+      targetEPerS,
+      returnsTable,
+      brightnessCaution,
       altTrack: alt,
       usableIdx,
     });

@@ -42,9 +42,10 @@ from .filters import (
     mode_filter,
     mode_label,
 )
+from .integration_time import IntegrationPoint, diminishing_returns_table
 from .moon import brightening_mag, sky_brightness_with_moon
 from .sensors import Camera
-from .sky import sky_electron_rate, sqm_from_bortle
+from .sky import sky_electron_rate, sqm_from_bortle, target_electron_rate
 
 MIN_ALT_DEG = 30.0
 
@@ -200,6 +201,9 @@ class RankedTarget:
     exposure: ExposureResult
     dark_sky_rate: float         # e-/px/s with no moon, for comparison
     mode_advice: ModeAdvice | None = None   # full spectrum / visible / duo-band
+    target_e_per_s: float = 0.0  # from catalog mag + size; see Target.surface_brightness_mag
+    returns_table: list[IntegrationPoint] = ()  # SNR at 1/2/4/8/16/24h, this target's own signal
+    brightness_caution: str = ""  # set for line emitters: catalog mag is a rough guide only
 
 
 def fov_fit_score(target_size_arcmin: float, fov_arcmin: tuple[float, float]) -> float:
@@ -345,6 +349,26 @@ def rank_targets(
         window_idx = (int(idx[0]), int(idx[-1]))
         exp = optimal_sub_exposure(camera.read_noise_e, mean_rate, max_sub_s=max_sub_s)
 
+        # How much total time this specific target is worth, from its own
+        # published brightness rather than the sky-only approximation. The
+        # curve's *shape* (next_hour_gain_pct) is the same for every target —
+        # see integration_time.py — but the SNR column is not, and that's the
+        # number literature brightness actually buys us.
+        best_mode = advice.best
+        target_rate = target_electron_rate(
+            t.surface_brightness_mag, aperture_mm, pixel_scale, camera.qe,
+            FILTERS[best_mode.filter_key], t.line_emitter, camera,
+        )
+        returns = diminishing_returns_table(
+            target_rate, best_mode.sky_e_per_s, camera.read_noise_e,
+            best_mode.recommended_sub_s,
+        )
+        caution = (
+            "estimated from catalog visual magnitude, not a measured Ha/OIII flux — "
+            "treat as an order-of-magnitude guide for an emission target"
+            if t.line_emitter else ""
+        )
+
         ranked.append(
             RankedTarget(
                 target=t,
@@ -362,6 +386,9 @@ def rank_targets(
                 exposure=exp,
                 dark_sky_rate=dark_rate,
                 mode_advice=advice,
+                target_e_per_s=target_rate,
+                returns_table=returns,
+                brightness_caution=caution,
             )
         )
 
