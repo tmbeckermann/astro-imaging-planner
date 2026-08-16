@@ -19,8 +19,8 @@ HERE = pathlib.Path(__file__).parent
 
 DEFAULTS = {
     "place": "Nashville",
-    "date": "2026-08-11",
-    "bortle": 8,
+    "date": None,  # None means "today", resolved client-side in the visitor's zone
+    "bortle": 6,
     "fallbackCamera": "asi533mc",
     "scope": "dwarf-mini",
     "corrector": "native",

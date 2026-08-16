@@ -805,9 +805,15 @@ const ZONES = [
   ["Pacific/Auckland", "Auckland"],
 ];
 
+// DEFAULTS.date is null for a static build baked ahead of time — "today" has
+// to be resolved here, in the visitor's own browser, not at build time.
+function todayInZone(tz) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(new Date());
+}
+
 const state = {
   place: DATA.places.find((p) => p.name === DEFAULTS.place) ?? DATA.places[0],
-  date: DEFAULTS.date,
+  date: DEFAULTS.date ?? todayInZone(DEFAULTS.tz),
   bortle: DEFAULTS.bortle,
   bortleTouched: false,
   scope: DEFAULTS.scope,
